@@ -1,12 +1,14 @@
 # 🎮 RPG Game (Flutter + Firebase)
 
+Projeto acadêmico desenvolvido em Flutter utilizando Firebase (Firestore) como banco de dados.
+
+---
+
 ## 📅 Data de início
 
 10/02/2026
 
-Projeto Integrador III
-
-Projeto acadêmico desenvolvido em Flutter utilizando Firebase (Firestore) como banco de dados.
+📚 Projeto Integrador III
 
 ---
 
@@ -28,13 +30,88 @@ Projeto acadêmico desenvolvido em Flutter utilizando Firebase (Firestore) como 
 
 ---
 
-## ⚙️ Pré-requisitos
+## ⚙️ Configuração do ambiente
 
-Antes de rodar o projeto, você precisa ter instalado:
+Antes de rodar o projeto, configure seu ambiente Flutter:
 
-* Flutter SDK
-* Android Studio ou VS Code
-* Emulador ou dispositivo físico
+### 📱 1. Instalar o Flutter SDK
+
+1. Acesse o site oficial:
+   👉 https://docs.flutter.dev/get-started/install
+
+2. Baixe a versão para seu sistema (Windows ou Linux)
+
+3. Extraia o arquivo e adicione o Flutter ao PATH
+
+4. Verifique a instalação:
+
+```bash
+flutter doctor
+```
+
+---
+
+### 🧰 2. IDE (VS Code ou Android Studio)
+
+Você pode usar:
+
+* VS Code
+* Android Studio
+
+👉 No VS Code, instale as extensões:
+
+* Flutter
+* Dart
+
+---
+
+### 📲 3. Configurar dispositivo
+
+Escolha uma opção:
+
+* Emulador Android
+* Dispositivo físico com depuração USB ativada
+* Navegador (Chrome)
+
+---
+
+### ✅ 4. Verificar ambiente
+
+Execute:
+
+```bash
+flutter doctor
+```
+
+Corrija qualquer erro indicado ✔️
+
+---
+
+## 🌐 Rodando rapidamente (Chrome)
+
+Você pode testar o projeto rapidamente usando o navegador, sem precisar de emulador.
+
+### ▶️ Passos
+
+1. Ative o suporte Web (caso ainda não esteja habilitado):
+
+```bash
+flutter config --enable-web
+```
+
+2. Execute o projeto:
+
+```bash
+flutter run -d chrome
+```
+
+---
+
+### ⚠️ Observações
+
+* O Chrome abrirá automaticamente
+* Ideal para testes rápidos de interface
+* Algumas funcionalidades podem se comportar diferente do mobile
 
 ---
 
@@ -58,7 +135,7 @@ cd rpg_game
 flutter pub get
 ```
 
-4. Rode o projeto:
+4. Execute o projeto:
 
 ```bash
 flutter run
@@ -70,11 +147,13 @@ flutter run
 
 Este projeto já está configurado com Firebase.
 
-Caso ocorra algum erro relacionado ao Firebase:
+Caso ocorra erro:
 
-* Verifique se o arquivo `google-services.json` está presente em:
+* Verifique se o arquivo abaixo está presente:
 
-  * `android/app/`
+```
+android/app/google-services.json
+```
 
 ---
 
@@ -87,10 +166,9 @@ Caso ocorra algum erro relacionado ao Firebase:
 
 ---
 
-## 📝 Observações
+## 🛠️ Problemas comuns
 
-* Certifique-se de estar logado no Firebase, se necessário
-* Em caso de erro, rode:
+Se ocorrer algum erro ao rodar o projeto:
 
 ```bash
 flutter clean
