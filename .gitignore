@@ -52,3 +52,4 @@ android/local.properties
 # Environment variables
 .env
 .env.*
+
