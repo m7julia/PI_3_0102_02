@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "108223842070",
+    "project_id": "functionstesteluis",
+    "storage_bucket": "functionstesteluis.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:108223842070:android:7c248bc9261ca9104bb237",
+        "android_client_info": {
+          "package_name": "com.example.rpg_game"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAE2foyrH_3EE72_VzPtlwKE0zV1dMFvCo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
