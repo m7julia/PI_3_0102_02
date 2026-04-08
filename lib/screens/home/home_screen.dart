@@ -7,42 +7,73 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('RPG (DEFINIR NOME DO JOGO)')),
-      body: Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // INICIAR
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const IntroScreen()),
-                );
-              },
-              child: const Text('Iniciar'),
+      body: Stack(
+        children: [
+          // IMAGEM DE FUNDO
+          SizedBox.expand(
+            child: Stack(
+              children: [
+                Image.asset(
+                  'assets/images/background.png',
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                ),
+                Container(color: Colors.black.withOpacity(0.5)),
+              ],
             ),
-
-            const SizedBox(width: 15), // espaço horizontal
-            // CONTINUAR
-            ElevatedButton(
-              onPressed: () {
-                print('Continuar jogo');
-              },
-              child: const Text('Continuar'),
+          ),
+          Positioned(
+            top: 40,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Text(
+                'RPG (DEFINIR NOME DO JOGO)',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
+          ),
+          // BOTÕES
+          Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const IntroScreen()),
+                    );
+                  },
+                  child: const Text('Iniciar'),
+                ),
 
-            const SizedBox(width: 15),
+                const SizedBox(width: 15),
 
-            // CONFIGURAÇÕES
-            ElevatedButton(
-              onPressed: () {
-                print('Abrir configurações');
-              },
-              child: const Text('Configurações'),
+                ElevatedButton(
+                  onPressed: () {
+                    print('Continuar jogo');
+                  },
+                  child: const Text('Continuar'),
+                ),
+
+                const SizedBox(width: 15),
+
+                ElevatedButton(
+                  onPressed: () {
+                    print('Configurações');
+                  },
+                  child: const Text('Configurações'),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
