@@ -11,6 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
+  google_fonts: ^6.1.0
 
   # Firebase
   firebase_core: ^4.6.0
@@ -33,3 +34,6 @@ flutter:
     - assets/images/background.png
     - assets/audio/
     - assets/fonts/
+
+
+  
