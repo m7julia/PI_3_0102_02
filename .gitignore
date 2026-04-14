@@ -53,3 +53,4 @@ android/local.properties
 .env
 .env.*
 
+lib/firebase_options.dart
