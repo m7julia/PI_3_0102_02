@@ -38,9 +38,9 @@ class HomeScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'RPG (DEFINIR NOME DO JOGO)',
+                      'MAGIALURA',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.cinzelDecorative(
                         fontSize: 34,
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFFF8E7B9),
