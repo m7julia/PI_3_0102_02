@@ -1,16 +1,80 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../intro/intro_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final AudioPlayer player = AudioPlayer();
+  bool estaMutado = false;
+  bool _audioIniciado = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (kIsWeb) {
+      // Na web, começa mutado e aguarda interação do usuário
+      // para evitar bloqueio de autoplay do browser
+      setState(() => estaMutado = true);
+    } else {
+      // Mobile/Desktop: toca automaticamente
+      tocarMusica();
+    }
+  }
+
+  Future<void> tocarMusica() async {
+    await player.setReleaseMode(ReleaseMode.loop);
+    await player.setVolume(0.5);
+    await player.play(AssetSource('audio/music/menu.mp3'));
+  }
+
+  Future<void> alternarMute() async {
+    // Na web, se o áudio ainda não foi iniciado, inicia na primeira interação
+    if (kIsWeb && !_audioIniciado) {
+      await tocarMusica();
+      setState(() {
+        estaMutado = false;
+        _audioIniciado = true;
+      });
+      return;
+    }
+
+    // Comportamento padrão de toggle mute
+    setState(() => estaMutado = !estaMutado);
+    await player.setVolume(estaMutado ? 0.0 : 0.5);
+  }
+
+  Future<void> irParaIntro() async {
+    await player.stop();
+
+    if (!mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const IntroScreen()),
+    );
+  }
+
+  @override
+  void dispose() {
+    player.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          // imagem de fundo
+          // Fundo com imagem e overlay escuro
           SizedBox.expand(
             child: Stack(
               children: [
@@ -29,88 +93,123 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          // tela
           SafeArea(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'MAGIALURA',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.cinzelDecorative(
-                        fontSize: 34,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFFF8E7B9),
-                        letterSpacing: 1.5,
-                        shadows: const [
-                          Shadow(
-                            color: Colors.black,
-                            blurRadius: 10,
-                            offset: Offset(2, 2),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    Container(
-                      width: 300,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 15,
-                      ),
+            child: Stack(
+              children: [
+                // Botão de mute/unmute com tooltip explicativo na web
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: Tooltip(
+                    message: kIsWeb && !_audioIniciado
+                        ? 'Clique para ativar o áudio'
+                        : estaMutado
+                            ? 'Ativar som'
+                            : 'Silenciar',
+                    child: Container(
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.45),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: const Color.fromARGB(255, 158, 138, 74),
+                          color: kIsWeb && !_audioIniciado
+                              ? const Color(0xFFF8E7B9).withOpacity(0.5)
+                              : const Color.fromARGB(255, 158, 138, 74),
                           width: 2,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.4),
-                            blurRadius: 16,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
                       ),
-                      child: Column(
-                        children: [
-                          _rpgMenuButton(
-                            text: 'Iniciar',
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const IntroScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _rpgMenuButton(
-                            text: 'Continuar',
-                            onPressed: () {
-                              print('Continuar jogo');
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _rpgMenuButton(
-                            text: 'Configurações',
-                            onPressed: () {
-                              print('Configurações');
-                            },
-                          ),
-                        ],
+                      child: IconButton(
+                        onPressed: alternarMute,
+                        icon: Icon(
+                          // Na web antes de iniciar: mostra volume_off
+                          // Após iniciar: alterna entre volume_up e volume_off
+                          (kIsWeb && !_audioIniciado) || estaMutado
+                              ? Icons.volume_off
+                              : Icons.volume_up,
+                          color: kIsWeb && !_audioIniciado
+                              ? const Color(0xFFF8E7B9).withOpacity(0.5)
+                              : const Color(0xFFF8E7B9),
+                        ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
+
+                // Conteúdo central
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'MAGIALURA',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.cinzelDecorative(
+                            fontSize: 34,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFFF8E7B9),
+                            letterSpacing: 1.5,
+                            shadows: const [
+                              Shadow(
+                                color: Colors.black,
+                                blurRadius: 10,
+                                offset: Offset(2, 2),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        Container(
+                          width: 300,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 15,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.45),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color.fromARGB(255, 158, 138, 74),
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.4),
+                                blurRadius: 16,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              _rpgMenuButton(
+                                text: 'Iniciar',
+                                onPressed: irParaIntro,
+                              ),
+                              const SizedBox(height: 16),
+                              _rpgMenuButton(
+                                text: 'Continuar',
+                                onPressed: () {
+                                  print('Continuar jogo');
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              _rpgMenuButton(
+                                text: 'Configurações',
+                                onPressed: () {
+                                  print('Configurações');
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -134,7 +233,10 @@ class HomeScreen extends StatelessWidget {
           shadowColor: Colors.black,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
-            side: const BorderSide(color: Color.fromARGB(255, 0, 0, 0), width: 2),
+            side: const BorderSide(
+              color: Color.fromARGB(255, 0, 0, 0),
+              width: 2,
+            ),
           ),
           padding: const EdgeInsets.symmetric(vertical: 14),
         ),

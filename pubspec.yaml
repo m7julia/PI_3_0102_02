@@ -12,6 +12,7 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   google_fonts: ^8.0.1
+  audioplayers: ^5.2.1
 
   # Firebase
   firebase_core: ^4.6.0
@@ -32,7 +33,7 @@ flutter:
 
   assets:
     - assets/images/background.png
-    - assets/audio/
+    - assets/audio/music/menu.mp3
     - assets/fonts/
 
 
