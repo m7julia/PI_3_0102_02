@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
-import '../intro/intro_screen.dart';
+import '../game/../game/personagem/criar_personagem_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,13 +19,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-
     if (kIsWeb) {
-      // Na web, começa mutado e aguarda interação do usuário
-      // para evitar bloqueio de autoplay do browser
       setState(() => estaMutado = true);
     } else {
-      // Mobile/Desktop: toca automaticamente
       tocarMusica();
     }
   }
@@ -37,7 +33,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> alternarMute() async {
-    // Na web, se o áudio ainda não foi iniciado, inicia na primeira interação
     if (kIsWeb && !_audioIniciado) {
       await tocarMusica();
       setState(() {
@@ -46,20 +41,19 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       return;
     }
-
-    // Comportamento padrão de toggle mute
     setState(() => estaMutado = !estaMutado);
     await player.setVolume(estaMutado ? 0.0 : 0.5);
   }
 
-  Future<void> irParaIntro() async {
+
+  
+
+  Future<void> irParaPersonagem() async {
     await player.stop();
-
     if (!mounted) return;
-
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const IntroScreen()),
+      MaterialPageRoute(builder: (_) => const CriarPersonagemScreen()),
     );
   }
 
@@ -74,7 +68,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Fundo com imagem e overlay escuro
           SizedBox.expand(
             child: Stack(
               children: [
@@ -96,7 +89,6 @@ class _HomeScreenState extends State<HomeScreen> {
           SafeArea(
             child: Stack(
               children: [
-                // Botão de mute/unmute com tooltip explicativo na web
                 Positioned(
                   top: 16,
                   right: 16,
@@ -104,8 +96,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     message: kIsWeb && !_audioIniciado
                         ? 'Clique para ativar o áudio'
                         : estaMutado
-                            ? 'Ativar som'
-                            : 'Silenciar',
+                        ? 'Ativar som'
+                        : 'Silenciar',
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.45),
@@ -120,8 +112,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: IconButton(
                         onPressed: alternarMute,
                         icon: Icon(
-                          // Na web antes de iniciar: mostra volume_off
-                          // Após iniciar: alterna entre volume_up e volume_off
                           (kIsWeb && !_audioIniciado) || estaMutado
                               ? Icons.volume_off
                               : Icons.volume_up,
@@ -134,32 +124,57 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                // Conteúdo central
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          'MAGIALURA',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.cinzelDecorative(
-                            fontSize: 34,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFFF8E7B9),
-                            letterSpacing: 1.5,
-                            shadows: const [
-                              Shadow(
-                                color: Colors.black,
-                                blurRadius: 10,
-                                offset: Offset(2, 2),
-                              ),
-                            ],
+                        // título com perspectiva 3D
+                        Transform(
+                          alignment: Alignment.center,
+                          transform: Matrix4.identity()
+                            ..setEntry(3, 2, 0.001)
+                            ..rotateX(-0.85),
+                          child: Text(
+                            'MagIAlurA',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.cinzelDecorative(
+                              fontSize: 115,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(
+                                0xFFF8E7B9,
+                              ), // cor da frente - amarelo claro
+                              letterSpacing: 20,
+                              shadows: [
+                                // camadas que criam a "profundidade" 3D
+                                for (int i = 1; i <= 10; i++)
+                                  Shadow(
+                                    color: Color.lerp(
+                                      const Color.fromARGB(
+                                        255,
+                                        0,
+                                        0,
+                                        0,
+                                      ), // dourado escuro
+                                      Colors.black,
+                                      i / 10,
+                                    )!,
+                                    offset: Offset(i.toDouble(), i.toDouble()),
+                                    blurRadius: 0, // efeito 3D
+                                  ),
+                                // sombra de profundidade final
+                                const Shadow(
+                                  color: Colors.black,
+                                  offset: Offset(10, 10),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
 
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 115),
 
                         Container(
                           width: 300,
@@ -186,21 +201,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               _rpgMenuButton(
                                 text: 'Iniciar',
-                                onPressed: irParaIntro,
+                                onPressed: irParaPersonagem,
                               ),
                               const SizedBox(height: 16),
                               _rpgMenuButton(
                                 text: 'Continuar',
-                                onPressed: () {
-                                  print('Continuar jogo');
-                                },
+                                onPressed: () {},
                               ),
                               const SizedBox(height: 16),
                               _rpgMenuButton(
                                 text: 'Configurações',
-                                onPressed: () {
-                                  print('Configurações');
-                                },
+                                onPressed: () {},
                               ),
                             ],
                           ),
