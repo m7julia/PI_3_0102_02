@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../services/nivel_service.dart';
+import 'package:rpg_game/services/nivel_service.dart';
 
 class Ligue3Game extends StatefulWidget {
   const Ligue3Game({super.key});
@@ -11,7 +11,6 @@ class Ligue3Game extends StatefulWidget {
 }
 
 class _Ligue3GameState extends State<Ligue3Game> {
-  // ── constantes ────────────────────────────────────────────────────────────
   static const int gridSize = 5;
   static const int metaPorElemento = 6;
 
@@ -20,42 +19,40 @@ class _Ligue3GameState extends State<Ligue3Game> {
       'asset': 'assets/images/icons/girassol_icon.png',
       'nome': 'Girassol',
       'cor': Color(0xFFF9A825),
-      'emoji': '🌻' // fallback
+      'emoji': '🌻',
     },
     {
       'asset': 'assets/images/icons/milho_icon.png',
       'nome': 'Milho',
       'cor': Color(0xFF558B2F),
-      'emoji': '🌽'
+      'emoji': '🌽',
     },
     {
       'asset': 'assets/images/icons/trigo_icon.png',
       'nome': 'Trigo',
       'cor': Color(0xFFBF8C00),
-      'emoji': '🌾'
+      'emoji': '🌾',
     },
     {
       'asset': 'assets/images/icons/abobora_icon.png',
       'nome': 'Abóbora',
       'cor': Color(0xFFE64A19),
-      'emoji': '🎃'
+      'emoji': '🎃',
     },
   ];
 
-  // ── estado ────────────────────────────────────────────────────────────────
-  late List<List<String>> matriz; // armazena caminhos dos assets
+  late List<List<String>> matriz;
   List<List<int>> selecionados = [];
-  Map<String, int> colhidos = {}; // chave = asset path
+  Map<String, int> colhidos = {};
   int pontuacao = 0;
   String mensagem = '';
   bool mensagemErro = false;
   bool faseConcluida = false;
   List<int>? dragOrigem;
-  
-  // Cache de imagens
-  Map<String, Widget> _imageCache = {};
 
-  // ── ciclo de vida ─────────────────────────────────────────────────────────
+  // Controla se o save no Firestore já foi disparado
+  bool _salvoNoFirestore = false;
+
   @override
   void initState() {
     super.initState();
@@ -69,29 +66,27 @@ class _Ligue3GameState extends State<Ligue3Game> {
     }
   }
 
-  // ── inicialização ─────────────────────────────────────────────────────────
   void iniciarJogo() {
     matriz = _gerarMatrizSemTrios();
     selecionados = [];
     colhidos = {
-      for (var cultivo in cultivos) cultivo['asset'] as String: 0
+      for (var cultivo in cultivos) cultivo['asset'] as String: 0,
     };
     pontuacao = 0;
     mensagem = '';
     mensagemErro = false;
     faseConcluida = false;
+    _salvoNoFirestore = false; // reseta ao iniciar novo jogo
   }
 
   List<List<String>> _gerarMatrizSemTrios() {
     final rng = Random();
-    // pool: 6 de cada cultivo = 24 células; 1 posição restante → escolha aleatória
     List<String> pool = [];
     for (var cultivo in cultivos) {
       for (int k = 0; k < metaPorElemento; k++) {
         pool.add(cultivo['asset'] as String);
       }
     }
-    // 25 - 24 = 1 extra
     pool.add(cultivos[rng.nextInt(cultivos.length)]['asset'] as String);
 
     List<List<String>> board;
@@ -110,13 +105,11 @@ class _Ligue3GameState extends State<Ligue3Game> {
   }
 
   bool _temTrioInicial(List<List<String>> b) {
-    // horizontal
     for (int r = 0; r < gridSize; r++) {
       for (int c = 0; c <= gridSize - 3; c++) {
         if (b[r][c] == b[r][c + 1] && b[r][c] == b[r][c + 2]) return true;
       }
     }
-    // vertical
     for (int c = 0; c < gridSize; c++) {
       for (int r = 0; r <= gridSize - 3; r++) {
         if (b[r][c] == b[r + 1][c] && b[r][c] == b[r + 2][c]) return true;
@@ -125,7 +118,6 @@ class _Ligue3GameState extends State<Ligue3Game> {
     return false;
   }
 
-  // ── helpers para assets ───────────────────────────────────────────────────
   String _getEmojiForAsset(String assetPath) {
     final cultivo = cultivos.firstWhere(
       (c) => c['asset'] == assetPath,
@@ -148,20 +140,17 @@ class _Ligue3GameState extends State<Ligue3Game> {
       width: size,
       height: size,
       fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) {
-        // Fallback para emoji
-        return Text(
-          _getEmojiForAsset(assetPath),
-          style: TextStyle(fontSize: size),
-        );
-      },
+      errorBuilder: (context, error, stackTrace) => Text(
+        _getEmojiForAsset(assetPath),
+        style: TextStyle(fontSize: size),
+      ),
     );
   }
 
-  // ── lógica de seleção e combinação ────────────────────────────────────────
   void _tocarCelula(int linha, int coluna) {
     final pos = [linha, coluna];
-    final jaSelected = selecionados.any((s) => s[0] == linha && s[1] == coluna);
+    final jaSelected =
+        selecionados.any((s) => s[0] == linha && s[1] == coluna);
 
     setState(() {
       if (jaSelected) {
@@ -177,19 +166,16 @@ class _Ligue3GameState extends State<Ligue3Game> {
         return;
       }
 
-      if (selecionados.length < 3) {
-        selecionados.add(pos);
-      }
+      if (selecionados.length < 3) selecionados.add(pos);
 
-      if (selecionados.length == 3) {
-        _tentarCombinar();
-      }
+      if (selecionados.length == 3) _tentarCombinar();
     });
   }
 
   void _tentarCombinar() {
     final asset = matriz[selecionados[0][0]][selecionados[0][1]];
-    final todosIguais = selecionados.every((s) => matriz[s[0]][s[1]] == asset);
+    final todosIguais =
+        selecionados.every((s) => matriz[s[0]][s[1]] == asset);
 
     if (!todosIguais) {
       selecionados = [];
@@ -222,7 +208,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
         if (matriz[r][c].isNotEmpty) coluna.add(matriz[r][c]);
       }
       while (coluna.length < gridSize) {
-        coluna.add(cultivos[rng.nextInt(cultivos.length)]['asset'] as String);
+        coluna.add(
+            cultivos[rng.nextInt(cultivos.length)]['asset'] as String);
       }
       for (int r = gridSize - 1; r >= 0; r--) {
         matriz[r][c] = coluna[gridSize - 1 - r];
@@ -238,30 +225,28 @@ class _Ligue3GameState extends State<Ligue3Game> {
     while (houveCorrecao && tentativas < 100) {
       houveCorrecao = false;
       tentativas++;
-      
       for (int r = 0; r < gridSize; r++) {
         for (int c = 0; c <= gridSize - 3; c++) {
           if (matriz[r][c] == matriz[r][c + 1] &&
               matriz[r][c] == matriz[r][c + 2]) {
-            final assetsDisponiveis = cultivos
+            final outros = cultivos
                 .map((e) => e['asset'] as String)
                 .where((e) => e != matriz[r][c])
                 .toList();
-            matriz[r][c + 2] = assetsDisponiveis[rng.nextInt(assetsDisponiveis.length)];
+            matriz[r][c + 2] = outros[rng.nextInt(outros.length)];
             houveCorrecao = true;
           }
         }
       }
-      
       for (int c = 0; c < gridSize; c++) {
         for (int r = 0; r <= gridSize - 3; r++) {
           if (matriz[r][c] == matriz[r + 1][c] &&
               matriz[r][c] == matriz[r + 2][c]) {
-            final assetsDisponiveis = cultivos
+            final outros = cultivos
                 .map((e) => e['asset'] as String)
                 .where((e) => e != matriz[r][c])
                 .toList();
-            matriz[r + 2][c] = assetsDisponiveis[rng.nextInt(assetsDisponiveis.length)];
+            matriz[r + 2][c] = outros[rng.nextInt(outros.length)];
             houveCorrecao = true;
           }
         }
@@ -270,13 +255,23 @@ class _Ligue3GameState extends State<Ligue3Game> {
   }
 
   void _verificarFaseConcluida() {
-    if (cultivos.every(
-        (cultivo) => (colhidos[cultivo['asset'] as String] ?? 0) >= metaPorElemento)) {
+    final completo = cultivos.every(
+      (cultivo) =>
+          (colhidos[cultivo['asset'] as String] ?? 0) >= metaPorElemento,
+    );
+    if (completo && !faseConcluida) {
       faseConcluida = true;
+      _salvarProgressoFirestore(); // ← salva ao concluir
     }
   }
 
-  // ── drag & drop ───────────────────────────────────────────────────────────
+  /// Salva o nível como completo no Firestore (apenas uma vez por partida).
+  Future<void> _salvarProgressoFirestore() async {
+    if (_salvoNoFirestore) return;
+    _salvoNoFirestore = true;
+    await NivelService.completarNivelMaju();
+  }
+
   void _iniciarDrag(int linha, int coluna) {
     dragOrigem = [linha, coluna];
   }
@@ -301,7 +296,6 @@ class _Ligue3GameState extends State<Ligue3Game> {
     bool houveMatch = true;
     while (houveMatch) {
       houveMatch = false;
-      
       for (int r = 0; r < gridSize; r++) {
         for (int c = 0; c <= gridSize - 3; c++) {
           if (matriz[r][c].isNotEmpty &&
@@ -315,7 +309,6 @@ class _Ligue3GameState extends State<Ligue3Game> {
           }
         }
       }
-      
       for (int c = 0; c < gridSize; c++) {
         for (int r = 0; r <= gridSize - 3; r++) {
           if (matriz[r][c].isNotEmpty &&
@@ -329,13 +322,11 @@ class _Ligue3GameState extends State<Ligue3Game> {
           }
         }
       }
-      
       if (houveMatch) _aplicarGravidade();
     }
     _verificarFaseConcluida();
   }
 
-  // ── build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -371,14 +362,11 @@ class _Ligue3GameState extends State<Ligue3Game> {
             child: Image.asset(
               'assets/images/fundo_fazenda.jpeg',
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(color: const Color(0xFF6B3F1D));
-              },
+              errorBuilder: (_, __, ___) =>
+                  Container(color: const Color(0xFF6B3F1D)),
             ),
           ),
-          Container(
-            color: Colors.black.withValues(alpha: 0.6),
-          ),
+          Container(color: Colors.black.withValues(alpha: 0.6)),
           SafeArea(
             child: Column(
               children: [
@@ -403,15 +391,18 @@ class _Ligue3GameState extends State<Ligue3Game> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6B3F1D),
                       foregroundColor: const Color(0xFFF8E7B9),
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 40, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
-                        side: const BorderSide(color: Color(0xFFF8E7B9), width: 1),
+                        side: const BorderSide(
+                            color: Color(0xFFF8E7B9), width: 1),
                       ),
                     ),
                     child: Text(
                       'Novo Jogo',
-                      style: GoogleFonts.cinzel(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.cinzel(
+                          fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -424,7 +415,6 @@ class _Ligue3GameState extends State<Ligue3Game> {
     );
   }
 
-  // ── widgets auxiliares ────────────────────────────────────────────────────
   Widget _buildDescricaoMeta() {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
@@ -503,7 +493,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
                               color: Colors.greenAccent,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.check, size: 9, color: Colors.black),
+                            child: const Icon(Icons.check,
+                                size: 9, color: Colors.black),
                           ),
                         ),
                     ],
@@ -514,7 +505,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
                     child: LinearProgressIndicator(
                       value: progresso,
                       minHeight: 6,
-                      backgroundColor: const Color(0xFFF8E7B9).withValues(alpha: 0.2),
+                      backgroundColor:
+                          const Color(0xFFF8E7B9).withValues(alpha: 0.2),
                       valueColor: AlwaysStoppedAnimation<Color>(
                           completo ? Colors.greenAccent : cor),
                     ),
@@ -527,7 +519,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
                       color: completo
                           ? Colors.greenAccent
                           : const Color(0xFFF8E7B9),
-                      fontWeight: completo ? FontWeight.bold : FontWeight.normal,
+                      fontWeight:
+                          completo ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                 ],
@@ -580,11 +573,13 @@ class _Ligue3GameState extends State<Ligue3Game> {
               final linha = index ~/ gridSize;
               final coluna = index % gridSize;
               final asset = matriz[linha][coluna];
-              final selecionado = selecionados.any((s) => s[0] == linha && s[1] == coluna);
+              final selecionado = selecionados
+                  .any((s) => s[0] == linha && s[1] == coluna);
 
               return DragTarget<List<int>>(
                 onWillAcceptWithDetails: (details) => true,
-                onAcceptWithDetails: (details) => _finalizarDrop(linha, coluna),
+                onAcceptWithDetails: (details) =>
+                    _finalizarDrop(linha, coluna),
                 builder: (context, candidateData, rejectedData) {
                   final highlight = candidateData.isNotEmpty;
                   return Draggable<List<int>>(
@@ -648,10 +643,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
             Container(
               width: 7,
               height: 7,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: cor,
-              ),
+              decoration: BoxDecoration(shape: BoxShape.circle, color: cor),
             ),
           ],
         ),
@@ -692,21 +684,62 @@ class _Ligue3GameState extends State<Ligue3Game> {
                   color: const Color(0xFFF8E7B9).withValues(alpha: 0.9),
                 ),
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => setState(() => iniciarJogo()),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF8E7B9),
-                  foregroundColor: const Color(0xFF6B3F1D),
-                  padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+              // Indicador de salvo
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.cloud_done,
+                      color: Colors.greenAccent, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Progresso salvo!',
+                    style: GoogleFonts.cinzel(
+                      fontSize: 12,
+                      color: Colors.greenAccent,
+                    ),
                   ),
-                ),
-                child: Text(
-                  'Jogar Novamente',
-                  style: GoogleFonts.cinzel(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: () => setState(() => iniciarJogo()),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6B3F1D),
+                      foregroundColor: const Color(0xFFF8E7B9),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: const BorderSide(
+                            color: Color(0xFFF8E7B9), width: 1),
+                      ),
+                    ),
+                    child: Text(
+                      'Jogar Novamente',
+                      style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF8E7B9),
+                      foregroundColor: const Color(0xFF6B3F1D),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      'Voltar',
+                      style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

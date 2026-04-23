@@ -46,16 +46,16 @@ class _HomeScreenState extends State<HomeScreen> {
     await player.setVolume(estaMutado ? 0.0 : 0.5);
   }
 
+
+
   Future<void> irParaMundoMaria() async {
     await player.stop();
     if (!mounted) return;
-   Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (_) => MundoMariaScreen(nomeJogador: 'Viajante'),
-  ),
-);
-  }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const MundoMariaScreen()),
+    );
+  } 
 
   Future<void> irParaPersonagem() async {
     await player.stop();
@@ -217,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 text: 'Continuar',
                                 onPressed: () {},
                               ),
-                              const SizedBox(height: 16),
+                                const SizedBox(height: 16),
                               _rpgMenuButton(
                                 text: 'Mundo maria',
                                 onPressed: irParaMundoMaria,

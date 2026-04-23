@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../services/nivel_service.dart';
+import 'package:rpg_game/services/nivel_service.dart';
 
 class JogoMemoriaGame extends StatefulWidget {
   const JogoMemoriaGame({super.key});
@@ -11,7 +11,6 @@ class JogoMemoriaGame extends StatefulWidget {
 }
 
 class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
-  // ── constantes ────────────────────────────────────────────────────────────
   static const String _ferraduraAsset =
       'assets/images/icons/ferradura_icon.png';
   static const List<String> _cultivosAssets = [
@@ -20,30 +19,21 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
     'assets/images/icons/girassol_icon.png',
     'assets/images/icons/trigo_icon.png',
   ];
-  static const List<String> _cultivosEmojis = [
-    '🎃',
-    '🌽',
-    '🌻',
-    '🌾',
-  ]; // Para fallback/texto
   static const int _totalPares = 4;
 
-  // ── estado ────────────────────────────────────────────────────────────────
-  late List<String> cartas; // caminho do asset em cada posição
+  late List<String> cartas;
   late List<bool> combinadas;
   late List<bool> reveladas;
 
   int? primeiroIndex;
   bool bloqueado = false;
 
-  bool ferraduraRevelada = false;
-
   int pontuacao = 0;
   int paresEncontrados = 0;
   bool faseConcluida = false;
 
-  // Cache de imagens pré-carregadas
-  Map<String, Widget> _imageCache = {};
+  // Controla se o save no Firestore já foi disparado (evita chamadas duplas)
+  bool _salvoNoFirestore = false;
 
   @override
   void initState() {
@@ -52,7 +42,6 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
     iniciarJogo();
   }
 
-  // ── pré-carregamento das imagens ──────────────────────────────────────────
   Future<void> _precarregarImagens() async {
     final allAssets = [..._cultivosAssets, ..._cultivosAssets, _ferraduraAsset];
     for (var asset in allAssets) {
@@ -60,12 +49,9 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
     }
   }
 
-  // ── inicialização ─────────────────────────────────────────────────────────
   void iniciarJogo() {
-    // 4 pares de cultivos (8 cartas) + 1 ferradura = 9 cartas
     final baralho = [..._cultivosAssets, ..._cultivosAssets, _ferraduraAsset]
       ..shuffle(Random());
-
     cartas = baralho;
     combinadas = List.generate(9, (_) => false);
     reveladas = List.generate(9, (_) => false);
@@ -74,21 +60,18 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
     pontuacao = 0;
     paresEncontrados = 0;
     faseConcluida = false;
+    _salvoNoFirestore = false; // reseta ao iniciar novo jogo
   }
 
-  // ── obter emoji correspondente ao asset (para fallback) ───────────────────
   String _getEmojiForAsset(String assetPath) {
     if (assetPath == _ferraduraAsset) return '🐴';
-
     if (assetPath.contains('abobora')) return '🎃';
     if (assetPath.contains('milho')) return '🌽';
     if (assetPath.contains('girassol')) return '🌻';
     if (assetPath.contains('trigo')) return '🌾';
-
     return '?';
   }
 
-  // ── lógica principal ──────────────────────────────────────────────────────
   void _tocarCarta(int index) {
     if (bloqueado) return;
     if (combinadas[index]) return;
@@ -105,7 +88,6 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
     primeiroIndex = null;
 
     if (cartas[primeiro] == cartas[index]) {
-      // PAR ENCONTRADO
       setState(() {
         combinadas[primeiro] = true;
         combinadas[index] = true;
@@ -141,28 +123,31 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
       Future.delayed(const Duration(milliseconds: 900), () {
         if (!mounted) return;
         setState(() => faseConcluida = true);
+        _salvarProgressoFirestore(); // ← salva ao mostrar tela de conclusão
       });
     });
   }
 
-  // ── widgets de imagem com fallback ────────────────────────────────────────
+  /// Salva o nível como completo no Firestore (apenas uma vez por partida).
+  Future<void> _salvarProgressoFirestore() async {
+    if (_salvoNoFirestore) return;
+    _salvoNoFirestore = true;
+    await NivelService.completarNivelMaju();
+  }
+
   Widget _buildImageCard(String assetPath, {double size = 60}) {
     return Image.asset(
       assetPath,
       width: size,
       height: size,
       fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) {
-        // Fallback para emoji se a imagem não carregar
-        return Text(
-          _getEmojiForAsset(assetPath),
-          style: TextStyle(fontSize: size),
-        );
-      },
+      errorBuilder: (context, error, stackTrace) => Text(
+        _getEmojiForAsset(assetPath),
+        style: TextStyle(fontSize: size),
+      ),
     );
   }
 
-  // ── build principal ───────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -198,19 +183,11 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
             child: Image.asset(
               'assets/images/fundo_fazenda.jpeg',
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: const Color(0xFF6B3F1D),
-                  child: const Center(child: Text('Fundo não encontrado')),
-                );
-              },
+              errorBuilder: (_, __, ___) =>
+                  Container(color: const Color(0xFF6B3F1D)),
             ),
           ),
-          Container(
-            color: Colors.black.withValues(
-              alpha: 0.6,
-            ), // Substituído withOpacity
-          ),
+          Container(color: Colors.black.withValues(alpha: 0.6)),
           SafeArea(
             child: Column(
               children: [
@@ -225,23 +202,17 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                       backgroundColor: const Color(0xFF6B3F1D),
                       foregroundColor: const Color(0xFFF8E7B9),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 40,
-                        vertical: 12,
-                      ),
+                          horizontal: 40, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                         side: const BorderSide(
-                          color: Color(0xFFF8E7B9),
-                          width: 1,
-                        ),
+                            color: Color(0xFFF8E7B9), width: 1),
                       ),
                     ),
                     child: Text(
                       'Novo Jogo',
                       style: GoogleFonts.cinzel(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                          fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -254,7 +225,6 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
     );
   }
 
-  // ── widgets auxiliares ────────────────────────────────────────────────────
   Widget _buildDescricaoMeta() {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 6),
@@ -293,7 +263,8 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
 
   Widget _buildContadorPares() {
     final ferraduraIdx = cartas.indexOf(_ferraduraAsset);
-    final ferraduraRevelada = ferraduraIdx >= 0 && combinadas[ferraduraIdx];
+    final ferraduraRevelada =
+        ferraduraIdx >= 0 && combinadas[ferraduraIdx];
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -313,8 +284,10 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
             final asset = entry.value;
             final idx1 = cartas.indexOf(asset);
             final idx2 = cartas.lastIndexOf(asset);
-            final encontrado =
-                idx1 >= 0 && idx2 >= 0 && combinadas[idx1] && combinadas[idx2];
+            final encontrado = idx1 >= 0 &&
+                idx2 >= 0 &&
+                combinadas[idx1] &&
+                combinadas[idx2];
             return _buildIconeContador(
               asset: asset,
               encontrado: encontrado,
@@ -359,11 +332,10 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                 child: Container(
                   width: 12,
                   height: 12,
-                  decoration: BoxDecoration(
-                    color: corCheck,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.check, size: 9, color: Colors.black),
+                  decoration:
+                      BoxDecoration(color: corCheck, shape: BoxShape.circle),
+                  child:
+                      const Icon(Icons.check, size: 9, color: Colors.black),
                 ),
               ),
           ],
@@ -533,27 +505,62 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                   color: const Color(0xFFF8E7B9).withValues(alpha: 0.9),
                 ),
               ),
+              // Indicador de salvo
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.cloud_done,
+                      color: Colors.greenAccent, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Progresso salvo!',
+                    style: GoogleFonts.cinzel(
+                      fontSize: 12,
+                      color: Colors.greenAccent,
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => setState(() => iniciarJogo()),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF8E7B9),
-                  foregroundColor: const Color(0xFF6B3F1D),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 36,
-                    vertical: 12,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: () => setState(() => iniciarJogo()),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6B3F1D),
+                      foregroundColor: const Color(0xFFF8E7B9),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: const BorderSide(
+                            color: Color(0xFFF8E7B9), width: 1),
+                      ),
+                    ),
+                    child: Text(
+                      'Jogar Novamente',
+                      style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                    ),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF8E7B9),
+                      foregroundColor: const Color(0xFF6B3F1D),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      'Voltar',
+                      style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                    ),
                   ),
-                ),
-                child: Text(
-                  'Jogar Novamente',
-                  style: GoogleFonts.cinzel(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                ],
               ),
             ],
           ),

@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rpg_game/features/mundo_maria/games/jogo_memoria_game.dart';
 import 'package:rpg_game/features/mundo_maria/games/ligue_3_game.dart';
 
@@ -9,23 +10,35 @@ import 'package:rpg_game/features/mundo_maria/games/ligue_3_game.dart';
 // Etapas do diálogo
 // ─────────────────────────────────────────────────────────────────────────────
 enum _Etapa {
-  chegada,         // Margarida se apresenta
-  jogadorFala,     // Jogador menciona as notas de Beethoven
-  reacao,          // "Que maravilha!"
-  perguntaCaminho, // Pergunta sobre caminho curto ou longo
-  escolha,         // Botões de escolha visíveis
-  introMemoria,    // Narrativa do Jogo da Memória
-  introLigue3,     // Narrativa do Ligue 3
+  carregando,
+  chegada1,
+  chegada2,
+  chegada3,
+  jogadorFala,
+  reacao1,
+  reacao2,
+  reacao3,
+  perguntaCaminho1,
+  perguntaCaminho2,
+  perguntaCaminho3,
+  escolha,
+  introMemoria1,
+  introMemoria2,
+  introMemoria3,
+  introMemoria4,
+  introMemoria5,
+  introLigue31,
+  introLigue32,
+  introLigue33,
+  introLigue34,
+  introLigue35,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MundoMariaScreen
 // ─────────────────────────────────────────────────────────────────────────────
 class MundoMariaScreen extends StatefulWidget {
-  /// Nome do personagem vindo da tela anterior.
-  final String nomeJogador;
-
-  const MundoMariaScreen({super.key, required this.nomeJogador});
+  const MundoMariaScreen({super.key});
 
   @override
   State<MundoMariaScreen> createState() => _MundoMariaScreenState();
@@ -33,13 +46,14 @@ class MundoMariaScreen extends StatefulWidget {
 
 class _MundoMariaScreenState extends State<MundoMariaScreen>
     with TickerProviderStateMixin {
-
   // ── estado ─────────────────────────────────────────────────────────────────
-  _Etapa _etapa = _Etapa.chegada;
+  _Etapa _etapa = _Etapa.carregando;
+  String _nomeJogador = 'Viajante'; // fallback enquanto carrega
   String _textoExibido = '';
   bool _textoTerminou = false;
   bool _mostrarNpc = false;
   bool _mostrarDialogo = false;
+  bool _erroBusca = false;
 
   // ── som ────────────────────────────────────────────────────────────────────
   bool _somAtivado = false;
@@ -63,20 +77,50 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
   // ─────────────────────────────────────────────────────────────────────────
   String get _textoAtual {
     switch (_etapa) {
-      case _Etapa.chegada:
-        return 'Bem-vindo à minha fazenda, viajante! Fico feliz em ver que o portal abriu. Sou Margarida, guardiã destas terras. Diga-me... o que te trouxe até aqui?';
+      case _Etapa.carregando:
+        return '';
+      case _Etapa.chegada1:
+        return 'Bem-vindo à minha fazenda, viajante!';
+      case _Etapa.chegada2:
+        return 'Sou Margarida, cuidadora da Fazenda Vale-Dourado.';
+      case _Etapa.chegada3:
+        return 'Diga-me... o que te trouxe até aqui?';
       case _Etapa.jogadorFala:
-        return 'Sou ${widget.nomeJogador}! Completei as notas de Beethoven e ganhei a chave do portal para chegar até você.';
-      case _Etapa.reacao:
-        return 'Que maravilha, ${widget.nomeJogador}! As melodias de Beethoven escolheram bem seu mensageiro. Que bom que chegou — já tenho a missão perfeita para ti!';
-      case _Etapa.perguntaCaminho:
-        return 'Mas antes de te enviar ao campo... preciso saber que tipo de aventureiro você é.\n\nVocê prefere o caminho curto e difícil, ou o caminho longo e mais fácil?';
+        return 'Sou $_nomeJogador! Completei as notas de Beethoven e ganhei a chave do portal para chegar até você.';
+      case _Etapa.reacao1:
+        return 'Que maravilha, $_nomeJogador!';
+      case _Etapa.reacao2:
+        return 'As melodias de Beethoven escolheram bem seu mensageiro.';
+      case _Etapa.reacao3:
+        return 'Que bom que chegou — já tenho a missão perfeita para ti!';
+      case _Etapa.perguntaCaminho1:
+        return 'Mas antes de te enviar ao campo...';
+      case _Etapa.perguntaCaminho2:
+        return 'preciso saber que tipo de aventureiro você é.';
+      case _Etapa.perguntaCaminho3:
+        return 'Você prefere o caminho curto e difícil, ou o caminho longo e mais fácil?';
       case _Etapa.escolha:
-        return 'Escolha seu caminho, ${widget.nomeJogador}...';
-      case _Etapa.introMemoria:
-        return 'Para guardar a colheita de hoje, precisamos separar tudo em pares antes de levar ao celeiro. Cada item tem seu par — nada entra desemparelhado!\n\nVire as cartas e encontre os quatro pares da colheita. Mas fique atento: em algum lugar está a minha ferradura da sorte. Se a encontrar, me avise!';
-      case _Etapa.introLigue3:
-        return 'Os vegetais aqui crescem em grupos e só são colhidos de três em três. Para colher, ligue três do mesmo vegetal — eles saem da terra juntos!\n\nSua missão é coletar 6 unidades de cada vegetal: girassol, milho, trigo e abóbora. Quando completar tudo, venha me avisar!';
+        return 'Escolha seu caminho, $_nomeJogador...';
+      case _Etapa.introMemoria1:
+        return 'Para guardar a colheita de hoje, precisamos separar tudo em pares antes de levar ao celeiro.';
+      case _Etapa.introMemoria2:
+        return 'Cada item tem seu par — nada entra desemparelhado!';
+      case _Etapa.introMemoria3:
+        return 'Vire as cartas e encontre os quatro pares da colheita.';
+      case _Etapa.introMemoria4:
+        return 'Mas fique atento: em algum lugar está a minha ferradura da sorte.';
+      case _Etapa.introMemoria5:
+        return 'Se a encontrar, me avise!';
+      case _Etapa.introLigue31:
+        return 'Os vegetais aqui crescem em grupos e só são colhidos de três em três.';
+      case _Etapa.introLigue32:
+        return 'Para colher, ligue três do mesmo vegetal — eles saem da terra juntos!';
+      case _Etapa.introLigue33:
+        return 'Sua missão é coletar 6 unidades de cada vegetal:';
+      case _Etapa.introLigue34:
+        return '🌻 girassol, 🌽 milho, 🌾 trigo e 🎃 abóbora.';
+      case _Etapa.introLigue35:
+        return 'Quando completar tudo, venha me avisar!';
     }
   }
 
@@ -88,7 +132,7 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
     super.initState();
     _configurarAnimacoes();
     _audioPlayer = AudioPlayer();
-    _iniciarCena();
+    _buscarNomeEIniciar();
   }
 
   void _configurarAnimacoes() {
@@ -96,12 +140,14 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _npcScale = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(parent: _npcAnimCtrl, curve: Curves.elasticOut),
-    );
-    _npcRotate = Tween<double>(begin: -0.05, end: 0.0).animate(
-      CurvedAnimation(parent: _npcAnimCtrl, curve: Curves.easeOut),
-    );
+    _npcScale = Tween<double>(
+      begin: 0.5,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _npcAnimCtrl, curve: Curves.elasticOut));
+    _npcRotate = Tween<double>(
+      begin: -0.05,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _npcAnimCtrl, curve: Curves.easeOut));
 
     _dialogoAnimCtrl = AnimationController(
       duration: const Duration(milliseconds: 600),
@@ -112,9 +158,10 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    _shakeAnim = Tween<double>(begin: 0, end: 10).animate(
-      CurvedAnimation(parent: _shakeCtrl, curve: Curves.elasticIn),
-    );
+    _shakeAnim = Tween<double>(
+      begin: 0,
+      end: 10,
+    ).animate(CurvedAnimation(parent: _shakeCtrl, curve: Curves.elasticIn));
 
     _opcaoAnimCtrl = AnimationController(
       duration: const Duration(milliseconds: 500),
@@ -136,13 +183,40 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Lógica de cena e som
+  // Busca nome no Firestore e inicia cena
   // ─────────────────────────────────────────────────────────────────────────
+  Future<void> _buscarNomeEIniciar() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('personagens')
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final data = snapshot.docs.first.data();
+        final nome = data['nome'] as String?;
+        if (nome != null && nome.isNotEmpty) {
+          if (mounted) setState(() => _nomeJogador = nome);
+        }
+      }
+    } catch (e) {
+      debugPrint('[MundoMaria] Erro ao buscar personagem: $e');
+      if (mounted) setState(() => _erroBusca = true);
+      // Continua com o fallback 'Viajante'
+    }
+
+    // Inicia a cena independente de erro (usa fallback se necessário)
+    await _iniciarCena();
+  }
+
   Future<void> _iniciarCena() async {
     await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
 
-    setState(() => _mostrarNpc = true);
+    setState(() {
+      _mostrarNpc = true;
+      _etapa = _Etapa.chegada1;
+    });
     _npcAnimCtrl.forward();
 
     await Future.delayed(const Duration(milliseconds: 700));
@@ -154,6 +228,9 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
     await _animarTexto(_textoAtual);
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Som
+  // ─────────────────────────────────────────────────────────────────────────
   Future<void> _toggleSom() async {
     if (!_somAtivado) {
       try {
@@ -192,14 +269,12 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
       _textoExibido = '';
       _textoTerminou = false;
     });
-
     for (int i = 0; i < texto.length; i++) {
       await Future.delayed(const Duration(milliseconds: 30));
       if (!mounted) return;
       setState(() => _textoExibido += texto[i]);
       if (texto[i] != ' ' && i % 2 == 0) _tocarSomLetra();
     }
-
     if (!mounted) return;
     setState(() => _textoTerminou = true);
   }
@@ -214,56 +289,66 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
   // ─────────────────────────────────────────────────────────────────────────
   Future<void> _avancarDialogo() async {
     if (!_textoTerminou) return;
+    await _executarShake();
 
-    switch (_etapa) {
-      case _Etapa.chegada:
-        // Jogador responde, Margarida reage em sequência
-        await _executarShake();
-        setState(() => _etapa = _Etapa.jogadorFala);
-        await _animarTexto(_textoAtual);
-        await Future.delayed(const Duration(milliseconds: 700));
-        await _executarShake();
-        setState(() => _etapa = _Etapa.reacao);
-        await _animarTexto(_textoAtual);
-        break;
+    // Mapa sequencial de etapas
+    const sequencia = {
+      _Etapa.chegada1: _Etapa.chegada2,
+      _Etapa.chegada2: _Etapa.chegada3,
+      _Etapa.chegada3: _Etapa.jogadorFala,
+      _Etapa.jogadorFala: _Etapa.reacao1,
+      _Etapa.reacao1: _Etapa.reacao2,
+      _Etapa.reacao2: _Etapa.reacao3,
+      _Etapa.reacao3: _Etapa.perguntaCaminho1,
+      _Etapa.perguntaCaminho1: _Etapa.perguntaCaminho2,
+      _Etapa.perguntaCaminho2: _Etapa.perguntaCaminho3,
+      _Etapa.introMemoria1: _Etapa.introMemoria2,
+      _Etapa.introMemoria2: _Etapa.introMemoria3,
+      _Etapa.introMemoria3: _Etapa.introMemoria4,
+      _Etapa.introMemoria4: _Etapa.introMemoria5,
+      _Etapa.introLigue31: _Etapa.introLigue32,
+      _Etapa.introLigue32: _Etapa.introLigue33,
+      _Etapa.introLigue33: _Etapa.introLigue34,
+      _Etapa.introLigue34: _Etapa.introLigue35,
+    };
 
-      case _Etapa.reacao:
-        await _executarShake();
-        setState(() => _etapa = _Etapa.perguntaCaminho);
-        await _animarTexto(_textoAtual);
-        break;
+    // Etapas finais que lançam o jogo
+    if (_etapa == _Etapa.introMemoria5) {
+      _irParaJogo(memoria: true);
+      return;
+    }
+    if (_etapa == _Etapa.introLigue35) {
+      _irParaJogo(memoria: false);
+      return;
+    }
 
-      case _Etapa.perguntaCaminho:
-        await _executarShake();
-        setState(() => _etapa = _Etapa.escolha);
-        await _animarTexto(_textoAtual);
-        _opcaoAnimCtrl.forward();
-        break;
+    // Etapa que abre as opções
+    if (_etapa == _Etapa.perguntaCaminho3) {
+      setState(() => _etapa = _Etapa.escolha);
+      await _animarTexto(_textoAtual);
+      _opcaoAnimCtrl.forward();
+      return;
+    }
 
-      case _Etapa.introMemoria:
-        _irParaJogo(memoria: true);
-        break;
-
-      case _Etapa.introLigue3:
-        _irParaJogo(memoria: false);
-        break;
-
-      default:
-        break;
+    // Sequência normal
+    final proxima = sequencia[_etapa];
+    if (proxima != null) {
+      setState(() => _etapa = proxima);
+      await _animarTexto(_textoAtual);
     }
   }
 
   Future<void> _escolherCaminhoMemoria() async {
     _opcaoAnimCtrl.reset();
     await _executarShake();
-    setState(() => _etapa = _Etapa.introMemoria);
+    setState(() => _etapa = _Etapa.introMemoria1);
     await _animarTexto(_textoAtual);
   }
 
   Future<void> _escolherCaminhoLigue3() async {
     _opcaoAnimCtrl.reset();
     await _executarShake();
-    setState(() => _etapa = _Etapa.introLigue3);
+    setState(() => _etapa = _Etapa.introLigue31);
     await _animarTexto(_textoAtual);
   }
 
@@ -286,13 +371,13 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
   // Helpers
   // ─────────────────────────────────────────────────────────────────────────
   bool get _mostrarBotaoContinuar =>
-      _etapa != _Etapa.escolha && _etapa != _Etapa.jogadorFala;
+      _etapa != _Etapa.escolha && _etapa != _Etapa.carregando;
 
   String get _labelBotao {
-    if (_etapa == _Etapa.introMemoria || _etapa == _Etapa.introLigue3) {
-      return 'Vamos lá!';
+    if (_etapa == _Etapa.introMemoria5 || _etapa == _Etapa.introLigue35) {
+      return 'Vamos lá! ✨';
     }
-    return 'Continuar';
+    return 'Continuar →';
   }
 
   bool get _ehFalaJogador => _etapa == _Etapa.jogadorFala;
@@ -330,7 +415,6 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
       ),
       body: Stack(
         children: [
-          // Fundo
           SizedBox.expand(
             child: Image.asset(
               'assets/images/fundo_fazenda.jpeg',
@@ -339,24 +423,29 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
                   Container(color: const Color(0xFF2D1A0A)),
             ),
           ),
-          // Overlay
           Container(color: Colors.black.withValues(alpha: 0.55)),
 
-          // Conteúdo
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  const Spacer(),
-                  _buildNpc(),
-                  const SizedBox(height: 20),
-                  _buildCaixaDialogo(),
-                  const SizedBox(height: 28),
-                ],
+          // Loading enquanto busca o nome
+          if (_etapa == _Etapa.carregando)
+            const Center(
+              child: CircularProgressIndicator(color: Color(0xFFF8E7B9)),
+            ),
+
+          if (_etapa != _Etapa.carregando)
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    const Spacer(),
+                    _buildNpc(),
+                    const SizedBox(height: 20),
+                    _buildCaixaDialogo(),
+                    const SizedBox(height: 28),
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -375,69 +464,11 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
           animation: _shakeAnim,
           builder: (context, child) {
             final offset = sin(_shakeAnim.value * 6 * pi) * 8;
-            return Transform.translate(
-              offset: Offset(offset, 0),
-              child: child,
-            );
+            return Transform.translate(offset: Offset(offset, 0), child: child);
           },
           child: ScaleTransition(
             scale: _npcScale,
-            child: RotationTransition(
-              turns: _npcRotate,
-              child: Column(
-                children: [
-                  Image.asset(
-                    'assets/images/margarida_npc.png',
-                    width: 190,
-                    height: 190,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 190,
-                      height: 190,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF6B3F1D).withValues(alpha: 0.6),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFFF8E7B9).withValues(alpha: 0.4),
-                          width: 2,
-                        ),
-                      ),
-                      child: const Center(
-                        child: Text('🌸', style: TextStyle(fontSize: 72)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  ScaleTransition(
-                    scale: Tween<double>(begin: 0.8, end: 1.0).animate(
-                      CurvedAnimation(
-                          parent: _npcAnimCtrl, curve: Curves.elasticOut),
-                    ),
-                    child: Text(
-                      'Margarida',
-                      style: GoogleFonts.cinzelDecorative(
-                        fontSize: 20,
-                        color: const Color(0xFFF8E7B9),
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            blurRadius: 8,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Text(
-                    'Guardiã da Fazenda',
-                    style: GoogleFonts.cinzel(
-                      fontSize: 11,
-                      color: const Color(0xFFF8E7B9).withValues(alpha: 0.5),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            child: RotationTransition(turns: _npcRotate),
           ),
         ),
       ),
@@ -459,10 +490,7 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.78),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFF9E8A4A),
-              width: 2,
-            ),
+            border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFF9E8A4A).withValues(alpha: 0.2),
@@ -474,11 +502,8 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Badge de quem está falando
               _buildBadgeFalante(),
               const SizedBox(height: 8),
-
-              // Texto animado
               Text(
                 _textoExibido,
                 style: GoogleFonts.cinzel(
@@ -487,21 +512,17 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
                   color: _ehFalaJogador
                       ? const Color(0xFFF8E7B9).withValues(alpha: 0.7)
                       : const Color(0xFFF8E7B9),
-                  fontStyle:
-                      _ehFalaJogador ? FontStyle.italic : FontStyle.normal,
+                  fontStyle: _ehFalaJogador
+                      ? FontStyle.italic
+                      : FontStyle.normal,
                 ),
               ),
-
               const SizedBox(height: 16),
-
-              // Opções de caminho
               if (_etapa == _Etapa.escolha && _textoTerminou)
                 ScaleTransition(
                   scale: _opcaoScale,
                   child: _buildOpcoesCaminho(),
                 ),
-
-              // Botão continuar
               if (_mostrarBotaoContinuar)
                 Align(
                   alignment: Alignment.centerRight,
@@ -510,10 +531,13 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6B3F1D),
                       foregroundColor: const Color(0xFFF8E7B9),
-                      disabledBackgroundColor:
-                          const Color(0xFF6B3F1D).withValues(alpha: 0.4),
+                      disabledBackgroundColor: const Color(
+                        0xFF6B3F1D,
+                      ).withValues(alpha: 0.4),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                         side: const BorderSide(
@@ -524,8 +548,7 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
                     ),
                     child: Text(
                       _labelBotao,
-                      style:
-                          GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                      style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -536,10 +559,9 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
     );
   }
 
-  // ── Badge de falante ──────────────────────────────────────────────────────
   Widget _buildBadgeFalante() {
     final bool isJogador = _ehFalaJogador;
-    final String nome = isJogador ? widget.nomeJogador : 'Margarida';
+    final String nome = isJogador ? _nomeJogador : 'Margarida';
     final Color cor = isJogador
         ? const Color(0xFF9E8A4A)
         : const Color(0xFF6B3F1D);
@@ -566,7 +588,6 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
     );
   }
 
-  // ── Botões de escolha ─────────────────────────────────────────────────────
   Widget _buildOpcoesCaminho() {
     return Column(
       children: [
@@ -602,15 +623,11 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
         splashColor: cor.withValues(alpha: 0.15),
         child: Container(
           width: double.infinity,
-          padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: cor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: cor.withValues(alpha: 0.5),
-              width: 1.5,
-            ),
+            border: Border.all(color: cor.withValues(alpha: 0.5), width: 1.5),
           ),
           child: Row(
             children: [
