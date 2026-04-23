@@ -35,4 +35,6 @@ flutter:
     - assets/images/
     - assets/audio/music/
     - assets/audio/
-    - assets/fonts/
+   
+    - assets/images/icons/
+   

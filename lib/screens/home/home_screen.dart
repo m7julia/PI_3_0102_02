@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:rpg_game/features/mundo_maria/screens/mundo_maria.dart';
 import '../game/../game/personagem/criar_personagem_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -45,8 +46,16 @@ class _HomeScreenState extends State<HomeScreen> {
     await player.setVolume(estaMutado ? 0.0 : 0.5);
   }
 
-
-  
+  Future<void> irParaMundoMaria() async {
+    await player.stop();
+    if (!mounted) return;
+   Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (_) => MundoMariaScreen(nomeJogador: 'Viajante'),
+  ),
+);
+  }
 
   Future<void> irParaPersonagem() async {
     await player.stop();
@@ -207,6 +216,11 @@ class _HomeScreenState extends State<HomeScreen> {
                               _rpgMenuButton(
                                 text: 'Continuar',
                                 onPressed: () {},
+                              ),
+                              const SizedBox(height: 16),
+                              _rpgMenuButton(
+                                text: 'Mundo maria',
+                                onPressed: irParaMundoMaria,
                               ),
                               const SizedBox(height: 16),
                               _rpgMenuButton(
