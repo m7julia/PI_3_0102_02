@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:rpg_game/features/mundo_maria/screens/mundo_maria.dart';
+import 'package:rpg_game/features/mundo_ana/screens/mundo_ana_screen.dart'; // ← novo
 import '../game/../game/personagem/criar_personagem_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -46,8 +47,6 @@ class _HomeScreenState extends State<HomeScreen> {
     await player.setVolume(estaMutado ? 0.0 : 0.5);
   }
 
-
-
   Future<void> irParaMundoMaria() async {
     await player.stop();
     if (!mounted) return;
@@ -55,7 +54,17 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute(builder: (_) => const MundoMariaScreen()),
     );
-  } 
+  }
+
+  // ← novo
+  Future<void> irParaMundoAna() async {
+    await player.stop();
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const MundoAnaScreen()),
+    );
+  }
 
   Future<void> irParaPersonagem() async {
     await player.stop();
@@ -134,12 +143,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
 
                 Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: SingleChildScrollView(
+                    child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // título com perspectiva 3D
                         Transform(
                           alignment: Alignment.center,
                           transform: Matrix4.identity()
@@ -151,28 +160,19 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: GoogleFonts.cinzelDecorative(
                               fontSize: 115,
                               fontWeight: FontWeight.bold,
-                              color: const Color(
-                                0xFFF8E7B9,
-                              ), // cor da frente - amarelo claro
+                              color: const Color(0xFFF8E7B9),
                               letterSpacing: 20,
                               shadows: [
-                                // camadas que criam a "profundidade" 3D
                                 for (int i = 1; i <= 10; i++)
                                   Shadow(
                                     color: Color.lerp(
-                                      const Color.fromARGB(
-                                        255,
-                                        0,
-                                        0,
-                                        0,
-                                      ), // dourado escuro
+                                      const Color.fromARGB(255, 0, 0, 0),
                                       Colors.black,
                                       i / 10,
                                     )!,
                                     offset: Offset(i.toDouble(), i.toDouble()),
-                                    blurRadius: 0, // efeito 3D
+                                    blurRadius: 0,
                                   ),
-                                // sombra de profundidade final
                                 const Shadow(
                                   color: Colors.black,
                                   offset: Offset(10, 10),
@@ -217,10 +217,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                 text: 'Continuar',
                                 onPressed: () {},
                               ),
-                                const SizedBox(height: 16),
+                              const SizedBox(height: 16),
                               _rpgMenuButton(
-                                text: 'Mundo maria',
+                                text: 'Mundo Maria',
                                 onPressed: irParaMundoMaria,
+                              ),
+                              const SizedBox(height: 16),
+                              _rpgMenuButton(
+                                text: 'Terrasen', 
+                                onPressed: irParaMundoAna,
                               ),
                               const SizedBox(height: 16),
                               _rpgMenuButton(
@@ -232,6 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
+                  ),
                   ),
                 ),
               ],
