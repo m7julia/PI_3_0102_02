@@ -14,6 +14,12 @@ dependencies:
   google_fonts: ^8.0.1
   audioplayers: ^5.2.1
 
+  # permissão de geolocalização
+  geolocator: ^12.0.0
+  flutter_map: ^7.0.0
+  latlong2: ^0.9.0
+  permission_handler: ^11.3.0
+
   # Firebase
   firebase_core: ^4.6.0
   firebase_auth: ^6.3.0
