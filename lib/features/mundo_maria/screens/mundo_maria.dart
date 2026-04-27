@@ -356,9 +356,9 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (_, animation, __) =>
+        pageBuilder: (_, animation, _) =>
             memoria ? const JogoMemoriaGame() : const Ligue3Game(),
-        transitionsBuilder: (_, animation, __, child) => FadeTransition(
+        transitionsBuilder: (_, animation, _, child) => FadeTransition(
           opacity: CurvedAnimation(parent: animation, curve: Curves.easeIn),
           child: child,
         ),
@@ -419,7 +419,7 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
             child: Image.asset(
               'assets/images/fundo_fazenda.jpeg',
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
+              errorBuilder: (_, _, _) =>
                   Container(color: const Color(0xFF2D1A0A)),
             ),
           ),
