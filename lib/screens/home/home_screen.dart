@@ -158,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             'MagIAlurA',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.cinzelDecorative(
-                              fontSize: 115,
+                              fontSize: 45,
                               fontWeight: FontWeight.bold,
                               color: const Color(0xFFF8E7B9),
                               letterSpacing: 20,
