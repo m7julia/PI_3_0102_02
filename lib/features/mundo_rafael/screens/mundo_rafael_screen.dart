@@ -40,7 +40,7 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
   bool _npcJaApareceu = false;
   int? _ultimoDado;
 
-  // ── Lógica do dado ─────────────────────────────────────────────────────
+  // Lógica do dado
 
   void rolarDado() {
     final resultado = _rng.nextInt(6) + 1;
@@ -77,6 +77,8 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
       _etapa = _Etapa.resultadoSucesso;
     });
   }
+
+  // Lógica de resultado do dado
 
   void continuarAposResultado() {
     if (_etapa == _Etapa.resultadoFalha) {
