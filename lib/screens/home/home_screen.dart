@@ -2,6 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:rpg_game/features/mundo_maria/screens/mundo_maria.dart';
+import 'package:rpg_game/features/mundo_ana/screens/mundo_ana_screen.dart'; // ← novo
+import '../game/../game/personagem/criar_personagem_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -46,6 +49,25 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     setState(() => estaMutado = !estaMutado);
     await player.setVolume(estaMutado ? 0.0 : 0.5);
+  }
+
+  Future<void> irParaMundoMaria() async {
+    await player.stop();
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const MundoMariaScreen()),
+    );
+  }
+
+  // ← novo
+  Future<void> irParaMundoAna() async {
+    await player.stop();
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const MundoAnaScreen()),
+    );
   }
 
   Future<void> irParaPersonagem() async {
@@ -188,6 +210,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // Conteúdo central
                 Center(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 50),
                     child: Column(
@@ -202,6 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             'MagIAlurA',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.cinzelDecorative(
+                              fontSize: 45,
                               fontSize: 36,
                               fontWeight: FontWeight.bold,
                               color: const Color(0xFFF8E7B9),
@@ -263,6 +289,16 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               const SizedBox(height: 16),
                               _rpgMenuButton(
+                                text: 'Mundo Maria',
+                                onPressed: irParaMundoMaria,
+                              ),
+                              const SizedBox(height: 16),
+                              _rpgMenuButton(
+                                text: 'Terrasen', 
+                                onPressed: irParaMundoAna,
+                              ),
+                              const SizedBox(height: 16),
+                              _rpgMenuButton(
                                 text: 'Configurações',
                                 onPressed: () {},
                               ),
@@ -271,6 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
+                  ),
                   ),
                 ),
               ],
