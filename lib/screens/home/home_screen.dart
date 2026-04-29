@@ -5,7 +5,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:rpg_game/features/mundo_maria/screens/mundo_maria.dart';
 import 'package:rpg_game/features/mundo_ana/screens/mundo_ana_screen.dart'; // ← novo
 import 'package:rpg_game/features/mundo_rafael/screens/mundo_rafael_screen.dart';
-import 'package:rpg_game/features/mundo_luis/screens/mundo_luis.dart'; 
+import 'package:rpg_game/features/mundo_luis/screens/mundo_luis.dart';
+import 'package:rpg_game/features/mundo_gianluca/screens/mundo_gian_screen.dart';
 import '../game/../game/personagem/criar_personagem_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -71,12 +72,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+   Future<void> irParaMundoGianluca() async {
+    await player.stop();
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const MundoGianScreen()),
+    );
+  }
+
+
   Future<void> irParaMundoRafa() async {
     await player.stop();
     if (!mounted) return;
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const MundoRafaScreen()),
+      MaterialPageRoute(builder: (_) => const MundoRafaelScreen()),
     );
   }
    Future<void> irParaMundoLuis() async {
@@ -317,6 +328,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 _rpgMenuButton(
                                   text: 'Terrasen',
                                   onPressed: irParaMundoAna,
+                                ),
+
+                                const SizedBox(height: 16),
+                                _rpgMenuButton(
+                                  text: 'Mundo Gianluca',
+                                  onPressed: irParaMundoGianluca,
                                 ),
                                  const SizedBox(height: 16),
                                 _rpgMenuButton(
