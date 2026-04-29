@@ -229,9 +229,21 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('em construção')),
-    );
-  }
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/fundo_estacionamento.png'),
+          fit: BoxFit.cover, 
+        ),
+      ),
+      child: Center(
+        child: Text(
+          'em construção',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+    ),
+  );
 }
