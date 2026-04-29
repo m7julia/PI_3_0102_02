@@ -84,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const MundoRafaScreen()),
+      MaterialPageRoute(builder: (_) => const MundoLuisScreen()),
     );
   }
 
