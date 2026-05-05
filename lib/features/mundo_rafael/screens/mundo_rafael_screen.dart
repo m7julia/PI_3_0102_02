@@ -228,23 +228,313 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
     });
   }
 
+  bool get _ehResultadoDado => _etapa == _Etapa.resultadoFalha || _etapa == _Etapa.resultadoReroll || _etapa == _Etapa.resultadoSucesso;
+
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    body: Container(
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/images/fundo_estacionamento.png'),
-          fit: BoxFit.cover, 
+  Widget build(BuildContext context) {
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.black.withValues(alpha: 0.35),
+        elevation: 0,
+        foregroundColor: Colors.amber.shade200,
+        title: Text(
+          'Estacionamento',
+          style: TextStyle(
+            color: Colors.amber.shade200,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
+        ),
+        actions: [
+          _hudChip(
+            icon: Icons.favorite,
+            label: '$_hp',
+            cor: Colors.redAccent,
+          ),
+          _hudChip(
+            icon: Icons.directions_walk,
+            label: '$_movimentos/$totalMovimentos',
+            cor: Colors.lightBlueAccent,
+          ),
+          if (_temChave)
+            _hudChip(
+              icon: _chaveUsada ? Icons.lock_open : Icons.vpn_key,
+              label: _chaveUsada ? 'usada' : 'ok',
+              cor: Colors.amber,
+            ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: Stack(
+        children: [
+          SizedBox.expand(
+            child: Image.asset(
+              'assets/images/fundo_estacionamento.png',
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) =>
+                  Container(color: const Color(0xFF1A1A1A)),
+            ),
+          ),
+          Container(color: Colors.black.withValues(alpha: 0.55)),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  const Spacer(),
+                  _caixaDialogo(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _hudChip({
+    required IconData icon,
+    required String label,
+    required Color cor,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.45),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cor.withValues(alpha: 0.6)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: cor),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: cor,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+          ],
         ),
       ),
-      child: Center(
-        child: Text(
-          'em construção',
-          style: TextStyle(color: Colors.white),
+    );
+  }
+
+  Widget _caixaDialogo() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.amber.shade300.withValues(alpha: 0.6),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.amber.withValues(alpha: 0.15),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (_ehResultadoDado && _ultimoDado != null) _badgeDado(_ultimoDado!),
+          Text(
+            textoAtual,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              height: 1.55,
+            ),
+          ),
+          const SizedBox(height: 18),
+          _botoesAcao(),
+        ],
+      ),
+    );
+  }
+
+  Widget _badgeDado(int valor) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.amber.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.amber.shade300),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.casino, size: 16, color: Colors.amber),
+            const SizedBox(width: 6),
+            Text(
+              'Dado: $valor',
+              style: TextStyle(
+                color: Colors.amber.shade200,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ],
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
+  Widget _botoesAcao() {
+    switch (_etapa) {
+      case _Etapa.inicio:
+        return _botaoPrimario(
+          label: 'Começar a travessia',
+          icone: Icons.play_arrow,
+          onTap: () => setState(() => _etapa = _Etapa.rolarDado),
+        );
+
+      case _Etapa.rolarDado:
+        return _botaoPrimario(
+          label: 'Rolar o dado',
+          icone: Icons.casino,
+          onTap: rolarDado,
+        );
+
+      case _Etapa.resultadoFalha:
+      case _Etapa.resultadoReroll:
+      case _Etapa.resultadoSucesso:
+        return _botaoPrimario(
+          label: 'Continuar',
+          icone: Icons.arrow_forward,
+          onTap: continuarAposResultado,
+        );
+
+      case _Etapa.encontroNpc:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _botaoEscolha(
+              label: 'Pedir ajuda',
+              icone: Icons.handshake,
+              onTap: escolhaPedirAjuda,
+            ),
+            const SizedBox(height: 8),
+            _botaoEscolha(
+              label: 'Ignorar e seguir',
+              icone: Icons.directions_walk,
+              onTap: escolhaIgnorar,
+              secundario: true,
+            ),
+            const SizedBox(height: 8),
+            _botaoEscolha(
+              label: 'Enfrentar',
+              icone: Icons.sports_kabaddi,
+              onTap: escolhaEnfrentar,
+              secundario: true,
+            ),
+          ],
+        );
+
+      case _Etapa.resolucaoAjuda:
+      case _Etapa.resolucaoIgnorar:
+      case _Etapa.resolucaoEnfrentar:
+        return _botaoPrimario(
+          label: 'Continuar',
+          icone: Icons.arrow_forward,
+          onTap: continuarAposNpc,
+        );
+
+      case _Etapa.vitoriaComChave:
+      case _Etapa.vitoriaSemChave:
+      case _Etapa.derrota:
+        return Row(
+          children: [
+            Expanded(
+              child: _botaoEscolha(
+                label: 'Jogar de novo',
+                icone: Icons.refresh,
+                onTap: reiniciar,
+                secundario: true,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _botaoEscolha(
+                label: 'Voltar',
+                icone: Icons.exit_to_app,
+                onTap: () => Navigator.of(context).pop(),
+              ),
+            ),
+          ],
+        );
+    }
+  }
+
+  Widget _botaoPrimario({
+    required String label,
+    required IconData icone,
+    required VoidCallback onTap,
+  }) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: ElevatedButton.icon(
+        onPressed: onTap,
+        icon: Icon(icone, size: 18),
+        label: Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.amber.shade700,
+          foregroundColor: Colors.black,
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: Colors.amber, width: 1.5),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _botaoEscolha({
+    required String label,
+    required IconData icone,
+    required VoidCallback onTap,
+    bool secundario = false,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icone, size: 18),
+      label: Text(
+        label,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor:
+            secundario ? Colors.transparent : Colors.amber.shade700,
+        foregroundColor: secundario ? Colors.amber.shade200 : Colors.black,
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: secundario
+                ? Colors.amber.shade300.withValues(alpha: 0.6)
+                : Colors.amber,
+            width: 1.5,
+          ),
+        ),
+        elevation: secundario ? 0 : 4,
+      ),
+    );
+  }
 }
