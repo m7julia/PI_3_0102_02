@@ -107,8 +107,11 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
         return;
       }
       if (_movimentos >= totalMovimentos) {
-        setState(() => _etapa =
-            _temChave ? _Etapa.vitoriaComChave : _Etapa.vitoriaSemChave);
+        setState(
+          () => _etapa = _temChave
+              ? _Etapa.vitoriaComChave
+              : _Etapa.vitoriaSemChave,
+        );
         return;
       }
       setState(() => _etapa = _Etapa.rolarDado);
@@ -147,8 +150,11 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
       return;
     }
     if (_movimentos >= totalMovimentos) {
-      setState(() => _etapa =
-          _temChave ? _Etapa.vitoriaComChave : _Etapa.vitoriaSemChave);
+      setState(
+        () => _etapa = _temChave
+            ? _Etapa.vitoriaComChave
+            : _Etapa.vitoriaSemChave,
+      );
       return;
     }
     setState(() => _etapa = _Etapa.rolarDado);
@@ -229,21 +235,19 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    body: Container(
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/images/fundo_estacionamento.png'),
-          fit: BoxFit.cover, 
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/fundo_estacionamento.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Center(
+          child: Text('em construção', style: TextStyle(color: Colors.white)),
         ),
       ),
-      child: Center(
-        child: Text(
-          'em construção',
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
-    ),
-  );
+    );
+  }
 }
