@@ -107,8 +107,11 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
         return;
       }
       if (_movimentos >= totalMovimentos) {
-        setState(() => _etapa =
-            _temChave ? _Etapa.vitoriaComChave : _Etapa.vitoriaSemChave);
+        setState(
+          () => _etapa = _temChave
+              ? _Etapa.vitoriaComChave
+              : _Etapa.vitoriaSemChave,
+        );
         return;
       }
       setState(() => _etapa = _Etapa.rolarDado);
@@ -147,8 +150,11 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
       return;
     }
     if (_movimentos >= totalMovimentos) {
-      setState(() => _etapa =
-          _temChave ? _Etapa.vitoriaComChave : _Etapa.vitoriaSemChave);
+      setState(
+        () => _etapa = _temChave
+            ? _Etapa.vitoriaComChave
+            : _Etapa.vitoriaSemChave,
+      );
       return;
     }
     setState(() => _etapa = _Etapa.rolarDado);

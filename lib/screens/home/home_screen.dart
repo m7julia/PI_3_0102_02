@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:rpg_game/features/mundo_maria/screens/mundo_maria.dart';
-import 'package:rpg_game/features/mundo_ana/screens/mundo_ana_screen.dart'; // ← novo
+import 'package:rpg_game/features/mundo_ana/screens/mundo_ana_screen.dart'; 
 import 'package:rpg_game/features/mundo_rafael/screens/mundo_rafael_screen.dart';
 import 'package:rpg_game/features/mundo_luis/screens/mundo_luis.dart';
 import 'package:rpg_game/features/mundo_gianluca/screens/mundo_gian_screen.dart';
@@ -90,7 +90,8 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(builder: (_) => const MundoRafaelScreen()),
     );
   }
-   Future<void> irParaMundoLuis() async {
+
+  Future<void> irParaMundoLuis() async {
     await player.stop();
     if (!mounted) return;
     Navigator.push(
@@ -340,9 +341,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   text: 'Bar pirata',
                                   onPressed: irParaMundoLuis,
                                 ),
-                                 const SizedBox(height: 16),
+                                const SizedBox(height: 16),
                                 _rpgMenuButton(
-                                  text: 'Estacionamento', 
+                                  text: 'Estacionamento',
                                   onPressed: irParaMundoRafa,
                                 ),
                                 const SizedBox(height: 16),
