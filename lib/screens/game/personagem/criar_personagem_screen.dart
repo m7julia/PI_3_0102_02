@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../../../services/personagem_service.dart';
 import '../../../models/personagem.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CriarPersonagemScreen extends StatefulWidget {
   const CriarPersonagemScreen({super.key});
@@ -227,7 +228,11 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen>
         vidaMax: 100,
       );
 
-      await service.criarPersonagem(personagem);
+      final personagemId = await service.criarPersonagem(personagem);
+
+      final prefs = await SharedPreferences.getInstance();
+
+      await prefs.setString('personagemAtualId', personagemId);
 
       _mostrarMensagem('Personagem criado com sucesso!');
 

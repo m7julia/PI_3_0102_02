@@ -4,12 +4,14 @@ import '../models/personagem.dart';
 class PersonagemService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // criar o  personagem
-  Future<void> criarPersonagem(Personagem personagem) async {
-    await _firestore.collection('personagens').add({
+  // criar o personagem
+  Future<String> criarPersonagem(Personagem personagem) async {
+    final docRef = await _firestore.collection('personagens').add({
       ...personagem.toMap(),
       'criadoEm': FieldValue.serverTimestamp(),
     });
+
+    return docRef.id;
   }
 
   // busca por todos os personagens
