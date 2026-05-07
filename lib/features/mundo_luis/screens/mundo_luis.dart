@@ -22,7 +22,7 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
 
   String? imagemItemEncontrado;
 
-  String falaAtual = '??? : Temos um invasor! Piratas, ataquem!';
+  String falaAtual = 'Temos um invasor! Piratas, ataquem!';
 
   String textoVisivel = '';
 
@@ -113,104 +113,133 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
   }
 
   void escolherOpcao(String opcao) {
-    setState(() {
-      imagemItemEncontrado = null;
+    // Variáveis locais para evitar uso de return dentro do setState
+    String? novaFala;
+    List<String>? novasOpcoes;
+    String? novaImagem;
 
-      if (opcao == 'Continuar') {
-        atualizarFala(
-          'Calma, pessoal! A Margarida me enviou para procurar vocês. '
-          'Meu nome é $nomeJogador, e ela pediu que eu falasse com Luis Gancho-fino...\n\n'
-          'Luis Gancho-fino: Faz tempo que não ouço esse nome… '
-          'Ela ainda tá bem? Ou continua mandando todo mundo trabalhar?\n\n'
-          '$nomeJogador : Tá ótima! Doce, gentil… e mandona do jeitinho dela. '
-          'Inclusive, me mandou ajudar vocês a encontrar uma tal moeda de ouro perdida.\n\n'
-          'Luis Gancho-fino: Ahhh, Margarida… ajudando até de longe! '
-          'Daqui a pouco ela aparece aqui mandando a gente arrumar o bar também…',
-        );
-        opcoesAtuais = ['Aceitar a busca', 'Hesitar'];
-      } else if (opcao == 'Aceitar a busca' || opcao == 'Hesitar') {
-        missaoAceita = true;
+    if (opcao == 'Continuar') {
+      if (falaAtual == 'Temos um invasor! Piratas, ataquem!') {
+        novaFala =
+            'Calma, pessoal! A Margarida me enviou para procurar vocês. '
+            'Meu nome é $nomeJogador, e ela pediu que eu falasse com Luis Gancho-fino...';
+        novasOpcoes = ['Continuar'];
+      } else if (falaAtual.contains('A Margarida me enviou')) {
+        novaFala =
+            'Luis Gancho-fino: Faz tempo que não ouço esse nome… '
+            'Ela ainda tá bem? Ou continua mandando todo mundo trabalhar?';
+        novasOpcoes = ['Continuar'];
+      } else if (falaAtual.contains('Faz tempo que não ouço esse nome')) {
+        novaFala =
+            '$nomeJogador: Tá ótima! Doce, gentil… e mandona do jeitinho dela. '
+            'Inclusive, me mandou ajudar vocês a encontrar uma tal moeda de ouro perdida.';
+        novasOpcoes = ['Continuar'];
+      } else {
+        novaFala =
+            'Luis Gancho-fino: Ahhh, Margarida… ajudando até de longe! '
+            'Daqui a pouco ela aparece aqui mandando a gente arrumar o bar também…';
+        novasOpcoes = ['Aceitar a busca', 'Hesitar']; // só no else!
+      }
+    } else if (opcao == 'Aceitar a busca' || opcao == 'Hesitar') {
+      final falaInicio = opcao == 'Hesitar'
+          ? 'Luis Gancho-fino: Hesitar? Aqui não temos tempo pra isso, marujo! '
+          : 'Luis Gancho-fino: Que bom! Sabia que podia contar com você!\n\n';
 
-        final falaInicio = opcao == 'Hesitar'
-            ? 'Luis Gancho-fino: Hesitar? Aqui não temos tempo pra isso, marujo! '
-            : 'Luis Gancho-fino: Que bom! Sabia que podia contar com você!\n\n';
-
-        atualizarFala(
+      novaFala =
           '${falaInicio}A moeda de ouro dos piratas foi perdida! '
-          'Para avançar, você precisa encontrá-la.',
-        );
-        opcoesAtuais = ['Iniciar busca'];
-      } else if (opcao == 'Iniciar busca') {
-        atualizarFala('Luis Gancho-fino: Onde deseja começar a procurar?');
-        opcoesAtuais = opcoesDeBusca();
-      } else if (opcao == 'Procurar perto da máquina de música') {
-        achouLuneta = true;
-        imagemItemEncontrado = 'assets/images/icons_bar/luneta.png';
-        atualizarFala(
+          'Para avançar, você precisa encontrá-la.';
+      novasOpcoes = ['Iniciar busca'];
+    } else if (opcao == 'Iniciar busca') {
+      novaFala = 'Luis Gancho-fino: Onde deseja começar a procurar?';
+      novasOpcoes = opcoesDeBusca();
+    } else if (opcao == 'Procurar perto da máquina de música') {
+      novaImagem = 'assets/images/icons_bar/luneta.png';
+      novaFala =
           'Você encontrou uma luneta!\n\n'
           'Luis Gancho-fino: Minha luneta! '
-          'Sem ela eu tava mirando até em barril achando que era inimigo!',
-        );
-        opcoesAtuais = opcoesDeBusca();
-      } else if (opcao == 'Procurar atrás do balcão do bar') {
-        achouCerveja = true;
-        imagemItemEncontrado = 'assets/images/icons_bar/cerveja.png';
-        atualizarFala(
+          'Sem ela eu tava mirando até em barril achando que era inimigo!';
+      novasOpcoes = opcoesDeBusca();
+    } else if (opcao == 'Procurar atrás do balcão do bar') {
+      novaImagem = 'assets/images/icons_bar/cerveja.png';
+      novaFala =
           'Você encontrou uma cerveja!\n\n'
           'Luis Gancho-fino: Você sabe mesmo como agradar um pirata… '
-          'mas ainda falta minha moeda!',
-        );
-        opcoesAtuais = opcoesDeBusca();
-      } else if (opcao == 'Procurar no depósito de cerveja') {
-        if (falouComAraraComPistas && achouMapa && achouLuneta) {
-          achouMoeda = true;
-          imagemItemEncontrado = 'assets/images/icons_bar/moeda_ouro.png';
-          atualizarFala(
+          'mas ainda falta minha moeda!';
+      novasOpcoes = opcoesDeBusca();
+    } else if (opcao == 'Procurar no depósito de cerveja') {
+      if (falouComAraraComPistas && achouMapa && achouLuneta) {
+        novaImagem = 'assets/images/icons_bar/moeda_ouro.png';
+        novaFala =
             'Você encontrou a moeda de ouro perdida!\n\n'
             'Luis Gancho-fino: Finalmente alguém encontrou a moeda! '
             'Hoje a bebida é por minha conta!\n\n'
             'Em forma de agradecimento, leve esta moeda. '
-            'Tenho certeza que será útil em suas próximas buscas!',
-          );
-          opcoesAtuais = ['Receber recompensa'];
-        } else {
-          achouMapa = true;
-          imagemItemEncontrado = 'assets/images/icons_bar/mapa.png';
-          atualizarFala(
+            'Tenha certeza que será útil em suas próximas buscas!';
+        novasOpcoes = ['Receber recompensa'];
+      } else {
+        novaImagem = 'assets/images/icons_bar/mapa.png';
+        novaFala =
             'Você encontrou um mapa do tesouro!\n\n'
             'Luis Gancho-fino: Pelas barbas do capitão! '
-            'Esse mapa pode nos ajudar…',
-          );
-          opcoesAtuais = opcoesDeBusca();
-        }
-      } else if (opcao == 'Procurar na gaiola da arara') {
-        if (!achouMapa && !achouLuneta) {
-          atualizarFala('Arara: Muito escuro… não dá pra ver nada…');
-        } else if (achouLuneta && !achouMapa) {
-          atualizarFala('Arara: Ver é bom… mas sem direção você se perde!');
-        } else if (achouMapa && !achouLuneta) {
-          atualizarFala('Arara: Saber o caminho não basta… precisa enxergar!');
-        } else {
-          falouComAraraComPistas = true;
-          atualizarFala(
+            'Esse mapa pode nos ajudar…';
+        novasOpcoes = opcoesDeBusca();
+      }
+    } else if (opcao == 'Procurar na gaiola da arara') {
+      if (!achouMapa && !achouLuneta) {
+        novaFala = 'Arara: Muito escuro… não dá pra ver nada…';
+        novasOpcoes = opcoesDeBusca();
+      } else if (achouLuneta && !achouMapa) {
+        novaFala = 'Arara: Ver é bom… mas sem direção você se perde!';
+        novasOpcoes = opcoesDeBusca();
+      } else if (achouMapa && !achouLuneta) {
+        novaFala = 'Arara: Saber o caminho não basta… precisa enxergar!';
+        novasOpcoes = opcoesDeBusca();
+      } else {
+        novaFala =
             'Arara: Brilha no escuro… no meio dos barris!\n\n'
-            'Luis Gancho-fino: Com essa pista, o depósito parece ser o lugar certo…',
-          );
-          opcoesAtuais = ['Procurar no depósito de cerveja'];
-          return;
-        }
-        opcoesAtuais = opcoesDeBusca();
-      } else if (opcao == 'Receber recompensa') {
-        imagemItemEncontrado = 'assets/images/icons_bar/moeda_ouro.png';
-        atualizarFala(
+            'Luis Gancho-fino: Com essa pista, o depósito parece ser o lugar certo…';
+        novasOpcoes = ['Procurar no depósito de cerveja'];
+      }
+    } else if (opcao == 'Receber recompensa') {
+      novaImagem = 'assets/images/icons_bar/moeda_ouro.png';
+      novaFala =
           'Um verdadeiro pirata não é medido pelo ouro que carrega, '
           'mas pelas escolhas que faz em meio ao caos.\n\n'
           'Hoje, você provou seu valor neste bar.\n\n'
-          'Missão concluída!',
-        );
-        opcoesAtuais = [];
+          'Missão concluída!';
+      novasOpcoes = [];
+    }
+
+    // Aplica todas as mudanças de estado de uma vez, sem return no meio
+    setState(() {
+      imagemItemEncontrado = novaImagem;
+
+      if (opcao == 'Procurar perto da máquina de música') {
+        achouLuneta = true;
+      } else if (opcao == 'Procurar atrás do balcão do bar') {
+        achouCerveja = true;
+      } else if (opcao == 'Procurar no depósito de cerveja') {
+        if (falouComAraraComPistas && achouMapa && achouLuneta) {
+          achouMoeda = true;
+        } else {
+          achouMapa = true;
+        }
+      } else if (opcao == 'Procurar na gaiola da arara') {
+        if (achouMapa && achouLuneta) {
+          falouComAraraComPistas = true;
+        }
+      } else if (opcao == 'Aceitar a busca' || opcao == 'Hesitar') {
+        missaoAceita = true;
+      }
+
+      if (novasOpcoes != null) {
+        opcoesAtuais = novasOpcoes!;
       }
     });
+
+    if (novaFala != null) {
+      atualizarFala(novaFala!);
+    }
   }
 
   Widget _buildBarraProgresso() {
@@ -381,7 +410,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // BADGE DO PERSONAGEM
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
@@ -407,7 +435,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
 
                   const SizedBox(height: 10),
 
-                  // TEXO PRINCIPAL
                   Text(
                     textoVisivel,
                     style: GoogleFonts.cinzel(
@@ -420,7 +447,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
 
                   const SizedBox(height: 18),
 
-                  // BOTÃO DE PULAR TEXTO
                   if (!textoCompleto)
                     Align(
                       alignment: Alignment.centerRight,
