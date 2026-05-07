@@ -408,23 +408,23 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
       ),
       body: Stack(
         children: [
-          // Fundo com zoom reduzido (usando BoxFit.contain para não cortar)
+          // Fundo com zoom maior (usando BoxFit.cover que preenche toda tela)
           SizedBox.expand(
             child: Image.asset(
               'assets/images/fundo_fazenda.jpeg',
-              fit: BoxFit.contain, // Alterado de cover para contain (zoom reduzido)
+              fit: BoxFit.cover, // Cover preenche toda tela sem sobras
               alignment: Alignment.center,
               errorBuilder: (_, __, ___) =>
                   Container(color: const Color(0xFF2D1A0A)),
             ),
           ),
           
-          // Overlay escuro mais suave
-          Container(color: Colors.black.withValues(alpha: 0.45)),
+          // Overlay escuro
+          Container(color: Colors.black.withValues(alpha: 0.50)),
           
-          // Personagem Margarida
+          // Personagem Margarida - reposicionada mais para cima
           Positioned(
-            bottom: 80,
+            bottom: 200, // Aumentado de 80 para 200 para subir a personagem
             left: 20,
             child: AnimatedSlide(
               duration: const Duration(milliseconds: 700),
@@ -435,12 +435,12 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
                 opacity: _mostrarNpc ? 1 : 0,
                 child: Image.asset(
                   'assets/images/personagem_margarida.png',
-                  width: 200,
-                  height: 200,
+                  width: 220,
+                  height: 220,
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => Container(
-                    width: 200,
-                    height: 200,
+                    width: 220,
+                    height: 220,
                     decoration: BoxDecoration(
                       color: const Color(0xFF6B3F1D),
                       shape: BoxShape.circle,
@@ -468,7 +468,6 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
                 child: Column(
                   children: [
                     const Spacer(),
-                    // Removido o _buildNpc() antigo e substituído pela imagem fixa
                     const SizedBox(height: 20),
                     _buildCaixaDialogo(),
                     const SizedBox(height: 28),
@@ -480,8 +479,6 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
       ),
     );
   }
-
-  // Removido o método _buildNpc() pois agora usa a imagem fixa
 
   Widget _buildCaixaDialogo() {
     return AnimatedSlide(

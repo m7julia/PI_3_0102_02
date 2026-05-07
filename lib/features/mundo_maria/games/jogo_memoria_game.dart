@@ -183,7 +183,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
             child: Image.asset(
               'assets/images/fundo_fazenda.jpeg',
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
+              errorBuilder: (_, _, _) =>
                   Container(color: const Color(0xFF6B3F1D)),
             ),
           ),

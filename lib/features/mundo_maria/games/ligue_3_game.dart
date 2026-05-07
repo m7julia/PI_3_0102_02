@@ -362,7 +362,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
             child: Image.asset(
               'assets/images/fundo_fazenda.jpeg',
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
+              errorBuilder: (_, _, _) =>
                   Container(color: const Color(0xFF6B3F1D)),
             ),
           ),

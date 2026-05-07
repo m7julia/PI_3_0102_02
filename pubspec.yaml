@@ -13,6 +13,13 @@ dependencies:
   cupertino_icons: ^1.0.8
   google_fonts: ^8.0.1
   audioplayers: ^5.2.1
+  shared_preferences: ^2.2.3
+
+  # permissão de geolocalização
+  geolocator: ^12.0.0
+  flutter_map: ^7.0.0
+  latlong2: ^0.9.0
+  permission_handler: ^11.3.0
 
   # Firebase
   firebase_core: ^4.6.0
@@ -35,6 +42,6 @@ flutter:
     - assets/images/
     - assets/audio/music/
     - assets/audio/
-   
     - assets/images/icons/
+    - assets/images/icons_bar/
    
