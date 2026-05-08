@@ -126,7 +126,7 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
         novasOpcoes = ['Continuar'];
       } else if (falaAtual.contains('A Margarida me enviou')) {
         novaFala =
-            'Luis Gancho-fino: Faz tempo que não ouço esse nome… '
+            'Luis Gancho-fino: Faz tempo que não ouço esse nome.. '
             'Ela ainda tá bem? Ou continua mandando todo mundo trabalhar?';
         novasOpcoes = ['Continuar'];
       } else if (falaAtual.contains('Faz tempo que não ouço esse nome')) {
