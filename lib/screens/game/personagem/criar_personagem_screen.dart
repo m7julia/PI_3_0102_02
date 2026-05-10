@@ -222,7 +222,6 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen>
   try {
     final service = PersonagemService();
 
-    // Removeu vidaAtual e vidaMax
     final personagem = Personagem(
       nome: nomeJogador,
       // criadoEm será definido automaticamente pelo service
