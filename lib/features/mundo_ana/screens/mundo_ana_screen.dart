@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rpg_game/features/mundo_gianluca/screens/mundo_gian_screen.dart';
-
 
 enum _Etapa {
   carregando,
+  bloqueado,
   chegada1,
   chegada2,
   missao1,
@@ -107,8 +108,8 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
               ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  Navigator.of(this.context).pop();
                 },
+                
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF6B3F1D),
                   foregroundColor: const Color(0xFFF8E7B9),
@@ -426,6 +427,7 @@ Future<void> _salvarProgressoTerrasen() async {
   String get _textoAtual {
     switch (_etapa) {
       case _Etapa.carregando: return '';
+      case _Etapa.bloqueado: return '';
       case _Etapa.chegada1: return 'Você atravessou portas que poucos sobreviveriam. Mas Terrasen não se curva a qualquer um. Eu sou Aelin Galathynius e este é um fragmento de Terrasen, um reino marcado por magia, resistência e reconstrução.';
       case _Etapa.chegada2: return 'Você aceita o desafio que Terrasen tem a oferecer?';
       case _Etapa.missao1: return 'O Amuleto de Orynth foi fragmentado. Para avançar, você deverá reconstruí-lo.';
@@ -477,50 +479,93 @@ Future<void> _salvarProgressoTerrasen() async {
   }
 
   Future<void> _buscarNomeEIniciar() async {
-  try {
-
-    final snapshot = await FirebaseFirestore.instance
-        .collection('personagens')
-        .limit(1)
-        .get();
-
-    if (snapshot.docs.isNotEmpty) {
-
-      final doc = snapshot.docs.first;
-
-      _personagemId = doc.id;
-
-      final data = doc.data();
-
-      final nome = data['nome'] as String?;
-
-      if (nome != null && nome.isNotEmpty && mounted) {
-        setState(() => _nomeJogador = nome);
+    try {
+      // busca o id do personagem salvo no sharedpreferences
+      final prefs = await SharedPreferences.getInstance();
+      final personagemId = prefs.getString('personagemAtualId');
+      
+      String? nome;
+      String? docId;
+      
+      if (personagemId != null) {
+        // tenta buscar pelo id salvo
+        final doc = await FirebaseFirestore.instance
+            .collection('personagens')
+            .doc(personagemId)
+            .get();
+        
+        if (doc.exists) {
+          docId = doc.id;
+          final data = doc.data();
+          if (data != null) {
+            nome = data['nome'] as String?;
+          }
+        }
       }
-
+      
+      // se não encontrou pelo id salvo, busca o último criado
+      if (docId == null) {
+        final snapshot = await FirebaseFirestore.instance
+            .collection('personagens')
+            .orderBy('criadoEm', descending: true)
+            .limit(1)
+            .get();
+        
+        if (snapshot.docs.isNotEmpty) {
+          docId = snapshot.docs.first.id;
+          nome = snapshot.docs.first.data()['nome'] as String?;
+        }
+      }
+      
+      if (docId == null) {
+        debugPrint('[MundoAna] Nenhum personagem encontrado');
+        if (mounted) Navigator.pop(context);
+        return;
+      }
+      
+      // agora docId não é mais null
+      _personagemId = docId;
+      
+      if (nome != null && nome.isNotEmpty && mounted) {
+        setState(() => _nomeJogador = nome!);
+      }
+      
+      // busca o documento completo para ver o estacionamento
+      final doc = await FirebaseFirestore.instance
+          .collection('personagens')
+          .doc(docId)  // aqui docId é string, não precisa de !
+          .get();
+      
+      if (!doc.exists) return;
+      
+      final data = doc.data()!;
       final estacionamento = data['estacionamento_caotico'];
-
       bool concluiuAnterior = false;
-
+      
       if (estacionamento is List && estacionamento.isNotEmpty) {
         concluiuAnterior = estacionamento[0] == true;
       }
-
+      
       if (!concluiuAnterior) {
-
-        await _mostrarPopupBloqueado();
-
+        if (mounted) {
+          await _mostrarPopupBloqueado();
+        }
         return;
       }
+      
+      await _iniciarCena();
+      
+    } catch (e) {
+      debugPrint('[MundoAna] Erro: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
-
-  } catch (e) {
-    debugPrint('[MundoAna] Erro: $e');
   }
 
-  await _iniciarCena();
-}
-
+  
   Future<void> _iniciarCena() async {
     await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
@@ -625,6 +670,7 @@ Future<void> _salvarProgressoTerrasen() async {
   Future<void> _avancarSimples() async {
     if (!_textoTerminou) return;
     switch (_etapa) {
+      case _Etapa.bloqueado:break;
       case _Etapa.chegada1: await _irParaEtapa(_Etapa.chegada2); break;
       case _Etapa.missao1: await _irParaEtapa(_Etapa.missao2); break;
       case _Etapa.missao2: await _irParaEtapa(_Etapa.desafio1); break;
@@ -653,6 +699,7 @@ Future<void> _salvarProgressoTerrasen() async {
 
   String get _labelBotao {
     switch (_etapa) {
+      case _Etapa.bloqueado:return '';
       case _Etapa.finalPositivo2: case _Etapa.finalNegativo2: return 'Abrir portal 🌀';
       case _Etapa.missao2: return 'Iniciar desafios ⚔️';
       case _Etapa.reuniao2: return 'Continuar ✨';
@@ -687,7 +734,7 @@ Future<void> _salvarProgressoTerrasen() async {
           SizedBox.expand(child: Image.asset('assets/images/fundo_terrasen.png', fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: const Color(0xFF2D1A0A)))),
           Container(color: Colors.black.withValues(alpha: 0.55)),
           if (_etapa == _Etapa.carregando) const Center(child: CircularProgressIndicator(color: Color(0xFFF8E7B9))),
-          if (_etapa != _Etapa.carregando) ...[
+          if (_etapa != _Etapa.carregando && _etapa != _Etapa.bloqueado) ...[
             Align(
               alignment: Alignment.bottomLeft,
               child: Padding(
