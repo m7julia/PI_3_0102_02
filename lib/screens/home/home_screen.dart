@@ -2,7 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
-import '../game/../game/personagem/criar_personagem_screen.dart';
+import 'package:rpg_game/features/mundo_maria/screens/mundo_maria.dart';
+import '../game/personagem/criar_personagem_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -45,8 +46,14 @@ class _HomeScreenState extends State<HomeScreen> {
     await player.setVolume(estaMutado ? 0.0 : 0.5);
   }
 
-
-  
+  Future<void> irParaMundoMaju() async {
+    await player.stop();
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const MundoMariaScreen()),
+    );
+  }
 
   Future<void> irParaPersonagem() async {
     await player.stop();
@@ -85,7 +92,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-
           SafeArea(
             child: Stack(
               children: [
@@ -123,7 +129,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -142,28 +147,19 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: GoogleFonts.cinzelDecorative(
                               fontSize: 115,
                               fontWeight: FontWeight.bold,
-                              color: const Color(
-                                0xFFF8E7B9,
-                              ), // cor da frente - amarelo claro
+                              color: const Color(0xFFF8E7B9),
                               letterSpacing: 20,
                               shadows: [
-                                // camadas que criam a "profundidade" 3D
                                 for (int i = 1; i <= 10; i++)
                                   Shadow(
                                     color: Color.lerp(
-                                      const Color.fromARGB(
-                                        255,
-                                        0,
-                                        0,
-                                        0,
-                                      ), // dourado escuro
+                                      const Color.fromARGB(255, 0, 0, 0),
                                       Colors.black,
                                       i / 10,
                                     )!,
                                     offset: Offset(i.toDouble(), i.toDouble()),
-                                    blurRadius: 0, // efeito 3D
+                                    blurRadius: 0,
                                   ),
-                                // sombra de profundidade final
                                 const Shadow(
                                   color: Colors.black,
                                   offset: Offset(10, 10),
@@ -173,9 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 115),
-
                         Container(
                           width: 300,
                           padding: const EdgeInsets.symmetric(
@@ -205,8 +199,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               const SizedBox(height: 16),
                               _rpgMenuButton(
-                                text: 'Continuar',
-                                onPressed: () {},
+                                text: 'Mundo da Maria',
+                                onPressed: irParaMundoMaju,
                               ),
                               const SizedBox(height: 16),
                               _rpgMenuButton(
