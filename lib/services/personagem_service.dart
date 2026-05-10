@@ -4,35 +4,33 @@ import '../models/personagem.dart';
 class PersonagemService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // criar o personagem
+  /// cria um novo personagem
   Future<String> criarPersonagem(Personagem personagem) async {
     final docRef = await _firestore.collection('personagens').add({
       ...personagem.toMap(),
-      'criadoEm': FieldValue.serverTimestamp(),
+      'criadoEm': FieldValue.serverTimestamp(), // data do servidor
     });
-
     return docRef.id;
   }
 
-  // busca por todos os personagens
+  /// busca todos os personagens
   Future<List<Personagem>> buscarPersonagens() async {
     final snapshot = await _firestore.collection('personagens').get();
-
-    return snapshot.docs.map((doc) => Personagem.fromMap(doc.data())).toList();
+    return snapshot.docs
+        .map((doc) => Personagem.fromMap(doc.data(), id: doc.id))
+        .toList();
   }
 
-  // busca por id (colocar uma busca por id futuramente)
+  /// busca personagem por ID
   Future<Personagem?> buscarPorId(String id) async {
     final doc = await _firestore.collection('personagens').doc(id).get();
-
     if (doc.exists) {
-      return Personagem.fromMap(doc.data()!);
+      return Personagem.fromMap(doc.data()!, id: doc.id);
     }
-
     return null;
   }
 
-  // atualiza o personagem
+  /// atualiza personagem completo
   Future<void> atualizarPersonagem(String id, Personagem personagem) async {
     await _firestore
         .collection('personagens')
@@ -40,7 +38,41 @@ class PersonagemService {
         .update(personagem.toMap());
   }
 
-  // deleta caso necessario
+  /// marca um mundo como completo (registra a data/hora atual)
+  Future<void> completarMundo(String personagemId, String nomeCampo) async {
+    final personagem = await buscarPorId(personagemId);
+    if (personagem == null) return;
+
+    Personagem atualizado;
+    switch (nomeCampo) {
+      case 'bar_pirata':
+        atualizado = personagem.copyWith(
+            barPirata: personagem.barPirata.completarComDataAtual());
+        break;
+      case 'conservatorio_diminuto':
+        atualizado = personagem.copyWith(
+            conservatorioDiminuto: personagem.conservatorioDiminuto.completarComDataAtual());
+        break;
+      case 'estacionamento_caotico':
+        atualizado = personagem.copyWith(
+            estacionamentoCaotico: personagem.estacionamentoCaotico.completarComDataAtual());
+        break;
+      case 'fazenda_vale_dourado':
+        atualizado = personagem.copyWith(
+            fazendaValeDourado: personagem.fazendaValeDourado.completarComDataAtual());
+        break;
+      case 'terrasen':
+        atualizado = personagem.copyWith(
+            terrasen: personagem.terrasen.completarComDataAtual());
+        break;
+      default:
+        throw ArgumentError('Campo de mundo desconhecido: $nomeCampo');
+    }
+
+    await atualizarPersonagem(personagemId, atualizado);
+  }
+
+  /// deleta personagem
   Future<void> deletarPersonagem(String id) async {
     await _firestore.collection('personagens').doc(id).delete();
   }

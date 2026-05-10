@@ -14,6 +14,7 @@ enum _Etapa {
   desafio1Erro,
   desafio1Sucesso,
   desafio2,
+  desafio2Erro,
   desafio2SemBonus,
   desafio2Sucesso,
   desafio3,
@@ -73,13 +74,14 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
       case _Etapa.desafio1Erro: return 'Este caminho leva a um beco sem saída. A floresta sussurra... tente novamente, $_nomeJogador.';
       case _Etapa.desafio1Sucesso: return 'O Caminho C te conduz a uma clareira encantada. Um fragmento do Amuleto de Orynth brilha entre as raízes! ✨ Fragmento coletado: $_fragmentos/3';
       case _Etapa.desafio2: return 'Uma criatura surge à sua frente, bloqueando o caminho. O que você faz?';
+      case _Etapa.desafio2Erro: return 'Sua ação agressiva assustou a criatura! Ela se escondeu e o caminho está bloqueado. Tente uma abordagem diferente...';
       case _Etapa.desafio2SemBonus: return 'Você avança, mas a criatura deixou marcas. Continue com cautela, $_nomeJogador.';
       case _Etapa.desafio2Sucesso: return 'Ao observar, você percebe que a criatura está ferida e assustada. Ela se afasta e revela um segundo fragmento escondido atrás dela! ✨ Fragmento coletado: $_fragmentos/3';
       case _Etapa.desafio3: return 'Resolva o enigma para continuar:\n\n"Eu existia antes de tudo, mas nunca fui criado. Não tenho forma, mas moldo tudo. O que sou eu?"';
       case _Etapa.desafio3Erro: return 'Não é isso... O enigma permanece sem resposta. As runas continuam brilhando, esperando.';
       case _Etapa.desafio3Sucesso: return 'Correto! O presente é o único tempo que existe de verdade. As runas se iluminam e um terceiro fragmento cai aos seus pés! ✨ Fragmento coletado: $_fragmentos/3';
       case _Etapa.desafio4: return 'Você encontra alguém ferido pelo caminho, mas vê que tem um portal aberto à sua espera. O que você decide?';
-      case _Etapa.desafio4Bonus: return 'Você para e ajuda. O ferido, grato, entrega um amuleto protetor. Seu coração acaba de ganhar um atributo positivo. +1 ✨';
+      case _Etapa.desafio4Bonus: return 'Você para e ajuda. O ferido, grato, entrega um amuleto protetor.✨';
       case _Etapa.desafio4SemBonus: return 'Você avança pelo portal. O objetivo foi alcançado, mas algo pesa em seu espírito.';
       case _Etapa.reuniao1: return 'Os fragmentos foram reunidos. O Amuleto de Orynth foi reconstruído.';
       case _Etapa.reuniao2: return 'Coragem. Sabedoria. Coração. Três forças, uma única chama. 🔥';
@@ -204,8 +206,18 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
   }
 
   Future<void> _escolhaCriatura(int opcao) async {
-    if (opcao == 3) { setState(() { _fragmentos++; _temVantagem = true; _pontosPositivos++; }); await _irParaEtapa(_Etapa.desafio2Sucesso); }
-    else { await _irParaEtapa(_Etapa.desafio2SemBonus); }
+    if (opcao == 3) { 
+      // Observar → SUCESSO
+      setState(() { 
+        _fragmentos++; 
+        _temVantagem = true; 
+        _pontosPositivos++; 
+      }); 
+      await _irParaEtapa(_Etapa.desafio2Sucesso);
+    } else { 
+      // Atacar (1) ou Fugir (2) → ERRO
+      await _irParaEtapa(_Etapa.desafio2Erro);
+    }
   }
 
   Future<void> _escolhaEnigma(int opcao) async {
@@ -226,6 +238,7 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
       case _Etapa.missao2: await _irParaEtapa(_Etapa.desafio1); break;
       case _Etapa.desafio1Erro: await _irParaEtapa(_Etapa.desafio1); break;
       case _Etapa.desafio1Sucesso: await _irParaEtapa(_Etapa.desafio2); break;
+      case _Etapa.desafio2Erro: await _irParaEtapa(_Etapa.desafio2); break;
       case _Etapa.desafio2SemBonus: await _irParaEtapa(_Etapa.desafio3); break;
       case _Etapa.desafio2Sucesso: await _irParaEtapa(_Etapa.desafio3); break;
       case _Etapa.desafio3Erro: await _irParaEtapa(_Etapa.desafio3); break;
@@ -399,9 +412,9 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
         ]);
       case _Etapa.desafio2:
         return _buildEscolhas([
+          _OpcaoBtn(label: '👁️ Observar', onTap: () => _escolhaCriatura(3)),  // CORRETO - primeiro e único que funciona
           _OpcaoBtn(label: '⚔️ Atacar', onTap: () => _escolhaCriatura(1), secundario: true),
           _OpcaoBtn(label: '🏃 Fugir', onTap: () => _escolhaCriatura(2), secundario: true),
-          _OpcaoBtn(label: '👁️ Observar', onTap: () => _escolhaCriatura(3)),
         ]);
       case _Etapa.desafio3:
         return _buildEscolhas([
@@ -435,27 +448,33 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
   }
 
   Widget _buildEscolhas(List<_OpcaoBtn> opcoes) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: opcoes.map((o) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: ElevatedButton(
-          onPressed: o.onTap,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF6B3F1D),
-            foregroundColor: const Color(0xFFF8E7B9),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: Color(0xFF9E8A4A), width: 1.5),
-            ),
-            elevation: 4,
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: opcoes.map((o) => Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: ElevatedButton(
+        onPressed: o.onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF6B3F1D), // mesma cor para todos
+          foregroundColor: const Color(0xFFF8E7B9),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: Color(0xFF9E8A4A), width: 1.5),
           ),
-          child: Text(o.label, style: GoogleFonts.cinzel(fontWeight: FontWeight.bold, fontSize: 13)),
+          elevation: 4,
         ),
-      )).toList(),
-    );
-  }
+        child: Text(
+          o.label,
+          style: GoogleFonts.cinzel(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    )).toList(),
+  );
+}
 
   Widget _buildBadgeFalante() {
     return Container(

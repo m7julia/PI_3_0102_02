@@ -217,35 +217,35 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen>
   }
 
   Future<void> finalizarCriacao() async {
-    setState(() => _salvando = true);
+  setState(() => _salvando = true);
 
-    try {
-      final service = PersonagemService();
+  try {
+    final service = PersonagemService();
 
-      final personagem = Personagem(
-        nome: nomeJogador,
-        vidaAtual: 100,
-        vidaMax: 100,
-      );
+    // Removeu vidaAtual e vidaMax
+    final personagem = Personagem(
+      nome: nomeJogador,
+      // criadoEm será definido automaticamente pelo service
+    );
 
-      final personagemId = await service.criarPersonagem(personagem);
+    final personagemId = await service.criarPersonagem(personagem);
 
-      final prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
 
-      await prefs.setString('personagemAtualId', personagemId);
+    await prefs.setString('personagemAtualId', personagemId);
 
-      _mostrarMensagem('Personagem criado com sucesso!');
+    _mostrarMensagem('Personagem criado com sucesso!');
 
-      if (!mounted) return;
-      Navigator.pop(context);
-    } catch (e) {
-      _mostrarMensagem('Erro ao salvar: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _salvando = false);
-      }
+    if (!mounted) return;
+    Navigator.pop(context);
+  } catch (e) {
+    _mostrarMensagem('Erro ao salvar: $e');
+  } finally {
+    if (mounted) {
+      setState(() => _salvando = false);
     }
   }
+}
 
   Future<void> _acaoBotaoPrincipal() async {
     if (_salvando || !textoTerminou) return;
