@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../../../services/personagem_service.dart';
 import '../../../models/personagem.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CriarPersonagemScreen extends StatefulWidget {
   const CriarPersonagemScreen({super.key});
@@ -216,31 +217,34 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen>
   }
 
   Future<void> finalizarCriacao() async {
-    setState(() => _salvando = true);
+  setState(() => _salvando = true);
 
-    try {
-      final service = PersonagemService();
+  try {
+    final service = PersonagemService();
 
-      final personagem = Personagem(
-        nome: nomeJogador,
-        vidaAtual: 100,
-        vidaMax: 100,
-      );
+    final personagem = Personagem(
+      nome: nomeJogador,
+      // criadoEm será definido automaticamente pelo service
+    );
 
-      await service.criarPersonagem(personagem);
+    final personagemId = await service.criarPersonagem(personagem);
 
-      _mostrarMensagem('Personagem criado com sucesso!');
+    final prefs = await SharedPreferences.getInstance();
 
-      if (!mounted) return;
-      Navigator.pop(context);
-    } catch (e) {
-      _mostrarMensagem('Erro ao salvar: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _salvando = false);
-      }
+    await prefs.setString('personagemAtualId', personagemId);
+
+    _mostrarMensagem('Personagem criado com sucesso!');
+
+    if (!mounted) return;
+    Navigator.pop(context);
+  } catch (e) {
+    _mostrarMensagem('Erro ao salvar: $e');
+  } finally {
+    if (mounted) {
+      setState(() => _salvando = false);
     }
   }
+}
 
   Future<void> _acaoBotaoPrincipal() async {
     if (_salvando || !textoTerminou) return;
