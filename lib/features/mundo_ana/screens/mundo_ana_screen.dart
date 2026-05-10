@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:rpg_game/features/mundo_gianluca/screens/mundo_gian_screen.dart';
+
 
 enum _Etapa {
   carregando,
@@ -29,6 +31,7 @@ enum _Etapa {
   finalPositivo2,
   finalNegativo1,
   finalNegativo2,
+  
 }
 
 class MundoAnaScreen extends StatefulWidget {
@@ -40,8 +43,365 @@ class MundoAnaScreen extends StatefulWidget {
 
 class _MundoAnaScreenState extends State<MundoAnaScreen>
     with TickerProviderStateMixin {
+
+  Future<void> _mostrarPopupBloqueado() async {
+  await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1208),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: const Color(0xFF9E8A4A),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                blurRadius: 25,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+
+              const Icon(
+                Icons.lock,
+                size: 70,
+                color: Color(0xFFF8E7B9),
+              ),
+
+              const SizedBox(height: 20),
+
+              Text(
+                'Portal Bloqueado',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.cinzel(
+                  color: const Color(0xFFF8E7B9),
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              Text(
+                'Você ainda não possui a chave necessária para acessar Terrasen.\n\nConclua primeiro o mundo "Estacionamento Caótico" e obtenha sua chave antes de prosseguir.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.cinzel(
+                  color: const Color(0xFFF8E7B9),
+                  fontSize: 15,
+                  height: 1.6,
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(this.context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6B3F1D),
+                  foregroundColor: const Color(0xFFF8E7B9),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: const BorderSide(
+                      color: Color(0xFF9E8A4A),
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+                child: Text(
+                  'Voltar',
+                  style: GoogleFonts.cinzel(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+  
+  
+  Future<void> _mostrarPopupConclusao() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1208),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: const Color(0xFF9E8A4A),
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                  blurRadius: 25,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+
+                Image.asset(
+                  'assets/images/chave_amuleto.png',
+                  height: 150,
+                  fit: BoxFit.contain,
+                ),
+
+                const SizedBox(height: 20),
+
+                Text(
+                  'Chave de Terrasen Obtida',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                Text(
+                  'Muito bem, $_nomeJogador.\n\nVocê concluiu a jornada por Terrasen e conquistou o Amuleto de Orynth.\n\nA chave deste mundo agora pertence a você.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 15,
+                    height: 1.6,
+                  ),
+                ),
+
+                const SizedBox(height: 28),
+
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+
+                    await _mostrarPopupEscolhaFinal();
+                  },
+
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6B3F1D),
+                    foregroundColor: const Color(0xFFF8E7B9),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 28,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: const BorderSide(
+                        color: Color(0xFF9E8A4A),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                  child: Text(
+                    'Abrir portal 🌀',
+                    style: GoogleFonts.cinzel(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _mostrarPopupEscolhaFinal() async {
+  await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1208),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: const Color(0xFF9E8A4A),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                blurRadius: 25,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+
+              Text(
+                'O Portal Está Aberto',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.cinzel(
+                  color: const Color(0xFFF8E7B9),
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              Text(
+                'Sua jornada em Terrasen foi registrada.\n\nDeseja encerrar sua aventura agora ou continuar explorando os mundos?',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.cinzel(
+                  color: const Color(0xFFF8E7B9),
+                  fontSize: 15,
+                  height: 1.6,
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              Center(
+                child: SizedBox(
+                  width: 260,
+                  child: ElevatedButton(
+                    onPressed: () async {
+
+                      await _salvarProgressoTerrasen();
+
+                      Navigator.of(context).pop();
+
+                      Navigator.of(this.context).pop();
+                    },
+
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6B3F1D),
+                      foregroundColor: const Color(0xFFF8E7B9),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: const BorderSide(
+                          color: Color(0xFF9E8A4A),
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      '💾 Salvar e sair',
+                      style: GoogleFonts.cinzel(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              Center(
+                child: SizedBox(
+                  width: 260,
+                  child: ElevatedButton(
+                    onPressed: () async {
+
+                      await _salvarProgressoTerrasen();
+
+                      Navigator.of(context).pop();
+
+                      Navigator.push(
+                        this.context,
+                        MaterialPageRoute(
+                          builder: (_) => const MundoGianScreen(),
+                        ),
+                      );
+                    },
+
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6B3F1D),
+                      foregroundColor: const Color(0xFFF8E7B9),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: const BorderSide(
+                          color: Color(0xFF9E8A4A),
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      '⚔️ Salvar e continuar',
+                      style: GoogleFonts.cinzel(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+Future<void> _salvarProgressoTerrasen() async {
+
+  if (_personagemId == null) return;
+
+  try {
+
+    await FirebaseFirestore.instance
+        .collection('personagens')
+        .doc(_personagemId)
+        .update({
+      'terrasen': [
+        true,
+        Timestamp.now(),
+        '[22.83365° S, 47.05197° W]'
+      ]
+    });
+
+  } catch (e) {
+    debugPrint('Erro ao salvar progresso: $e');
+  }
+}
+
   _Etapa _etapa = _Etapa.carregando;
   String _nomeJogador = 'Viajante';
+  String? _personagemId;
   String _textoExibido = '';
   bool _textoTerminou = false;
   bool _mostrarNpc = false;
@@ -117,15 +477,49 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
   }
 
   Future<void> _buscarNomeEIniciar() async {
-    try {
-      final snapshot = await FirebaseFirestore.instance.collection('personagens').limit(1).get();
-      if (snapshot.docs.isNotEmpty) {
-        final nome = snapshot.docs.first.data()['nome'] as String?;
-        if (nome != null && nome.isNotEmpty && mounted) setState(() => _nomeJogador = nome);
+  try {
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('personagens')
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isNotEmpty) {
+
+      final doc = snapshot.docs.first;
+
+      _personagemId = doc.id;
+
+      final data = doc.data();
+
+      final nome = data['nome'] as String?;
+
+      if (nome != null && nome.isNotEmpty && mounted) {
+        setState(() => _nomeJogador = nome);
       }
-    } catch (e) { debugPrint('[MundoAna] Erro: $e'); }
-    await _iniciarCena();
+
+      final estacionamento = data['estacionamento_caotico'];
+
+      bool concluiuAnterior = false;
+
+      if (estacionamento is List && estacionamento.isNotEmpty) {
+        concluiuAnterior = estacionamento[0] == true;
+      }
+
+      if (!concluiuAnterior) {
+
+        await _mostrarPopupBloqueado();
+
+        return;
+      }
+    }
+
+  } catch (e) {
+    debugPrint('[MundoAna] Erro: $e');
   }
+
+  await _iniciarCena();
+}
 
   Future<void> _iniciarCena() async {
     await Future.delayed(const Duration(milliseconds: 300));
@@ -207,7 +601,6 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
 
   Future<void> _escolhaCriatura(int opcao) async {
     if (opcao == 3) { 
-      // Observar → SUCESSO
       setState(() { 
         _fragmentos++; 
         _temVantagem = true; 
@@ -215,7 +608,6 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
       }); 
       await _irParaEtapa(_Etapa.desafio2Sucesso);
     } else { 
-      // Atacar (1) ou Fugir (2) → ERRO
       await _irParaEtapa(_Etapa.desafio2Erro);
     }
   }
@@ -245,11 +637,12 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
       case _Etapa.desafio3Sucesso: await _irParaEtapa(_Etapa.desafio4); break;
       case _Etapa.desafio4Bonus: case _Etapa.desafio4SemBonus: await _irParaEtapa(_Etapa.reuniao1); break;
       case _Etapa.reuniao1: await _irParaEtapa(_Etapa.reuniao2); break;
-      case _Etapa.reuniao2: if (_pontosPositivos >= 2) { await _irParaEtapa(_Etapa.finalPositivo1); } else { await _irParaEtapa(_Etapa.finalNegativo1); } break;
-      case _Etapa.finalPositivo1: await _irParaEtapa(_Etapa.finalPositivo2); break;
-      case _Etapa.finalNegativo1: await _irParaEtapa(_Etapa.finalNegativo2); break;
-      case _Etapa.finalPositivo2: case _Etapa.finalNegativo2: if (mounted) Navigator.pop(context); break;
-      default: break;
+      case _Etapa.reuniao2: if (_pontosPositivos >= 2) {await _irParaEtapa(_Etapa.finalPositivo1);} else {await _irParaEtapa(_Etapa.finalNegativo1);}break;
+      case _Etapa.finalPositivo1:await _irParaEtapa(_Etapa.finalPositivo2);break;
+      case _Etapa.finalNegativo1:await _irParaEtapa(_Etapa.finalNegativo2);break;
+      case _Etapa.finalPositivo2:
+      case _Etapa.finalNegativo2:await _mostrarPopupConclusao(); break;
+      default:break;
     }
   }
 
@@ -388,7 +781,6 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
                   ),
                 ),
 
-              // Texto terminou → ações
               if (_textoTerminou) _buildAcoes(),
             ],
           ),
