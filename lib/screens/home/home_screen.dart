@@ -3,9 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:rpg_game/features/mundo_maria/screens/mundo_maria.dart';
-<<<<<<< HEAD
-import '../game/personagem/criar_personagem_screen.dart';
-=======
 import 'package:rpg_game/features/mundo_ana/screens/mundo_ana_screen.dart'; 
 import 'package:rpg_game/features/mundo_rafael/screens/mundo_rafael_screen.dart';
 import 'package:rpg_game/features/mundo_luis/screens/mundo_luis.dart';
@@ -14,7 +11,6 @@ import '../game/../game/personagem/criar_personagem_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
->>>>>>> 81b77effc6207c8df5f5b1e0270f5ff7e80aa7f0
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -57,11 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await player.setVolume(estaMutado ? 0.0 : 0.5);
   }
 
-<<<<<<< HEAD
-  Future<void> irParaMundoMaju() async {
-=======
   Future<void> irParaMundoMaria() async {
->>>>>>> 81b77effc6207c8df5f5b1e0270f5ff7e80aa7f0
     await player.stop();
     if (!mounted) return;
     Navigator.push(
@@ -69,8 +61,6 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(builder: (_) => const MundoMariaScreen()),
     );
   }
-<<<<<<< HEAD
-=======
 
   // ← novo
   Future<void> irParaMundoAna() async {
@@ -109,7 +99,6 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(builder: (_) => const MundoLuisScreen()),
     );
   }
->>>>>>> 81b77effc6207c8df5f5b1e0270f5ff7e80aa7f0
 
   Future<void> irParaPersonagem() async {
     await player.stop();
@@ -212,6 +201,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
+
           SafeArea(
             child: Stack(
               children: [
@@ -234,43 +224,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-<<<<<<< HEAD
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // título com perspectiva 3D
-                        Transform(
-                          alignment: Alignment.center,
-                          transform: Matrix4.identity()
-                            ..setEntry(3, 2, 0.001)
-                            ..rotateX(-0.85),
-                          child: Text(
-                            'MagIAlurA',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.cinzelDecorative(
-                              fontSize: 115,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFFF8E7B9),
-                              letterSpacing: 20,
-                              shadows: [
-                                for (int i = 1; i <= 10; i++)
-                                  Shadow(
-                                    color: Color.lerp(
-                                      const Color.fromARGB(255, 0, 0, 0),
-                                      Colors.black,
-                                      i / 10,
-                                    )!,
-                                    offset: Offset(i.toDouble(), i.toDouble()),
-                                    blurRadius: 0,
-                                  ),
-                                const Shadow(
-                                  color: Colors.black,
-                                  offset: Offset(10, 10),
-                                  blurRadius: 8,
-=======
 
                 // ── BOTÃO DO MAPA (topo esquerdo) ──
                 Positioned(
@@ -369,7 +322,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 const SizedBox(height: 16),
                                 _rpgMenuButton(
-                                  text: 'Mundo Maria',
+                                  text: 'Fazenda vale dourado',
                                   onPressed: irParaMundoMaria,
                                 ),
                                 const SizedBox(height: 16),
@@ -397,59 +350,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 _rpgMenuButton(
                                   text: 'Configurações',
                                   onPressed: () {},
->>>>>>> 81b77effc6207c8df5f5b1e0270f5ff7e80aa7f0
                                 ),
                               ],
                             ),
                           ),
-<<<<<<< HEAD
-                        ),
-                        const SizedBox(height: 115),
-                        Container(
-                          width: 300,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 15,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.45),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: const Color.fromARGB(255, 158, 138, 74),
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.4),
-                                blurRadius: 16,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              _rpgMenuButton(
-                                text: 'Iniciar',
-                                onPressed: irParaPersonagem,
-                              ),
-                              const SizedBox(height: 16),
-                              _rpgMenuButton(
-                                text: 'Mundo da Maria',
-                                onPressed: irParaMundoMaju,
-                              ),
-                              const SizedBox(height: 16),
-                              _rpgMenuButton(
-                                text: 'Configurações',
-                                onPressed: () {},
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-=======
                         ],
                       ),
->>>>>>> 81b77effc6207c8df5f5b1e0270f5ff7e80aa7f0
                     ),
                   ),
                 ),
