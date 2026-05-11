@@ -76,4 +76,6 @@ class PersonagemService {
   Future<void> deletarPersonagem(String id) async {
     await _firestore.collection('personagens').doc(id).delete();
   }
+
+  
 }

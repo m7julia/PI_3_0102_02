@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:rpg_game/features/mundo_maria/screens/mundo_maria.dart';
-import 'package:rpg_game/features/mundo_ana/screens/mundo_ana_screen.dart'; 
+import 'package:rpg_game/features/mundo_ana/screens/mundo_ana_screen.dart';
 import 'package:rpg_game/features/mundo_rafael/screens/mundo_rafael_screen.dart';
 import 'package:rpg_game/features/mundo_luis/screens/mundo_luis.dart';
 import 'package:rpg_game/features/mundo_gianluca/screens/mundo_gian_screen.dart';
@@ -11,6 +11,9 @@ import '../game/../game/personagem/criar_personagem_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+// Adicione esses imports no topo do arquivo home_screen.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:rpg_game/services/personagem_service.dart'; // ajuste o path
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -72,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-   Future<void> irParaMundoGianluca() async {
+  Future<void> irParaMundoGianluca() async {
     await player.stop();
     if (!mounted) return;
     Navigator.push(
@@ -80,7 +83,6 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(builder: (_) => const MundoGianScreen()),
     );
   }
-
 
   Future<void> irParaMundoRafa() async {
     await player.stop();
@@ -156,6 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (_) => _MapaDialog(
         latitude: position.latitude,
         longitude: position.longitude,
+        personagemId: 'Z4zP83zZeHKjXMv7ALoM',
       ),
     );
   }
@@ -336,7 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   text: 'Mundo Gianluca',
                                   onPressed: irParaMundoGianluca,
                                 ),
-                                 const SizedBox(height: 16),
+                                const SizedBox(height: 16),
                                 _rpgMenuButton(
                                   text: 'Bar pirata',
                                   onPressed: irParaMundoLuis,
@@ -435,16 +438,145 @@ class _HomeScreenState extends State<HomeScreen> {
 // ══════════════════════════════════════════════════════════
 // DIÁLOGO DO MAPA
 // ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+// MODELO DOS AMBIENTES (gerado dinamicamente do Firebase)
+// ══════════════════════════════════════════════════════════
 
-class _MapaDialog extends StatelessWidget {
+class _Ambiente {
+  final String nome;
+  final String nomeLegivel;
+  final LatLng posicao;
+  final bool concluido;
+
+  const _Ambiente({
+    required this.nome,
+    required this.nomeLegivel,
+    required this.posicao,
+    required this.concluido,
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// DIÁLOGO DO MAPA — dados do Firebase
+// ══════════════════════════════════════════════════════════
+
+class _MapaDialog extends StatefulWidget {
   final double latitude;
   final double longitude;
+  final String personagemId; // ID do documento do personagem logado
 
-  const _MapaDialog({required this.latitude, required this.longitude});
+  const _MapaDialog({
+    required this.latitude,
+    required this.longitude,
+    required this.personagemId,
+  });
+
+  @override
+  State<_MapaDialog> createState() => _MapaDialogState();
+}
+
+class _MapaDialogState extends State<_MapaDialog> {
+  // Mapeamento: chave Firestore → nome legível
+  static const Map<String, String> _nomesLegiveis = {
+    'bar_pirata': 'Bar Pirata',
+    'conservatorio_diminuto': 'Conservatório Diminuto',
+    'estacionamento_caotico': 'Estacionamento Caótico',
+    'fazenda_vale_dourado': 'Fazenda Vale Dourado',
+    'terrasen': 'Terrasen',
+  };
+
+  List<_Ambiente> _ambientes = [];
+  bool _carregando = true;
+  String? _erro;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarAmbientes();
+  }
+
+  Future<void> _carregarAmbientes() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('personagens')
+          .doc(widget.personagemId)
+          .get();
+
+      if (!doc.exists) {
+        setState(() {
+          _erro = 'Personagem não encontrado.';
+          _carregando = false;
+        });
+        return;
+      }
+
+      final data = doc.data() ?? {};
+      final ambientes = <_Ambiente>[];
+
+      for (final chave in _nomesLegiveis.keys) {
+        final campo = data[chave];
+        if (campo is! List || campo.length < 3) continue;
+
+        final concluido = campo[0] == true;
+        final geo = campo[2];
+
+        LatLng? posicao;
+
+        if (geo is GeoPoint) {
+          posicao = LatLng(geo.latitude, geo.longitude);
+        } else if (geo is String) {
+          posicao = _parsearGeoString(geo);
+        }
+
+        if (posicao == null) continue;
+
+        ambientes.add(
+          _Ambiente(
+            nome: chave,
+            nomeLegivel: _nomesLegiveis[chave]!,
+            posicao: posicao,
+            concluido: concluido,
+          ),
+        );
+      }
+
+      setState(() {
+        _ambientes = ambientes;
+        _carregando = false;
+      });
+    } catch (e) {
+      setState(() {
+        _erro = 'Erro ao carregar mundos: $e';
+        _carregando = false;
+      });
+    }
+  }
+
+  /// Converte string "[22.83365° S, 47.05197° W]" → LatLng
+  LatLng? _parsearGeoString(String raw) {
+    try {
+      final limpo = raw.replaceAll(RegExp(r'[°\[\]]'), '').trim();
+      final partes = limpo.split(',');
+      if (partes.length < 2) return null;
+
+      double parseLado(String parte) {
+        final p = parte.trim();
+        final negativo = p.endsWith('S') || p.endsWith('W');
+        final valor = double.parse(p.replaceAll(RegExp(r'[NSEW\s]'), ''));
+        return negativo ? -valor : valor;
+      }
+
+      final lat = parseLado(partes[0]);
+      final lng = parseLado(partes[1]);
+      return LatLng(lat, lng);
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final ponto = LatLng(latitude, longitude);
+    final ponto = LatLng(widget.latitude, widget.longitude);
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -481,7 +613,7 @@ class _MapaDialog extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Sua Localização',
+                      'Mapa dos Mundos',
                       style: GoogleFonts.cinzelDecorative(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -497,37 +629,144 @@ class _MapaDialog extends StatelessWidget {
               ),
             ),
 
-            // Mapa
+            // Legenda
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Row(
+                children: [
+                  _legendaItem(
+                    cor: const Color(0xFF4CAF50),
+                    icone: Icons.place,
+                    texto: 'Desbloqueado',
+                  ),
+                  const SizedBox(width: 16),
+                  _legendaItem(
+                    cor: const Color(0xFF9E9E9E),
+                    icone: Icons.lock,
+                    texto: 'Bloqueado',
+                  ),
+                  const SizedBox(width: 16),
+                  _legendaItem(
+                    cor: const Color(0xFF2196F3),
+                    icone: Icons.my_location,
+                    texto: 'Você',
+                  ),
+                ],
+              ),
+            ),
+
+            // Mapa ou estado de carregamento/erro
             Expanded(
               child: ClipRRect(
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(18),
                   bottomRight: Radius.circular(18),
                 ),
-                child: FlutterMap(
-                  options: MapOptions(initialCenter: ponto, initialZoom: 15),
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.exemplo.magialura',
-                    ),
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                          point: ponto,
-                          width: 48,
-                          height: 48,
-                          child: const Icon(
-                            Icons.location_pin,
-                            color: Color(0xFFB22222),
-                            size: 48,
-                          ),
+                child: _carregando
+                    ? _telaCarregando()
+                    : _erro != null
+                    ? _telaErro()
+                    : FlutterMap(
+                        options: MapOptions(
+                          initialCenter: ponto,
+                          initialZoom: 16,
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                        children: [
+                          TileLayer(
+                            urlTemplate:
+                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName: 'com.exemplo.magialura',
+                          ),
+
+                          // Círculos de 10m
+                          CircleLayer(
+                            circles: _ambientes
+                                .map(
+                                  (a) => CircleMarker(
+                                    point: a.posicao,
+                                    radius: 10,
+                                    useRadiusInMeter: true,
+                                    color: a.concluido
+                                        ? const Color(
+                                            0xFF4CAF50,
+                                          ).withOpacity(0.20)
+                                        : const Color(
+                                            0xFF9E9E9E,
+                                          ).withOpacity(0.20),
+                                    borderColor: a.concluido
+                                        ? const Color(0xFF4CAF50)
+                                        : const Color(0xFF9E9E9E),
+                                    borderStrokeWidth: 2,
+                                  ),
+                                )
+                                .toList(),
+                          ),
+
+                          // Marcadores
+                          MarkerLayer(
+                            markers: [
+                              // Jogador
+                              Marker(
+                                point: ponto,
+                                width: 48,
+                                height: 48,
+                                child: const Icon(
+                                  Icons.my_location,
+                                  color: Color(0xFF2196F3),
+                                  size: 36,
+                                ),
+                              ),
+
+                              // Ambientes
+                              ..._ambientes.map(
+                                (a) => Marker(
+                                  point: a.posicao,
+                                  width: 80,
+                                  height: 70,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.65),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          a.nomeLegivel,
+                                          style: GoogleFonts.cinzel(
+                                            fontSize: 7,
+                                            color: a.concluido
+                                                ? const Color(0xFF4CAF50)
+                                                : const Color(0xFF9E9E9E),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Icon(
+                                        a.concluido ? Icons.place : Icons.lock,
+                                        color: a.concluido
+                                            ? const Color(0xFF4CAF50)
+                                            : const Color(0xFF9E9E9E),
+                                        size: 28,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
               ),
             ),
 
@@ -535,7 +774,8 @@ class _MapaDialog extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
               child: Text(
-                '${latitude.toStringAsFixed(5)}, ${longitude.toStringAsFixed(5)}',
+                '${widget.latitude.toStringAsFixed(5)}, '
+                '${widget.longitude.toStringAsFixed(5)}',
                 style: GoogleFonts.cinzel(
                   fontSize: 12,
                   color: const Color(0xFFF8E7B9).withOpacity(0.6),
@@ -546,6 +786,62 @@ class _MapaDialog extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _telaCarregando() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(color: Color(0xFFF8E7B9)),
+          const SizedBox(height: 16),
+          Text(
+            'Carregando mundos...',
+            style: GoogleFonts.cinzel(
+              color: const Color(0xFFF8E7B9).withOpacity(0.7),
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _telaErro() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(
+          _erro!,
+          style: GoogleFonts.cinzel(
+            color: const Color(0xFFB22222),
+            fontSize: 13,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  Widget _legendaItem({
+    required Color cor,
+    required IconData icone,
+    required String texto,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icone, color: cor, size: 14),
+        const SizedBox(width: 4),
+        Text(
+          texto,
+          style: GoogleFonts.cinzel(
+            fontSize: 10,
+            color: const Color(0xFFF8E7B9).withOpacity(0.7),
+          ),
+        ),
+      ],
     );
   }
 }
