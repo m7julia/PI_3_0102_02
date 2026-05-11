@@ -1,7 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:rpg_game/features/mundo_luis/screens/mundo_luis.dart';
+import 'package:rpg_game/screens/home/home_screen.dart';
 import 'package:rpg_game/services/nivel_service.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class Ligue3Game extends StatefulWidget {
   const Ligue3Game({super.key});
@@ -13,6 +16,45 @@ class Ligue3Game extends StatefulWidget {
 class _Ligue3GameState extends State<Ligue3Game> {
   static const int gridSize = 5;
   static const int metaPorElemento = 6;
+
+  late AudioPlayer _musicPlayer;
+  bool _musicaAtivada = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _precarregarImagens();
+    _iniciarMusica();
+    iniciarJogo();
+  }
+
+  Future<void> _iniciarMusica() async {
+    try {
+      _musicPlayer = AudioPlayer();
+      await _musicPlayer.setVolume(0.5);
+      await _musicPlayer.play(
+        AssetSource('audio/music/audio_fazenda_vale_dourado.mp3'),
+      );
+      await _musicPlayer.setReleaseMode(ReleaseMode.loop);
+    } catch (e) {
+      debugPrint('Erro ao iniciar música no Ligue3: $e');
+    }
+  }
+
+  Future<void> _pararMusica() async {
+    try {
+      await _musicPlayer.stop();
+      await _musicPlayer.dispose();
+    } catch (e) {
+      debugPrint('Erro ao parar música no Ligue3: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _pararMusica();
+    super.dispose();
+  }
 
   static const List<Map<String, dynamic>> cultivos = [
     {
@@ -53,12 +95,6 @@ class _Ligue3GameState extends State<Ligue3Game> {
   // Controla se o save no Firestore já foi disparado
   bool _salvoNoFirestore = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _precarregarImagens();
-    iniciarJogo();
-  }
 
   Future<void> _precarregarImagens() async {
     for (var cultivo in cultivos) {
@@ -69,14 +105,12 @@ class _Ligue3GameState extends State<Ligue3Game> {
   void iniciarJogo() {
     matriz = _gerarMatrizSemTrios();
     selecionados = [];
-    colhidos = {
-      for (var cultivo in cultivos) cultivo['asset'] as String: 0,
-    };
+    colhidos = {for (var cultivo in cultivos) cultivo['asset'] as String: 0};
     pontuacao = 0;
     mensagem = '';
     mensagemErro = false;
     faseConcluida = false;
-    _salvoNoFirestore = false; // reseta ao iniciar novo jogo
+    _salvoNoFirestore = false;
   }
 
   List<List<String>> _gerarMatrizSemTrios() {
@@ -140,17 +174,14 @@ class _Ligue3GameState extends State<Ligue3Game> {
       width: size,
       height: size,
       fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) => Text(
-        _getEmojiForAsset(assetPath),
-        style: TextStyle(fontSize: size),
-      ),
+      errorBuilder: (context, error, stackTrace) =>
+          Text(_getEmojiForAsset(assetPath), style: TextStyle(fontSize: size)),
     );
   }
 
   void _tocarCelula(int linha, int coluna) {
     final pos = [linha, coluna];
-    final jaSelected =
-        selecionados.any((s) => s[0] == linha && s[1] == coluna);
+    final jaSelected = selecionados.any((s) => s[0] == linha && s[1] == coluna);
 
     setState(() {
       if (jaSelected) {
@@ -174,8 +205,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
 
   void _tentarCombinar() {
     final asset = matriz[selecionados[0][0]][selecionados[0][1]];
-    final todosIguais =
-        selecionados.every((s) => matriz[s[0]][s[1]] == asset);
+    final todosIguais = selecionados.every((s) => matriz[s[0]][s[1]] == asset);
 
     if (!todosIguais) {
       selecionados = [];
@@ -208,8 +238,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
         if (matriz[r][c].isNotEmpty) coluna.add(matriz[r][c]);
       }
       while (coluna.length < gridSize) {
-        coluna.add(
-            cultivos[rng.nextInt(cultivos.length)]['asset'] as String);
+        coluna.add(cultivos[rng.nextInt(cultivos.length)]['asset'] as String);
       }
       for (int r = gridSize - 1; r >= 0; r--) {
         matriz[r][c] = coluna[gridSize - 1 - r];
@@ -261,15 +290,137 @@ class _Ligue3GameState extends State<Ligue3Game> {
     );
     if (completo && !faseConcluida) {
       faseConcluida = true;
-      _salvarProgressoFirestore(); // ← salva ao concluir
+      _mostrarPopupEscolhaFinal();
     }
   }
 
-  /// Salva o nível como completo no Firestore (apenas uma vez por partida).
-  Future<void> _salvarProgressoFirestore() async {
-    if (_salvoNoFirestore) return;
-    _salvoNoFirestore = true;
-    await NivelService.completarNivelMaju();
+  // ─── Popup: Escolha final (sair ou continuar) ─────────────────────────────
+
+  Future<void> _mostrarPopupEscolhaFinal() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1208),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                  blurRadius: 25,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '🎉 Fase Concluída! 🎉',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Você colheu tudo!\nPontuação final: $pontuacao pontos\n\nSua jornada na Fazenda Vale-Dourado foi registrada.\n\nDeseja encerrar sua aventura agora ou continuar explorando os mundos?',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 15,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                // Salvar e sair
+                Center(
+                  child: SizedBox(
+                    width: 260,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await NivelService.completarNivelMaju();
+                        if (mounted) {
+                          Navigator.of(context).pop(); // Fecha o dialog
+                          Navigator.pushAndRemoveUntil(
+                            this.context,
+                            MaterialPageRoute(
+                              builder: (_) => const HomeScreen(),
+                            ),
+                            (route) =>
+                                false, // Remove todas as rotas anteriores
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6B3F1D),
+                        foregroundColor: const Color(0xFFF8E7B9),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: const BorderSide(
+                            color: Color(0xFF9E8A4A),
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        '💾 Salvar e sair',
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Salvar e continuar para o próximo mundo (Mundo do Luis)
+                Center(
+                  child: SizedBox(
+                    width: 260,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await NivelService.completarNivelMaju();
+                        if (mounted) {
+                          Navigator.of(context).pop(); // Fecha o dialog
+                          Navigator.push(
+                            this.context,
+                            MaterialPageRoute(
+                              builder: (_) => const MundoLuisScreen(),
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6B3F1D),
+                        foregroundColor: const Color(0xFFF8E7B9),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: const BorderSide(
+                            color: Color(0xFF9E8A4A),
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        '⚔️ Salvar e continuar',
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _iniciarDrag(int linha, int coluna) {
@@ -384,32 +535,9 @@ class _Ligue3GameState extends State<Ligue3Game> {
                   ),
                 ),
                 Expanded(child: _buildGrade()),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: ElevatedButton(
-                    onPressed: () => setState(() => iniciarJogo()),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6B3F1D),
-                      foregroundColor: const Color(0xFFF8E7B9),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 40, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: const BorderSide(
-                            color: Color(0xFFF8E7B9), width: 1),
-                      ),
-                    ),
-                    child: Text(
-                      'Novo Jogo',
-                      style: GoogleFonts.cinzel(
-                          fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
-          if (faseConcluida) _buildFaseConcluida(),
         ],
       ),
     );
@@ -493,8 +621,11 @@ class _Ligue3GameState extends State<Ligue3Game> {
                               color: Colors.greenAccent,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.check,
-                                size: 9, color: Colors.black),
+                            child: const Icon(
+                              Icons.check,
+                              size: 9,
+                              color: Colors.black,
+                            ),
                           ),
                         ),
                     ],
@@ -505,10 +636,12 @@ class _Ligue3GameState extends State<Ligue3Game> {
                     child: LinearProgressIndicator(
                       value: progresso,
                       minHeight: 6,
-                      backgroundColor:
-                          const Color(0xFFF8E7B9).withValues(alpha: 0.2),
+                      backgroundColor: const Color(
+                        0xFFF8E7B9,
+                      ).withValues(alpha: 0.2),
                       valueColor: AlwaysStoppedAnimation<Color>(
-                          completo ? Colors.greenAccent : cor),
+                        completo ? Colors.greenAccent : cor,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -519,8 +652,9 @@ class _Ligue3GameState extends State<Ligue3Game> {
                       color: completo
                           ? Colors.greenAccent
                           : const Color(0xFFF8E7B9),
-                      fontWeight:
-                          completo ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: completo
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                 ],
@@ -573,13 +707,13 @@ class _Ligue3GameState extends State<Ligue3Game> {
               final linha = index ~/ gridSize;
               final coluna = index % gridSize;
               final asset = matriz[linha][coluna];
-              final selecionado = selecionados
-                  .any((s) => s[0] == linha && s[1] == coluna);
+              final selecionado = selecionados.any(
+                (s) => s[0] == linha && s[1] == coluna,
+              );
 
               return DragTarget<List<int>>(
                 onWillAcceptWithDetails: (details) => true,
-                onAcceptWithDetails: (details) =>
-                    _finalizarDrop(linha, coluna),
+                onAcceptWithDetails: (details) => _finalizarDrop(linha, coluna),
                 builder: (context, candidateData, rejectedData) {
                   final highlight = candidateData.isNotEmpty;
                   return Draggable<List<int>>(
@@ -616,8 +750,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
           color: selecionado
               ? Colors.greenAccent
               : highlight
-                  ? Colors.white
-                  : const Color(0xFFF8E7B9).withValues(alpha: 0.7),
+              ? Colors.white
+              : const Color(0xFFF8E7B9).withValues(alpha: 0.7),
           width: selecionado || highlight ? 3 : 1.5,
         ),
         borderRadius: BorderRadius.circular(12),
@@ -634,117 +768,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
               ]
             : null,
       ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildImageWidget(asset, size: 48),
-            const SizedBox(height: 3),
-            Container(
-              width: 7,
-              height: 7,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: cor),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFaseConcluida() {
-    return Container(
-      color: Colors.black.withValues(alpha: 0.75),
-      child: Center(
-        child: Container(
-          margin: const EdgeInsets.all(32),
-          padding: const EdgeInsets.all(28),
-          decoration: BoxDecoration(
-            color: const Color(0xFF6B3F1D),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFF8E7B9), width: 2),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '🌟 Fase Concluída! 🌟',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.cinzelDecorative(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFFF8E7B9),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Você colheu tudo!\nPontuação final: $pontuacao pontos',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.cinzel(
-                  fontSize: 16,
-                  color: const Color(0xFFF8E7B9).withValues(alpha: 0.9),
-                ),
-              ),
-              // Indicador de salvo
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.cloud_done,
-                      color: Colors.greenAccent, size: 16),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Progresso salvo!',
-                    style: GoogleFonts.cinzel(
-                      fontSize: 12,
-                      color: Colors.greenAccent,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    onPressed: () => setState(() => iniciarJogo()),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6B3F1D),
-                      foregroundColor: const Color(0xFFF8E7B9),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: const BorderSide(
-                            color: Color(0xFFF8E7B9), width: 1),
-                      ),
-                    ),
-                    child: Text(
-                      'Jogar Novamente',
-                      style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF8E7B9),
-                      foregroundColor: const Color(0xFF6B3F1D),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      'Voltar',
-                      style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+      child: Center(child: _buildImageWidget(asset, size: 48)),
     );
   }
 }
