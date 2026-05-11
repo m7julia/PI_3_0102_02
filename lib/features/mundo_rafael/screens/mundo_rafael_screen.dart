@@ -210,7 +210,6 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
       return;
     }
     if (_movimentos >= totalMovimentos) {
-      _salvarProgressoEstacionamento();
       setState(
         () => _etapa = _temChave
             ? _Etapa.vitoriaComChave
