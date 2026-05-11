@@ -19,7 +19,7 @@ class MundoFinalScreen extends StatelessWidget {
           ),
 
           // Escurece o fundo
-          Container(color: Colors.black.withValues(alpha: 0.7)),
+          Container(color: Colors.black.withValues(alpha: 0.2)),
 
           // Conteúdo principal
           Center(
@@ -29,7 +29,7 @@ class MundoFinalScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(28),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.75),
+                  color: Colors.black.withValues(alpha: 0.70),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: const Color(0xFFF8E7B9), width: 2),
                   boxShadow: [
