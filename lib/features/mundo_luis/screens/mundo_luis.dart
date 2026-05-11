@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rpg_game/features/mundo_final/screens/mundo_final_screen.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class MundoLuisScreen extends StatefulWidget {
   const MundoLuisScreen({super.key});
@@ -14,6 +15,9 @@ class MundoLuisScreen extends StatefulWidget {
 }
 
 class _MundoLuisScreenState extends State<MundoLuisScreen> {
+  late AudioPlayer _musicPlayer;
+  bool _somAtivado = true;
+
   bool missaoAceita = false;
   bool achouLuneta = false;
   bool achouMapa = false;
@@ -39,88 +43,129 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
   int get itensEncontrados =>
       (achouLuneta ? 1 : 0) + (achouCerveja ? 1 : 0) + (achouMapa ? 1 : 0);
 
-  
-  // // POPUP: mundo bloqueado
-  // Future<void> _mostrarPopupBloqueado() async {
-  //   await showDialog(
-  //     context: context,
-  //     barrierDismissible: false,
-  //     builder: (context) {
-  //       return Dialog(
-  //         backgroundColor: Colors.transparent,
-  //         child: Container(
-  //           padding: const EdgeInsets.all(24),
-  //           decoration: BoxDecoration(
-  //             color: const Color(0xFF1E1208),
-  //             borderRadius: BorderRadius.circular(24),
-  //             border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
-  //             boxShadow: [
-  //               BoxShadow(
-  //                 color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
-  //                 blurRadius: 25,
-  //                 spreadRadius: 2,
-  //               ),
-  //             ],
-  //           ),
-  //           child: Column(
-  //             mainAxisSize: MainAxisSize.min,
-  //             children: [
-  //               const Icon(Icons.lock, size: 70, color: Color(0xFFF8E7B9)),
-  //               const SizedBox(height: 20),
-  //               Text(
-  //                 'Portal Bloqueado',
-  //                 textAlign: TextAlign.center,
-  //                 style: GoogleFonts.cinzel(
-  //                   color: const Color(0xFFF8E7B9),
-  //                   fontSize: 24,
-  //                   fontWeight: FontWeight.bold,
-  //                 ),
-  //               ),
-  //               const SizedBox(height: 18),
-  //               Text(
-  //                 'Você ainda não possui a chave necessária para acessar o Bar Pirata.\n\n'
-  //                 'Conclua primeiro o mundo "Fazenda Vale Dourado" e obtenha sua chave antes de prosseguir.',
-  //                 textAlign: TextAlign.center,
-  //                 style: GoogleFonts.cinzel(
-  //                   color: const Color(0xFFF8E7B9),
-  //                   fontSize: 15,
-  //                   height: 1.6,
-  //                 ),
-  //               ),
-  //               const SizedBox(height: 28),
-  //               ElevatedButton(
-  //                 onPressed: () => Navigator.of(context).pop(),
-  //                 style: ElevatedButton.styleFrom(
-  //                   backgroundColor: const Color(0xFF6B3F1D),
-  //                   foregroundColor: const Color(0xFFF8E7B9),
-  //                   padding: const EdgeInsets.symmetric(
-  //                     horizontal: 28,
-  //                     vertical: 14,
-  //                   ),
-  //                   shape: RoundedRectangleBorder(
-  //                     borderRadius: BorderRadius.circular(14),
-  //                     side: const BorderSide(
-  //                       color: Color(0xFF9E8A4A),
-  //                       width: 1.5,
-  //                     ),
-  //                   ),
-  //                 ),
-  //                 child: Text(
-  //                   'Voltar',
-  //                   style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       );
-  //     },
-  //   );
+  @override
+  void initState() {
+    super.initState();
+    _musicPlayer = AudioPlayer();
+    _iniciarMusica();
+    carregarNomeJogador();
+  }
 
-  //   // Após fechar o popup, volta para a tela anterior
-  //   if (mounted) Navigator.of(context).pop();
-  // }
+  @override
+  void dispose() {
+    timerTexto?.cancel();
+    _musicPlayer.dispose();
+    super.dispose();
+  }
 
+  Future<void> _iniciarMusica() async {
+    try {
+      await _musicPlayer.setVolume(0.5);
+      await _musicPlayer.play(AssetSource('audio/music/bar_pirata.mp3'));
+      await _musicPlayer.setReleaseMode(ReleaseMode.loop);
+    } catch (e) {
+      debugPrint('Erro ao iniciar música: $e');
+    }
+  }
+
+  Future<void> _pararMusica() async {
+    try {
+      await _musicPlayer.stop();
+    } catch (e) {
+      debugPrint('Erro ao parar música: $e');
+    }
+  }
+
+  Future<void> _toggleSom() async {
+    if (_somAtivado) {
+      await _musicPlayer.pause();
+      setState(() => _somAtivado = false);
+    } else {
+      await _musicPlayer.resume();
+      setState(() => _somAtivado = true);
+    }
+  }
+
+  // POPUP: mundo bloqueado
+  Future<void> _mostrarPopupBloqueado() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1208),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                  blurRadius: 25,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.lock, size: 70, color: Color(0xFFF8E7B9)),
+                const SizedBox(height: 20),
+                Text(
+                  'Portal Bloqueado',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Você ainda não possui a chave necessária para acessar o Bar Pirata.\n\n'
+                  'Conclua primeiro o mundo "Fazenda Vale Dourado" e obtenha sua chave antes de prosseguir.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 15,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6B3F1D),
+                    foregroundColor: const Color(0xFFF8E7B9),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 28,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: const BorderSide(
+                        color: Color(0xFF9E8A4A),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                  child: Text(
+                    'Voltar',
+                    style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    // Após fechar o popup, volta para a tela anterior
+    if (mounted) Navigator.of(context).pop();
+  }
 
   // POPUP: conclusão (chave obtida)
   Future<void> _mostrarPopupConclusao() async {
@@ -196,7 +241,7 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
                     ),
                   ),
                   child: Text(
-                    'Abrir portal 🌀',
+                    'Abrir portal',
                     style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -329,7 +374,7 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
     );
   }
 
-  // FIRESTORE  salva progresso do Bar Pirata
+  // FIRESTORE — salva progresso do Bar Pirata
   Future<void> _salvarProgressoBarPirata() async {
     if (_personagemId == null) return;
 
@@ -345,7 +390,7 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
     }
   }
 
-  // 1. carrega o personagem salvo
+  // Carrega o personagem salvo
   Future<void> carregarNomeJogador() async {
     try {
       // 1. Tenta pegar o id salvo no SharedPreferences
@@ -401,18 +446,18 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
 
       if (!doc.exists) return;
 
-      // final data = doc.data()!;
-      // final fazenda = data['fazenda_vale_dourado'];
-      // bool concluiuAnterior = false;
+      final data = doc.data()!;
+      final fazenda = data['fazenda_vale_dourado'];
+      bool concluiuAnterior = false;
 
-      // if (fazenda is List && fazenda.isNotEmpty) {
-      //   concluiuAnterior = fazenda[0] == true;
-      // }
+      if (fazenda is List && fazenda.isNotEmpty) {
+        concluiuAnterior = fazenda[0] == true;
+      }
 
-      // if (!concluiuAnterior) {
-      //   if (mounted) await _mostrarPopupBloqueado();
-      //   return;
-      // }
+      if (!concluiuAnterior) {
+        if (mounted) await _mostrarPopupBloqueado();
+        return;
+      }
 
       // 4. Tudo certo — inicia a cena normalmente
       mostrarTexto(falaAtual);
@@ -424,18 +469,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
         );
       }
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    carregarNomeJogador();
-  }
-
-  @override
-  void dispose() {
-    timerTexto?.cancel();
-    super.dispose();
   }
 
   void mostrarTexto(String texto) {
@@ -580,11 +613,9 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
           'Missão concluída!';
       novasOpcoes = [];
 
-      // ── Dispara o popup de conclusão após o texto terminar ──
       // Aguarda o texto ser exibido antes de mostrar o popup
       await Future.delayed(const Duration(milliseconds: 100));
       if (mounted) {
-        // Pequeno delay para garantir que o setState abaixo já rodou
         Future.delayed(const Duration(milliseconds: 1800), () async {
           if (mounted) await _mostrarPopupConclusao();
         });
@@ -708,6 +739,21 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
                 'assets/images/personagem_luis.png',
                 height: 320,
                 fit: BoxFit.contain,
+              ),
+            ),
+          ),
+
+          Positioned(
+            top: 50,
+            left: 16,
+            child: SafeArea(
+              child: IconButton(
+                onPressed: _toggleSom,
+                icon: Icon(
+                  _somAtivado ? Icons.volume_up : Icons.volume_off,
+                  color: const Color(0xFFF8E7B9),
+                  size: 28,
+                ),
               ),
             ),
           ),
