@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:rpg_game/features/mundo_final/screens/mundo_final_screen.dart';
 
 class MundoLuisScreen extends StatefulWidget {
   const MundoLuisScreen({super.key});
@@ -19,6 +21,7 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
   bool falouComAraraComPistas = false;
   bool achouMoeda = false;
   String nomeJogador = 'viajante';
+  String? _personagemId;
 
   String? imagemItemEncontrado;
 
@@ -36,20 +39,390 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
   int get itensEncontrados =>
       (achouLuneta ? 1 : 0) + (achouCerveja ? 1 : 0) + (achouMapa ? 1 : 0);
 
+  
+  // // POPUP: mundo bloqueado
+  // Future<void> _mostrarPopupBloqueado() async {
+  //   await showDialog(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder: (context) {
+  //       return Dialog(
+  //         backgroundColor: Colors.transparent,
+  //         child: Container(
+  //           padding: const EdgeInsets.all(24),
+  //           decoration: BoxDecoration(
+  //             color: const Color(0xFF1E1208),
+  //             borderRadius: BorderRadius.circular(24),
+  //             border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+  //             boxShadow: [
+  //               BoxShadow(
+  //                 color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+  //                 blurRadius: 25,
+  //                 spreadRadius: 2,
+  //               ),
+  //             ],
+  //           ),
+  //           child: Column(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               const Icon(Icons.lock, size: 70, color: Color(0xFFF8E7B9)),
+  //               const SizedBox(height: 20),
+  //               Text(
+  //                 'Portal Bloqueado',
+  //                 textAlign: TextAlign.center,
+  //                 style: GoogleFonts.cinzel(
+  //                   color: const Color(0xFFF8E7B9),
+  //                   fontSize: 24,
+  //                   fontWeight: FontWeight.bold,
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 18),
+  //               Text(
+  //                 'Você ainda não possui a chave necessária para acessar o Bar Pirata.\n\n'
+  //                 'Conclua primeiro o mundo "Fazenda Vale Dourado" e obtenha sua chave antes de prosseguir.',
+  //                 textAlign: TextAlign.center,
+  //                 style: GoogleFonts.cinzel(
+  //                   color: const Color(0xFFF8E7B9),
+  //                   fontSize: 15,
+  //                   height: 1.6,
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 28),
+  //               ElevatedButton(
+  //                 onPressed: () => Navigator.of(context).pop(),
+  //                 style: ElevatedButton.styleFrom(
+  //                   backgroundColor: const Color(0xFF6B3F1D),
+  //                   foregroundColor: const Color(0xFFF8E7B9),
+  //                   padding: const EdgeInsets.symmetric(
+  //                     horizontal: 28,
+  //                     vertical: 14,
+  //                   ),
+  //                   shape: RoundedRectangleBorder(
+  //                     borderRadius: BorderRadius.circular(14),
+  //                     side: const BorderSide(
+  //                       color: Color(0xFF9E8A4A),
+  //                       width: 1.5,
+  //                     ),
+  //                   ),
+  //                 ),
+  //                 child: Text(
+  //                   'Voltar',
+  //                   style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+
+  //   // Após fechar o popup, volta para a tela anterior
+  //   if (mounted) Navigator.of(context).pop();
+  // }
+
+
+  // POPUP: conclusão (chave obtida)
+  Future<void> _mostrarPopupConclusao() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1208),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                  blurRadius: 25,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(
+                  'assets/images/icons_bar/moeda_ouro.png',
+                  height: 120,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Chave do Bar Pirata Obtida',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Muito bem, $nomeJogador.\n\n'
+                  'Você concluiu a jornada pelo Bar Pirata e encontrou a Moeda de Ouro.\n\n'
+                  'A chave deste mundo agora pertence a você.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 15,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    await _mostrarPopupEscolhaFinal();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6B3F1D),
+                    foregroundColor: const Color(0xFFF8E7B9),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 28,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: const BorderSide(
+                        color: Color(0xFF9E8A4A),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                  child: Text(
+                    'Abrir portal 🌀',
+                    style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // POPUP: escolha final (salvar e sair / continuar)
+  Future<void> _mostrarPopupEscolhaFinal() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1208),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                  blurRadius: 25,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'O Portal Está Aberto',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Sua jornada no Bar Pirata foi registrada.\n\n'
+                  'Deseja encerrar sua aventura agora ou continuar explorando os mundos?',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 15,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // Botão: salvar e sair
+                Center(
+                  child: SizedBox(
+                    width: 260,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await _salvarProgressoBarPirata();
+                        Navigator.of(context).pop();
+                        Navigator.of(this.context).pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6B3F1D),
+                        foregroundColor: const Color(0xFFF8E7B9),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: const BorderSide(
+                            color: Color(0xFF9E8A4A),
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        '💾 Salvar e sair',
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Botão: salvar e continuar para o mundo final
+                Center(
+                  child: SizedBox(
+                    width: 260,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await _salvarProgressoBarPirata();
+                        Navigator.of(context).pop();
+                        Navigator.push(
+                          this.context,
+                          MaterialPageRoute(
+                            builder: (_) => const MundoFinalScreen(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6B3F1D),
+                        foregroundColor: const Color(0xFFF8E7B9),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: const BorderSide(
+                            color: Color(0xFF9E8A4A),
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        '⚔️ Salvar e continuar',
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // FIRESTORE  salva progresso do Bar Pirata
+  Future<void> _salvarProgressoBarPirata() async {
+    if (_personagemId == null) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('personagens')
+          .doc(_personagemId)
+          .update({
+            'bar_pirata': [true, Timestamp.now(), '[22.83347° S, 47.04992° W]'],
+          });
+    } catch (e) {
+      debugPrint('Erro ao salvar progresso: $e');
+    }
+  }
+
+  // 1. carrega o personagem salvo
   Future<void> carregarNomeJogador() async {
     try {
-      final snapshot = await FirebaseFirestore.instance
+      // 1. Tenta pegar o id salvo no SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final personagemId = prefs.getString('personagemAtualId');
+
+      String? nome;
+      String? docId;
+
+      if (personagemId != null) {
+        final doc = await FirebaseFirestore.instance
+            .collection('personagens')
+            .doc(personagemId)
+            .get();
+
+        if (doc.exists) {
+          docId = doc.id;
+          nome = doc.data()?['nome'] as String?;
+        }
+      }
+
+      // 2. Fallback: busca o último personagem criado
+      if (docId == null) {
+        final snapshot = await FirebaseFirestore.instance
+            .collection('personagens')
+            .orderBy('criadoEm', descending: true)
+            .limit(1)
+            .get();
+
+        if (snapshot.docs.isNotEmpty) {
+          docId = snapshot.docs.first.id;
+          nome = snapshot.docs.first.data()['nome'] as String?;
+        }
+      }
+
+      if (docId == null) {
+        debugPrint('[MundoLuis] Nenhum personagem encontrado');
+        if (mounted) Navigator.pop(context);
+        return;
+      }
+
+      _personagemId = docId;
+
+      if (nome != null && nome.isNotEmpty && mounted) {
+        setState(() => nomeJogador = nome!);
+      }
+
+      // 3. Verifica se concluiu a Fazenda Vale Dourado
+      final doc = await FirebaseFirestore.instance
           .collection('personagens')
-          .limit(1)
+          .doc(docId)
           .get();
 
-      if (snapshot.docs.isNotEmpty) {
-        setState(() {
-          nomeJogador = snapshot.docs.first.data()['nome'] ?? 'viajante';
-        });
-      }
+      if (!doc.exists) return;
+
+      // final data = doc.data()!;
+      // final fazenda = data['fazenda_vale_dourado'];
+      // bool concluiuAnterior = false;
+
+      // if (fazenda is List && fazenda.isNotEmpty) {
+      //   concluiuAnterior = fazenda[0] == true;
+      // }
+
+      // if (!concluiuAnterior) {
+      //   if (mounted) await _mostrarPopupBloqueado();
+      //   return;
+      // }
+
+      // 4. Tudo certo — inicia a cena normalmente
+      mostrarTexto(falaAtual);
     } catch (e) {
-      debugPrint('Erro ao carregar nome: $e');
+      debugPrint('[MundoLuis] Erro: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -57,7 +430,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
   void initState() {
     super.initState();
     carregarNomeJogador();
-    mostrarTexto(falaAtual);
   }
 
   @override
@@ -112,8 +484,7 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
     ];
   }
 
-  void escolherOpcao(String opcao) {
-    // Variáveis locais para evitar uso de return dentro do setState
+  void escolherOpcao(String opcao) async {
     String? novaFala;
     List<String>? novasOpcoes;
     String? novaImagem;
@@ -138,7 +509,7 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
         novaFala =
             'Luis Gancho-fino: Ahhh, Margarida… ajudando até de longe! '
             'Daqui a pouco ela aparece aqui mandando a gente arrumar o bar também…';
-        novasOpcoes = ['Aceitar a busca', 'Hesitar']; // só no else!
+        novasOpcoes = ['Aceitar a busca', 'Hesitar'];
       }
     } else if (opcao == 'Aceitar a busca' || opcao == 'Hesitar') {
       final falaInicio = opcao == 'Hesitar'
@@ -208,9 +579,18 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
           'Hoje, você provou seu valor neste bar.\n\n'
           'Missão concluída!';
       novasOpcoes = [];
+
+      // ── Dispara o popup de conclusão após o texto terminar ──
+      // Aguarda o texto ser exibido antes de mostrar o popup
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (mounted) {
+        // Pequeno delay para garantir que o setState abaixo já rodou
+        Future.delayed(const Duration(milliseconds: 1800), () async {
+          if (mounted) await _mostrarPopupConclusao();
+        });
+      }
     }
 
-    // Aplica todas as mudanças de estado de uma vez, sem return no meio
     setState(() {
       imagemItemEncontrado = novaImagem;
 
@@ -478,7 +858,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
 
                   if (textoCompleto) ...[
                     const SizedBox(height: 8),
-
                     ...opcoesAtuais.map((opcao) {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 10),

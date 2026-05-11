@@ -1,5 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum _Etapa {
   inicio,
@@ -39,6 +41,63 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
   bool _chaveUsada = false;
   bool _npcJaApareceu = false;
   int? _ultimoDado;
+  String? _personagemId;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarPersonagemId();
+  }
+
+  Future<void> _carregarPersonagemId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final personagemId = prefs.getString('personagemAtualId');
+
+      if (personagemId != null) {
+        final doc = await FirebaseFirestore.instance
+            .collection('personagens')
+            .doc(personagemId)
+            .get();
+
+        if (doc.exists) {
+          _personagemId = doc.id;
+          return;
+        }
+      }
+
+      final snapshot = await FirebaseFirestore.instance
+          .collection('personagens')
+          .orderBy('criadoEm', descending: true)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        _personagemId = snapshot.docs.first.id;
+      }
+    } catch (e) {
+      debugPrint('[MundoRafael] Erro ao carregar personagem: $e');
+    }
+  }
+
+  Future<void> _salvarProgressoEstacionamento() async {
+    if (_personagemId == null) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('personagens')
+          .doc(_personagemId)
+          .update({
+        'estacionamento_caotico': [
+          true,
+          Timestamp.now(),
+          '[22.8344° S, 47.05177° W]',
+        ],
+      });
+    } catch (e) {
+      debugPrint('Erro ao salvar progresso: $e');
+    }
+  }
 
   // Lógica do dado
 
@@ -107,6 +166,7 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
         return;
       }
       if (_movimentos >= totalMovimentos) {
+        _salvarProgressoEstacionamento();
         setState(
           () => _etapa = _temChave
               ? _Etapa.vitoriaComChave
