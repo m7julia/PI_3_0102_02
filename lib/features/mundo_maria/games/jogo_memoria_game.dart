@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:rpg_game/features/mundo_luis/screens/mundo_luis.dart';
 import 'package:rpg_game/screens/home/home_screen.dart';
 import 'package:rpg_game/services/nivel_service.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class JogoMemoriaGame extends StatefulWidget {
   const JogoMemoriaGame({super.key});
@@ -23,6 +24,45 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
   ];
   static const int _totalPares = 4;
 
+  late AudioPlayer _musicPlayer;
+  bool _musicaAtivada = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _precarregarImagens();
+    _iniciarMusica();
+    iniciarJogo();
+  }
+
+  Future<void> _iniciarMusica() async {
+    try {
+      _musicPlayer = AudioPlayer();
+      await _musicPlayer.setVolume(0.5);
+      await _musicPlayer.play(
+        AssetSource('audio/music/audio_fazenda_vale_dourado.mp3'),
+      );
+      await _musicPlayer.setReleaseMode(ReleaseMode.loop);
+    } catch (e) {
+      debugPrint('Erro ao iniciar música no Memória: $e');
+    }
+  }
+
+  Future<void> _pararMusica() async {
+    try {
+      await _musicPlayer.stop();
+      await _musicPlayer.dispose();
+    } catch (e) {
+      debugPrint('Erro ao parar música no Memória: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _pararMusica();
+    super.dispose();
+  }
+
   late List<String> cartas;
   late List<bool> combinadas;
   late List<bool> reveladas;
@@ -36,13 +76,6 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
 
   // Controla se o save no Firestore já foi disparado (evita chamadas duplas)
   bool _salvoNoFirestore = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _precarregarImagens();
-    iniciarJogo();
-  }
 
   Future<void> _precarregarImagens() async {
     final allAssets = [..._cultivosAssets, ..._cultivosAssets, _ferraduraAsset];
@@ -178,8 +211,11 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.cloud_done,
-                        color: Colors.greenAccent, size: 14),
+                    const Icon(
+                      Icons.cloud_done,
+                      color: Colors.greenAccent,
+                      size: 14,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'Progresso será salvo',
@@ -205,7 +241,8 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                             MaterialPageRoute(
                               builder: (_) => const HomeScreen(),
                             ),
-                            (route) => false, // Remove todas as rotas anteriores
+                            (route) =>
+                                false, // Remove todas as rotas anteriores
                           );
                         }
                       },
@@ -223,8 +260,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                       ),
                       child: Text(
                         '💾 Salvar e sair',
-                        style: GoogleFonts.cinzel(
-                            fontWeight: FontWeight.bold),
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -261,8 +297,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                       ),
                       child: Text(
                         '⚔️ Salvar e continuar',
-                        style: GoogleFonts.cinzel(
-                            fontWeight: FontWeight.bold),
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -281,10 +316,8 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
       width: size,
       height: size,
       fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) => Text(
-        _getEmojiForAsset(assetPath),
-        style: TextStyle(fontSize: size),
-      ),
+      errorBuilder: (context, error, stackTrace) =>
+          Text(_getEmojiForAsset(assetPath), style: TextStyle(fontSize: size)),
     );
   }
 
@@ -294,7 +327,10 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
       appBar: AppBar(
         title: Text(
           'Jogo da Memória',
-          style: GoogleFonts.cinzel(color: const Color(0xFFF8E7B9), fontSize: 18),
+          style: GoogleFonts.cinzel(
+            color: const Color(0xFFF8E7B9),
+            fontSize: 18,
+          ),
         ),
         backgroundColor: const Color(0xFF6B3F1D),
         foregroundColor: const Color(0xFFF8E7B9),
@@ -397,8 +433,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
 
   Widget _buildContadorPares() {
     final ferraduraIdx = cartas.indexOf(_ferraduraAsset);
-    final ferraduraRevelada =
-        ferraduraIdx >= 0 && combinadas[ferraduraIdx];
+    final ferraduraRevelada = ferraduraIdx >= 0 && combinadas[ferraduraIdx];
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -418,10 +453,8 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
             final asset = entry.value;
             final idx1 = cartas.indexOf(asset);
             final idx2 = cartas.lastIndexOf(asset);
-            final encontrado = idx1 >= 0 &&
-                idx2 >= 0 &&
-                combinadas[idx1] &&
-                combinadas[idx2];
+            final encontrado =
+                idx1 >= 0 && idx2 >= 0 && combinadas[idx1] && combinadas[idx2];
             return _buildIconeContador(
               asset: asset,
               encontrado: encontrado,
@@ -466,10 +499,11 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                 child: Container(
                   width: 14,
                   height: 14,
-                  decoration:
-                      BoxDecoration(color: corCheck, shape: BoxShape.circle),
-                  child:
-                      const Icon(Icons.check, size: 10, color: Colors.black),
+                  decoration: BoxDecoration(
+                    color: corCheck,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.check, size: 10, color: Colors.black),
                 ),
               ),
           ],
@@ -613,17 +647,20 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                   backgroundColor: const Color(0xFF6B3F1D),
                   foregroundColor: const Color(0xFFF8E7B9),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 28, vertical: 12),
+                    horizontal: 28,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
-                    side: const BorderSide(
-                        color: Color(0xFFF8E7B9), width: 1),
+                    side: const BorderSide(color: Color(0xFFF8E7B9), width: 1),
                   ),
                 ),
                 child: Text(
                   'Continuar ➡️',
                   style: GoogleFonts.cinzel(
-                      fontSize: 14, fontWeight: FontWeight.bold),
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],

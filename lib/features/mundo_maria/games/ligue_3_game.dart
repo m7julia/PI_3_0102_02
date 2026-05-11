@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:rpg_game/features/mundo_luis/screens/mundo_luis.dart';
 import 'package:rpg_game/screens/home/home_screen.dart';
 import 'package:rpg_game/services/nivel_service.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class Ligue3Game extends StatefulWidget {
   const Ligue3Game({super.key});
@@ -15,6 +16,45 @@ class Ligue3Game extends StatefulWidget {
 class _Ligue3GameState extends State<Ligue3Game> {
   static const int gridSize = 5;
   static const int metaPorElemento = 6;
+
+  late AudioPlayer _musicPlayer;
+  bool _musicaAtivada = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _precarregarImagens();
+    _iniciarMusica();
+    iniciarJogo();
+  }
+
+  Future<void> _iniciarMusica() async {
+    try {
+      _musicPlayer = AudioPlayer();
+      await _musicPlayer.setVolume(0.5);
+      await _musicPlayer.play(
+        AssetSource('audio/music/audio_fazenda_vale_dourado.mp3'),
+      );
+      await _musicPlayer.setReleaseMode(ReleaseMode.loop);
+    } catch (e) {
+      debugPrint('Erro ao iniciar música no Ligue3: $e');
+    }
+  }
+
+  Future<void> _pararMusica() async {
+    try {
+      await _musicPlayer.stop();
+      await _musicPlayer.dispose();
+    } catch (e) {
+      debugPrint('Erro ao parar música no Ligue3: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _pararMusica();
+    super.dispose();
+  }
 
   static const List<Map<String, dynamic>> cultivos = [
     {
@@ -55,12 +95,6 @@ class _Ligue3GameState extends State<Ligue3Game> {
   // Controla se o save no Firestore já foi disparado
   bool _salvoNoFirestore = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _precarregarImagens();
-    iniciarJogo();
-  }
 
   Future<void> _precarregarImagens() async {
     for (var cultivo in cultivos) {
@@ -71,9 +105,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
   void iniciarJogo() {
     matriz = _gerarMatrizSemTrios();
     selecionados = [];
-    colhidos = {
-      for (var cultivo in cultivos) cultivo['asset'] as String: 0,
-    };
+    colhidos = {for (var cultivo in cultivos) cultivo['asset'] as String: 0};
     pontuacao = 0;
     mensagem = '';
     mensagemErro = false;
@@ -142,17 +174,14 @@ class _Ligue3GameState extends State<Ligue3Game> {
       width: size,
       height: size,
       fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) => Text(
-        _getEmojiForAsset(assetPath),
-        style: TextStyle(fontSize: size),
-      ),
+      errorBuilder: (context, error, stackTrace) =>
+          Text(_getEmojiForAsset(assetPath), style: TextStyle(fontSize: size)),
     );
   }
 
   void _tocarCelula(int linha, int coluna) {
     final pos = [linha, coluna];
-    final jaSelected =
-        selecionados.any((s) => s[0] == linha && s[1] == coluna);
+    final jaSelected = selecionados.any((s) => s[0] == linha && s[1] == coluna);
 
     setState(() {
       if (jaSelected) {
@@ -176,8 +205,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
 
   void _tentarCombinar() {
     final asset = matriz[selecionados[0][0]][selecionados[0][1]];
-    final todosIguais =
-        selecionados.every((s) => matriz[s[0]][s[1]] == asset);
+    final todosIguais = selecionados.every((s) => matriz[s[0]][s[1]] == asset);
 
     if (!todosIguais) {
       selecionados = [];
@@ -210,8 +238,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
         if (matriz[r][c].isNotEmpty) coluna.add(matriz[r][c]);
       }
       while (coluna.length < gridSize) {
-        coluna.add(
-            cultivos[rng.nextInt(cultivos.length)]['asset'] as String);
+        coluna.add(cultivos[rng.nextInt(cultivos.length)]['asset'] as String);
       }
       for (int r = gridSize - 1; r >= 0; r--) {
         matriz[r][c] = coluna[gridSize - 1 - r];
@@ -327,7 +354,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
                             MaterialPageRoute(
                               builder: (_) => const HomeScreen(),
                             ),
-                            (route) => false, // Remove todas as rotas anteriores
+                            (route) =>
+                                false, // Remove todas as rotas anteriores
                           );
                         }
                       },
@@ -345,8 +373,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
                       ),
                       child: Text(
                         '💾 Salvar e sair',
-                        style: GoogleFonts.cinzel(
-                            fontWeight: FontWeight.bold),
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -383,8 +410,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
                       ),
                       child: Text(
                         '⚔️ Salvar e continuar',
-                        style: GoogleFonts.cinzel(
-                            fontWeight: FontWeight.bold),
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -595,8 +621,11 @@ class _Ligue3GameState extends State<Ligue3Game> {
                               color: Colors.greenAccent,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.check,
-                                size: 9, color: Colors.black),
+                            child: const Icon(
+                              Icons.check,
+                              size: 9,
+                              color: Colors.black,
+                            ),
                           ),
                         ),
                     ],
@@ -607,10 +636,12 @@ class _Ligue3GameState extends State<Ligue3Game> {
                     child: LinearProgressIndicator(
                       value: progresso,
                       minHeight: 6,
-                      backgroundColor:
-                          const Color(0xFFF8E7B9).withValues(alpha: 0.2),
+                      backgroundColor: const Color(
+                        0xFFF8E7B9,
+                      ).withValues(alpha: 0.2),
                       valueColor: AlwaysStoppedAnimation<Color>(
-                          completo ? Colors.greenAccent : cor),
+                        completo ? Colors.greenAccent : cor,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -621,8 +652,9 @@ class _Ligue3GameState extends State<Ligue3Game> {
                       color: completo
                           ? Colors.greenAccent
                           : const Color(0xFFF8E7B9),
-                      fontWeight:
-                          completo ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: completo
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                 ],
@@ -675,13 +707,13 @@ class _Ligue3GameState extends State<Ligue3Game> {
               final linha = index ~/ gridSize;
               final coluna = index % gridSize;
               final asset = matriz[linha][coluna];
-              final selecionado = selecionados
-                  .any((s) => s[0] == linha && s[1] == coluna);
+              final selecionado = selecionados.any(
+                (s) => s[0] == linha && s[1] == coluna,
+              );
 
               return DragTarget<List<int>>(
                 onWillAcceptWithDetails: (details) => true,
-                onAcceptWithDetails: (details) =>
-                    _finalizarDrop(linha, coluna),
+                onAcceptWithDetails: (details) => _finalizarDrop(linha, coluna),
                 builder: (context, candidateData, rejectedData) {
                   final highlight = candidateData.isNotEmpty;
                   return Draggable<List<int>>(
@@ -718,8 +750,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
           color: selecionado
               ? Colors.greenAccent
               : highlight
-                  ? Colors.white
-                  : const Color(0xFFF8E7B9).withValues(alpha: 0.7),
+              ? Colors.white
+              : const Color(0xFFF8E7B9).withValues(alpha: 0.7),
           width: selecionado || highlight ? 3 : 1.5,
         ),
         borderRadius: BorderRadius.circular(12),
@@ -736,9 +768,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
               ]
             : null,
       ),
-      child: Center(
-        child: _buildImageWidget(asset, size: 48),
-      ),
+      child: Center(child: _buildImageWidget(asset, size: 48)),
     );
   }
 }

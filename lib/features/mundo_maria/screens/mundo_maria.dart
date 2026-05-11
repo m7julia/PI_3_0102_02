@@ -52,10 +52,8 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
   bool _mostrarDialogo = false;
   bool _pularAnimacao = false;
 
-  bool _somAtivado = false;
-  bool _audioLiberado = false;
-  bool _tocandoSomLetra = false;
-  late AudioPlayer _audioPlayer;
+  bool _somAtivado = true;
+  late AudioPlayer _musicPlayer;
 
   late AnimationController _npcAnimCtrl;
   late AnimationController _dialogoAnimCtrl;
@@ -416,8 +414,37 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
   void initState() {
     super.initState();
     _configurarAnimacoes();
-    _audioPlayer = AudioPlayer();
+    _musicPlayer = AudioPlayer();
+    _iniciarMusica();
     _buscarPersonagemEIniciar();
+  }
+
+  Future<void> _iniciarMusica() async {
+    try {
+      await _musicPlayer.setVolume(0.5);
+      await _musicPlayer.play(AssetSource('audio/music/audio_fazenda_vale_dourado.mp3'));
+      await _musicPlayer.setReleaseMode(ReleaseMode.loop);
+    } catch (e) {
+      debugPrint('Erro ao iniciar música: $e');
+    }
+  }
+
+  Future<void> _pararMusica() async {
+    try {
+      await _musicPlayer.stop();
+    } catch (e) {
+      debugPrint('Erro ao parar música: $e');
+    }
+  }
+
+  Future<void> _toggleSom() async {
+    if (_somAtivado) {
+      await _musicPlayer.pause();
+      setState(() => _somAtivado = false);
+    } else {
+      await _musicPlayer.resume();
+      setState(() => _somAtivado = true);
+    }
   }
 
   @override
@@ -426,7 +453,7 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
     _dialogoAnimCtrl.dispose();
     _shakeCtrl.dispose();
     _opcaoAnimCtrl.dispose();
-    _audioPlayer.dispose();
+    _musicPlayer.dispose();
     super.dispose();
   }
 
@@ -567,42 +594,7 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
     await _animarTexto(_textoAtual);
   }
 
-  // ─── Som ──────────────────────────────────────────────────────────────────
-
-  Future<void> _toggleSom() async {
-    if (!_somAtivado) {
-      try {
-        await _audioPlayer.setVolume(0.01);
-        await _audioPlayer.play(AssetSource('audio/typewriter_click.mp3'));
-        await Future.delayed(const Duration(milliseconds: 80));
-        await _audioPlayer.stop();
-        await _audioPlayer.setVolume(1.0);
-        setState(() {
-          _somAtivado = true;
-          _audioLiberado = true;
-        });
-      } catch (e) {
-        debugPrint('Erro ao ativar som: $e');
-      }
-    } else {
-      setState(() => _somAtivado = false);
-    }
-  }
-
-  Future<void> _tocarSomLetra() async {
-    if (!_somAtivado || !_audioLiberado || _tocandoSomLetra) return;
-    try {
-      _tocandoSomLetra = true;
-      await _audioPlayer.stop();
-      await _audioPlayer.play(AssetSource('audio/typewriter_click.mp3'));
-    } catch (e) {
-      debugPrint('Erro ao tocar som: $e');
-    } finally {
-      _tocandoSomLetra = false;
-    }
-  }
-
-  // ─── Texto animado ────────────────────────────────────────────────────────
+  // ─── Texto animado (sem som) ─────────────────────────────────────────────
 
   void _pularTexto() {
     if (!_textoTerminou) {
@@ -629,7 +621,6 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
       await Future.delayed(const Duration(milliseconds: 30));
       if (!mounted) return;
       setState(() => _textoExibido += texto[i]);
-      if (texto[i] != ' ' && i % 2 == 0) _tocarSomLetra();
     }
 
     if (!mounted) return;
@@ -711,14 +702,9 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
   }
 
   // ─── Navegação para minigame ──────────────────────────────────────────────
-  //
-  // Os minigames devem retornar um bool ao fechar:
-  //   Navigator.pop(context, true);   ← jogador venceu  ✅
-  //   Navigator.pop(context, false);  ← saiu sem vencer ❌
-  //
-  // O popup de conclusão só aparece quando o retorno for `true`.
 
   void _irParaJogo({required bool memoria}) {
+    _pararMusica();
     Navigator.push<bool>(
       context,
       PageRouteBuilder(
@@ -731,6 +717,7 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
         transitionDuration: const Duration(milliseconds: 600),
       ),
     ).then((venceu) {
+      _iniciarMusica();
       if (mounted && venceu == true) {
         _mostrarPopupConclusao();
       }
@@ -772,7 +759,10 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            _pararMusica();
+            Navigator.pop(context);
+          },
         ),
         actions: [
           IconButton(
