@@ -342,7 +342,7 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
                       Navigator.push(
                         this.context,
                         MaterialPageRoute(
-                          builder: (_) => const MundoGianScreen(),
+                          builder: (_) => MundoGianlucaScreen(),
                         ),
                       );
                     },
