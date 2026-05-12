@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:rpg_game/features/mundo_ana/screens/mundo_ana_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum _Etapa {
@@ -88,12 +89,12 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
           .collection('personagens')
           .doc(_personagemId)
           .update({
-        'estacionamento_caotico': [
-          true,
-          Timestamp.now(),
-          '[22.8344° S, 47.05177° W]',
-        ],
-      });
+            'estacionamento_caotico': [
+              true,
+              Timestamp.now(),
+              '[22.8344° S, 47.05177° W]',
+            ],
+          });
     } catch (e) {
       debugPrint('Erro ao salvar progresso: $e');
     }
@@ -294,7 +295,10 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
     });
   }
 
-  bool get _ehResultadoDado => _etapa == _Etapa.resultadoFalha || _etapa == _Etapa.resultadoReroll || _etapa == _Etapa.resultadoSucesso;
+  bool get _ehResultadoDado =>
+      _etapa == _Etapa.resultadoFalha ||
+      _etapa == _Etapa.resultadoReroll ||
+      _etapa == _Etapa.resultadoSucesso;
 
   @override
   Widget build(BuildContext context) {
@@ -313,11 +317,7 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
           ),
         ),
         actions: [
-          _hudChip(
-            icon: Icons.favorite,
-            label: '$_hp',
-            cor: Colors.redAccent,
-          ),
+          _hudChip(icon: Icons.favorite, label: '$_hp', cor: Colors.redAccent),
           _hudChip(
             icon: Icons.directions_walk,
             label: '$_movimentos/$totalMovimentos',
@@ -346,12 +346,7 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  const Spacer(),
-                  _caixaDialogo(),
-                ],
-              ),
+              child: Column(children: [const Spacer(), _caixaDialogo()]),
             ),
           ),
         ],
@@ -526,7 +521,7 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
           children: [
             Expanded(
               child: _botaoEscolha(
-                label: 'Jogar de novo',
+                label: 'Salvar e jogar de novo',
                 icone: Icons.refresh,
                 onTap: reiniciar,
                 secundario: true,
@@ -535,9 +530,14 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: _botaoEscolha(
-                label: 'Voltar',
+                label: 'Salvar e continuar',
                 icone: Icons.exit_to_app,
-                onTap: () => Navigator.of(context).pop(),
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => MundoAnaScreen()),
+                  );
+                },
               ),
             ),
           ],
@@ -555,10 +555,7 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
       child: ElevatedButton.icon(
         onPressed: onTap,
         icon: Icon(icone, size: 18),
-        label: Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        label: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.amber.shade700,
           foregroundColor: Colors.black,
@@ -586,8 +583,9 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
       ),
       style: ElevatedButton.styleFrom(
-        backgroundColor:
-            secundario ? Colors.transparent : Colors.amber.shade700,
+        backgroundColor: secundario
+            ? Colors.transparent
+            : Colors.amber.shade700,
         foregroundColor: secundario ? Colors.amber.shade200 : Colors.black,
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         shape: RoundedRectangleBorder(
