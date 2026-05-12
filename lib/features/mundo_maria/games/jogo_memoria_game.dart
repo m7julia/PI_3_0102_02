@@ -1,7 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../services/nivel_service.dart';
+import 'package:rpg_game/features/mundo_luis/screens/mundo_luis.dart';
+import 'package:rpg_game/screens/home/home_screen.dart';
+import 'package:rpg_game/services/nivel_service.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class JogoMemoriaGame extends StatefulWidget {
   const JogoMemoriaGame({super.key});
@@ -11,89 +14,132 @@ class JogoMemoriaGame extends StatefulWidget {
 }
 
 class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
-  // ── constantes ────────────────────────────────────────────────────────────
-  static const String _ferradura = '🐴';
-  static const List<String> _emojisPares = ['🌻', '🌽', '🌾', '🎃'];
-  static const int _totalPares = 4; // número de pares de cultivos
+  static const String _ferraduraAsset =
+      'assets/images/icons/ferradura_icon.png';
+  static const List<String> _cultivosAssets = [
+    'assets/images/icons/abobora_icon.png',
+    'assets/images/icons/milho_icon.png',
+    'assets/images/icons/girassol_icon.png',
+    'assets/images/icons/trigo_icon.png',
+  ];
+  static const int _totalPares = 4;
 
-  // ── estado ────────────────────────────────────────────────────────────────
-  late List<String> cartas;     // emoji em cada posição (índice 0–8)
-  late List<bool> combinadas;   // carta faz parte de um par já encontrado
-  late List<bool> reveladas;    // virada temporariamente nesta tentativa
-
-  int? primeiroIndex;           // índice da 1ª carta virada na tentativa atual
-  bool bloqueado = false;       // bloqueia novos toques enquanto anima erro
-
-  int pontuacao = 0;
-  int paresEncontrados = 0;     // pares de cultivos acertados (máx 4)
-  bool faseConcluida = false;
+  late AudioPlayer _musicPlayer;
+  bool _musicaAtivada = true;
 
   @override
   void initState() {
     super.initState();
+    _precarregarImagens();
+    _iniciarMusica();
     iniciarJogo();
   }
 
-  // ── inicialização ─────────────────────────────────────────────────────────
-
-  void iniciarJogo() {
-    // 4 pares de cultivos (8 cartas) + 1 ferradura = 9 cartas
-    final baralho = [..._emojisPares, ..._emojisPares, _ferradura]
-      ..shuffle(Random());
-
-    cartas        = baralho;
-    combinadas    = List.generate(9, (_) => false);
-    reveladas     = List.generate(9, (_) => false);
-    primeiroIndex = null;
-    bloqueado     = false;
-    pontuacao     = 0;
-    paresEncontrados = 0;
-    faseConcluida = false;
+  Future<void> _iniciarMusica() async {
+    try {
+      _musicPlayer = AudioPlayer();
+      await _musicPlayer.setVolume(0.5);
+      await _musicPlayer.play(
+        AssetSource('audio/music/audio_fazenda_vale_dourado.mp3'),
+      );
+      await _musicPlayer.setReleaseMode(ReleaseMode.loop);
+    } catch (e) {
+      debugPrint('Erro ao iniciar música no Memória: $e');
+    }
   }
 
-  // ── lógica principal ──────────────────────────────────────────────────────
+  Future<void> _pararMusica() async {
+    try {
+      await _musicPlayer.stop();
+      await _musicPlayer.dispose();
+    } catch (e) {
+      debugPrint('Erro ao parar música no Memória: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _pararMusica();
+    super.dispose();
+  }
+
+  late List<String> cartas;
+  late List<bool> combinadas;
+  late List<bool> reveladas;
+
+  int? primeiroIndex;
+  bool bloqueado = false;
+
+  int pontuacao = 0;
+  int paresEncontrados = 0;
+  bool faseConcluida = false;
+
+  // Controla se o save no Firestore já foi disparado (evita chamadas duplas)
+  bool _salvoNoFirestore = false;
+
+  Future<void> _precarregarImagens() async {
+    final allAssets = [..._cultivosAssets, ..._cultivosAssets, _ferraduraAsset];
+    for (var asset in allAssets) {
+      await precacheImage(AssetImage(asset), context);
+    }
+  }
+
+  void iniciarJogo() {
+    final baralho = [..._cultivosAssets, ..._cultivosAssets, _ferraduraAsset]
+      ..shuffle(Random());
+    cartas = baralho;
+    combinadas = List.generate(9, (_) => false);
+    reveladas = List.generate(9, (_) => false);
+    primeiroIndex = null;
+    bloqueado = false;
+    pontuacao = 0;
+    paresEncontrados = 0;
+    faseConcluida = false;
+    _salvoNoFirestore = false;
+  }
+
+  String _getEmojiForAsset(String assetPath) {
+    if (assetPath == _ferraduraAsset) return '🐴';
+    if (assetPath.contains('abobora')) return '🎃';
+    if (assetPath.contains('milho')) return '🌽';
+    if (assetPath.contains('girassol')) return '🌻';
+    if (assetPath.contains('trigo')) return '🌾';
+    return '?';
+  }
 
   void _tocarCarta(int index) {
-    // ignora ferradura (só vira automaticamente), cartas já combinadas,
-    // cartas já reveladas nesta tentativa e cliques enquanto animando erro
     if (bloqueado) return;
     if (combinadas[index]) return;
     if (reveladas[index]) return;
-    if (cartas[index] == _ferradura) return;
 
     setState(() => reveladas[index] = true);
 
     if (primeiroIndex == null) {
-      // ── primeira carta da tentativa ───────────────────────────────────
       primeiroIndex = index;
       return;
     }
 
-    // ── segunda carta — avalia o par ──────────────────────────────────
     final primeiro = primeiroIndex!;
     primeiroIndex = null;
 
     if (cartas[primeiro] == cartas[index]) {
-      // PAR ENCONTRADO
       setState(() {
         combinadas[primeiro] = true;
-        combinadas[index]    = true;
+        combinadas[index] = true;
         pontuacao += 10;
         paresEncontrados++;
       });
 
-      // todos os pares de cultivos achados → ferradura vira sozinha
       if (paresEncontrados == _totalPares) {
         _revelarFerraduraEConcluir();
       }
     } else {
-      // NÃO FORMOU PAR — vira as duas cartas de volta após 900 ms
       bloqueado = true;
       Future.delayed(const Duration(milliseconds: 900), () {
         if (!mounted) return;
         setState(() {
           reveladas[primeiro] = false;
-          reveladas[index]    = false;
+          reveladas[index] = false;
           bloqueado = false;
         });
       });
@@ -101,16 +147,14 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
   }
 
   void _revelarFerraduraEConcluir() {
-    // delay antes de virar a ferradura para o jogador ver o último par
     Future.delayed(const Duration(milliseconds: 700), () {
       if (!mounted) return;
-      final idx = cartas.indexOf(_ferradura);
+      final idx = cartas.indexOf(_ferraduraAsset);
       setState(() {
-        reveladas[idx]  = true;
+        reveladas[idx] = true;
         combinadas[idx] = true;
       });
 
-      // delay antes do overlay de conclusão
       Future.delayed(const Duration(milliseconds: 900), () {
         if (!mounted) return;
         setState(() => faseConcluida = true);
@@ -118,25 +162,193 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
     });
   }
 
-  // ── build ─────────────────────────────────────────────────────────────────
+  // ─── Popup: Escolha final (sair ou continuar) ─────────────────────────────
+
+  Future<void> _mostrarPopupEscolhaFinal() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1208),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                  blurRadius: 25,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '🐴 Jogo Concluído! 🐴',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Todos os pares foram encontrados!\nPontuação final: $pontuacao pontos\n\nSua jornada na Fazenda Vale-Dourado foi registrada.\n\nDeseja encerrar sua aventura agora ou continuar explorando os mundos?',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 15,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.cloud_done,
+                      color: Colors.greenAccent,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Progresso será salvo',
+                      style: GoogleFonts.cinzel(
+                        fontSize: 11,
+                        color: Colors.greenAccent,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+                // Salvar e sair
+                Center(
+                  child: SizedBox(
+                    width: 260,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await NivelService.completarNivelMaju();
+                        if (mounted) {
+                          Navigator.of(context).pop(); // Fecha o dialog
+                          Navigator.pushAndRemoveUntil(
+                            this.context,
+                            MaterialPageRoute(
+                              builder: (_) => const HomeScreen(),
+                            ),
+                            (route) =>
+                                false, // Remove todas as rotas anteriores
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6B3F1D),
+                        foregroundColor: const Color(0xFFF8E7B9),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: const BorderSide(
+                            color: Color(0xFF9E8A4A),
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        '💾 Salvar e sair',
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Salvar e continuar para o próximo mundo (Mundo do Luis)
+                Center(
+                  child: SizedBox(
+                    width: 260,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await NivelService.completarNivelMaju();
+                        if (mounted) {
+                          Navigator.of(context).pop(); // Fecha o dialog
+                          Navigator.push(
+                            this.context,
+                            MaterialPageRoute(
+                              builder: (_) => const MundoLuisScreen(),
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6B3F1D),
+                        foregroundColor: const Color(0xFFF8E7B9),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: const BorderSide(
+                            color: Color(0xFF9E8A4A),
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        '⚔️ Salvar e continuar',
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildImageCard(String assetPath, {double size = 55}) {
+    return Image.asset(
+      assetPath,
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) =>
+          Text(_getEmojiForAsset(assetPath), style: TextStyle(fontSize: size)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Jogo da Memória',
-            style: GoogleFonts.cinzel(color: const Color(0xFFF8E7B9))),
+        title: Text(
+          'Jogo da Memória',
+          style: GoogleFonts.cinzel(
+            color: const Color(0xFFF8E7B9),
+            fontSize: 18,
+          ),
+        ),
         backgroundColor: const Color(0xFF6B3F1D),
         foregroundColor: const Color(0xFFF8E7B9),
+        toolbarHeight: 56,
         actions: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(12.0),
             child: Row(
               children: [
-                const Icon(Icons.stars, color: Color(0xFFF8E7B9)),
-                const SizedBox(width: 8),
-                Text('$pontuacao',
-                    style: GoogleFonts.cinzel(fontSize: 18, color: const Color(0xFFF8E7B9))),
+                const Icon(Icons.stars, color: Color(0xFFF8E7B9), size: 20),
+                const SizedBox(width: 6),
+                Text(
+                  '$pontuacao',
+                  style: GoogleFonts.cinzel(
+                    fontSize: 18,
+                    color: const Color(0xFFF8E7B9),
+                  ),
+                ),
               ],
             ),
           ),
@@ -145,65 +357,74 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
       body: Stack(
         children: [
           SizedBox.expand(
-            child: Image.asset('assets/images/fundo_fazenda.jpeg', fit: BoxFit.cover),
-          ),
-          Container(color: Colors.black.withOpacity(0.6)),
-
-          SafeArea(
-            child: Column(
-              children: [
-                _buildDescricaoMeta(),
-                _buildContadorPares(),
-                Expanded(child: _buildGrade()),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: ElevatedButton(
-                    onPressed: () => setState(() => iniciarJogo()),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6B3F1D),
-                      foregroundColor: const Color(0xFFF8E7B9),
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: const BorderSide(color: Color(0xFFF8E7B9), width: 1),
-                      ),
-                    ),
-                    child: Text('Novo Jogo',
-                        style: GoogleFonts.cinzel(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
+            child: Image.asset(
+              'assets/images/fundo_fazenda.jpeg',
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) =>
+                  Container(color: const Color(0xFF6B3F1D)),
             ),
           ),
-
-          if (faseConcluida) _buildFaseConcluida(),
+          Container(color: Colors.black.withValues(alpha: 0.6)),
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        children: [
+                          _buildDescricaoMeta(),
+                          _buildContadorPares(),
+                          const SizedBox(height: 12),
+                          _buildGrade(),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          if (faseConcluida) _buildOverlayConclusao(),
         ],
       ),
     );
   }
 
-  // ── widgets auxiliares ────────────────────────────────────────────────────
-
   Widget _buildDescricaoMeta() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF6B3F1D).withOpacity(0.85),
+        color: const Color(0xFF6B3F1D).withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF8E7B9).withOpacity(0.6), width: 1),
+        border: Border.all(
+          color: const Color(0xFFF8E7B9).withValues(alpha: 0.6),
+          width: 1,
+        ),
       ),
       child: Column(
         children: [
-          Text('🧠 Jogo da Memória 🧠',
-              style: GoogleFonts.cinzel(
-                  fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFFF8E7B9))),
+          Text(
+            '🧠 Jogo da Memória 🧠',
+            style: GoogleFonts.cinzel(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFFF8E7B9),
+            ),
+          ),
           const SizedBox(height: 4),
           Text(
-            'Vire 2 cartas por vez e encontre os pares.\nAche todos os 4 pares para revelar a ferradura!',
+            'Encontre os 4 pares para revelar a ferradura!',
             textAlign: TextAlign.center,
             style: GoogleFonts.cinzel(
-                fontSize: 11, color: const Color(0xFFF8E7B9).withOpacity(0.85)),
+              fontSize: 11,
+              color: const Color(0xFFF8E7B9).withValues(alpha: 0.85),
+            ),
           ),
         ],
       ),
@@ -211,39 +432,45 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
   }
 
   Widget _buildContadorPares() {
-    final ferraduraIdx = cartas.indexOf(_ferradura);
-    final ferraduraRevelada = combinadas[ferraduraIdx];
+    final ferraduraIdx = cartas.indexOf(_ferraduraAsset);
+    final ferraduraRevelada = ferraduraIdx >= 0 && combinadas[ferraduraIdx];
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.4),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF8E7B9).withOpacity(0.4), width: 1),
+        color: Colors.black.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: const Color(0xFFF8E7B9).withValues(alpha: 0.4),
+          width: 1,
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          // um indicador por par de cultivos
-          ..._emojisPares.map((emoji) {
-            final idx1 = cartas.indexOf(emoji);
-            final idx2 = cartas.lastIndexOf(emoji);
-            final encontrado = idx1 >= 0 && idx2 >= 0 && combinadas[idx1] && combinadas[idx2];
+          ..._cultivosAssets.asMap().entries.map((entry) {
+            final asset = entry.value;
+            final idx1 = cartas.indexOf(asset);
+            final idx2 = cartas.lastIndexOf(asset);
+            final encontrado =
+                idx1 >= 0 && idx2 >= 0 && combinadas[idx1] && combinadas[idx2];
             return _buildIconeContador(
-              emoji: emoji,
+              asset: asset,
               encontrado: encontrado,
-              label: encontrado ? 'Par!' : '?/?',
-              corLabel: encontrado ? Colors.greenAccent : const Color(0xFFF8E7B9).withOpacity(0.5),
+              label: encontrado ? '✓' : '?',
+              corLabel: encontrado
+                  ? Colors.greenAccent
+                  : const Color(0xFFF8E7B9).withValues(alpha: 0.5),
             );
           }),
-
-          // ferradura (revelada automaticamente ao final)
           _buildIconeContador(
-            emoji: _ferradura,
+            asset: _ferraduraAsset,
             encontrado: ferraduraRevelada,
-            label: ferraduraRevelada ? 'Única!' : '🔒',
-            corLabel: ferraduraRevelada ? Colors.amberAccent : const Color(0xFFF8E7B9).withOpacity(0.5),
+            label: ferraduraRevelada ? '✓' : '🔒',
+            corLabel: ferraduraRevelada
+                ? Colors.amberAccent
+                : const Color(0xFFF8E7B9).withValues(alpha: 0.5),
             corCheck: Colors.amberAccent,
           ),
         ],
@@ -252,7 +479,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
   }
 
   Widget _buildIconeContador({
-    required String emoji,
+    required String asset,
     required bool encontrado,
     required String label,
     required Color corLabel,
@@ -264,28 +491,32 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
         Stack(
           alignment: Alignment.center,
           children: [
-            Text(
-              emoji,
-              style: TextStyle(
-                fontSize: 22,
-                color: encontrado ? Colors.white : Colors.white.withOpacity(0.3),
-              ),
-            ),
+            _buildImageCard(asset, size: 38),
             if (encontrado)
               Positioned(
-                right: 0, top: 0,
+                right: 0,
+                top: 0,
                 child: Container(
-                  width: 12, height: 12,
-                  decoration: BoxDecoration(color: corCheck, shape: BoxShape.circle),
-                  child: const Icon(Icons.check, size: 9, color: Colors.black),
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: corCheck,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.check, size: 10, color: Colors.black),
                 ),
               ),
           ],
         ),
         const SizedBox(height: 2),
-        Text(label,
-            style: GoogleFonts.cinzel(
-                fontSize: 10, color: corLabel, fontWeight: FontWeight.bold)),
+        Text(
+          label,
+          style: GoogleFonts.cinzel(
+            fontSize: 10,
+            color: corLabel,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }
@@ -293,15 +524,17 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
   Widget _buildGrade() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: AspectRatio(
-          aspectRatio: 1,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: SizedBox(
+          width: 340, // Aumentado de 280 para 340
+          height: 340, // Aumentado de 280 para 340
           child: GridView.builder(
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
+              childAspectRatio: 1.0,
             ),
             itemCount: 9,
             itemBuilder: (context, index) => _buildCarta(index),
@@ -312,85 +545,68 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
   }
 
   Widget _buildCarta(int index) {
-    final bool visivel   = reveladas[index] || combinadas[index];
+    final bool visivel = reveladas[index] || combinadas[index];
     final bool combinada = combinadas[index];
-    final bool ehFerr    = cartas[index] == _ferradura;
+    final bool ehFerr = cartas[index] == _ferraduraAsset;
 
-    // borda e glow variam conforme o estado da carta
     Color borderColor = const Color(0xFFF8E7B9);
     double borderWidth = 2;
-    Color bgColor = const Color(0xFF8B5A2B).withOpacity(0.9);
-    List<BoxShadow> sombras = [
-      BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 5, offset: const Offset(2, 2)),
-    ];
+    Color bgColor = const Color(0xFF8B5A2B).withValues(alpha: 0.9);
 
     if (combinada && ehFerr) {
       borderColor = Colors.amberAccent;
-      borderWidth = 3;
-      bgColor = Colors.amber.withOpacity(0.25);
-      sombras = [BoxShadow(color: Colors.amberAccent.withOpacity(0.5), blurRadius: 12, spreadRadius: 3)];
+      borderWidth = 2.5;
+      bgColor = Colors.amber.withValues(alpha: 0.25);
     } else if (combinada) {
       borderColor = Colors.greenAccent;
-      borderWidth = 3;
-      bgColor = Colors.green.withOpacity(0.2);
-      sombras = [BoxShadow(color: Colors.greenAccent.withOpacity(0.4), blurRadius: 10, spreadRadius: 2)];
+      borderWidth = 2.5;
+      bgColor = Colors.green.withValues(alpha: 0.2);
     } else if (reveladas[index]) {
       borderColor = Colors.white;
-      borderWidth = 2.5;
-      bgColor = const Color(0xFF6B3F1D).withOpacity(0.9);
+      borderWidth = 2;
+      bgColor = const Color(0xFF6B3F1D).withValues(alpha: 0.9);
     }
 
     return GestureDetector(
       onTap: () => _tocarCarta(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
+      child: Container(
         decoration: BoxDecoration(
           border: Border.all(color: borderColor, width: borderWidth),
-          borderRadius: BorderRadius.circular(16),
-          color: visivel ? bgColor : const Color(0xFF8B5A2B).withOpacity(0.9),
-          boxShadow: sombras,
+          borderRadius: BorderRadius.circular(14),
+          color: visivel
+              ? bgColor
+              : const Color(0xFF8B5A2B).withValues(alpha: 0.9),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 6,
+              offset: const Offset(2, 2),
+            ),
+          ],
         ),
-        child: visivel
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(cartas[index], style: const TextStyle(fontSize: 48)),
-                    if (ehFerr)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          'Única!',
-                          style: GoogleFonts.cinzel(
-                              fontSize: 12,
-                              color: Colors.amberAccent,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                  ],
-                ),
-              )
-            : Center(
-                child: Icon(
+        child: Center(
+          child: visivel
+              ? _buildImageCard(cartas[index], size: 50)
+              : Icon(
                   Icons.question_mark_rounded,
-                  size: 48,
-                  color: const Color(0xFFF8E7B9).withOpacity(0.8),
+                  size: 38,
+                  color: const Color(0xFFF8E7B9).withValues(alpha: 0.7),
                 ),
-              ),
+        ),
       ),
     );
   }
 
-  Widget _buildFaseConcluida() {
+  Widget _buildOverlayConclusao() {
     return Container(
-      color: Colors.black.withOpacity(0.78),
+      color: Colors.black.withValues(alpha: 0.75),
       child: Center(
         child: Container(
-          margin: const EdgeInsets.all(32),
-          padding: const EdgeInsets.all(28),
+          margin: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: const Color(0xFF6B3F1D),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(color: const Color(0xFFF8E7B9), width: 2),
           ),
           child: Column(
@@ -400,35 +616,52 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                 '🌟 Nível Concluído! 🌟',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.cinzelDecorative(
-                    fontSize: 24, fontWeight: FontWeight.bold, color: const Color(0xFFF8E7B9)),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFFF8E7B9),
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 '🐴 A ferradura trouxe sorte! 🐴',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.cinzel(
-                    fontSize: 15,
-                    color: Colors.amberAccent,
-                    fontWeight: FontWeight.bold),
+                  fontSize: 13,
+                  color: Colors.amberAccent,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 10),
               Text(
-                'Todos os pares foram encontrados!\nPontuação: $pontuacao pontos',
+                'Pontuação: $pontuacao',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.cinzel(
-                    fontSize: 14, color: const Color(0xFFF8E7B9).withOpacity(0.9)),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => setState(() => iniciarJogo()),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF8E7B9),
-                  foregroundColor: const Color(0xFF6B3F1D),
-                  padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  fontSize: 13,
+                  color: const Color(0xFFF8E7B9).withValues(alpha: 0.9),
                 ),
-                child: Text('Jogar Novamente',
-                    style: GoogleFonts.cinzel(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => _mostrarPopupEscolhaFinal(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6B3F1D),
+                  foregroundColor: const Color(0xFFF8E7B9),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: const BorderSide(color: Color(0xFFF8E7B9), width: 1),
+                  ),
+                ),
+                child: Text(
+                  'Continuar ➡️',
+                  style: GoogleFonts.cinzel(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
