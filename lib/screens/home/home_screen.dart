@@ -11,9 +11,8 @@ import '../game/../game/personagem/criar_personagem_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-// Adicione esses imports no topo do arquivo home_screen.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:rpg_game/services/personagem_service.dart'; // ajuste o path
+import 'package:rpg_game/services/personagem_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -110,10 +109,6 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(builder: (_) => const CriarPersonagemScreen()),
     );
   }
-
-  // ──────────────────────────────────────────────
-  // GEOLOCALIZAÇÃO
-  // ──────────────────────────────────────────────
 
   Future<Position?> _solicitarLocalizacao() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -261,10 +256,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               'MagIAlurA',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.cinzelDecorative(
-                                fontSize: 45,
+                                fontSize: 38,
                                 fontWeight: FontWeight.bold,
                                 color: const Color(0xFFF8E7B9),
-                                letterSpacing: 20,
+                                letterSpacing: 3,
                                 shadows: [
                                   for (int i = 1; i <= 10; i++)
                                     Shadow(
@@ -289,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 115),
+                          const SizedBox(height: 50),
 
                           Container(
                             width: 300,
