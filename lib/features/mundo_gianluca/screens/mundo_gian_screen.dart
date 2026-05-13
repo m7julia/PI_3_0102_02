@@ -192,8 +192,7 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
         true,
         Timestamp.now(),
 
-        // MANTIVE STRING PARA NÃO DAR CONFLITO
-        '[22.83365° S, 47.05197° W]'
+        '[22.83239° S, 47.05127° W]'
       ]
     });
 
