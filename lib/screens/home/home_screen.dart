@@ -320,35 +320,20 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 const SizedBox(height: 16),
                                 _rpgMenuButton(
-                                  text: 'Fazenda vale dourado',
-                                  onPressed: irParaMundoMaria,
-                                ),
-                                const SizedBox(height: 16),
-                                _rpgMenuButton(
-                                  text: 'Terrasen',
-                                  onPressed: irParaMundoAna,
-                                ),
-
-                                const SizedBox(height: 16),
-                                _rpgMenuButton(
-                                  text: 'Mundo Gianluca',
-                                  onPressed: irParaMundoGianluca,
-                                ),
-                                const SizedBox(height: 16),
-                                _rpgMenuButton(
-                                  text: 'Bar pirata',
-                                  onPressed: irParaMundoLuis,
-                                ),
-                                const SizedBox(height: 16),
-                                _rpgMenuButton(
                                   text: 'Estacionamento',
                                   onPressed: irParaMundoRafa,
                                 ),
                                 const SizedBox(height: 16),
                                 _rpgMenuButton(
-                                  text: 'Configurações',
-                                  onPressed: () {},
+                                  text: 'Fazenda vale dourado',
+                                  onPressed: irParaMundoMaria,
                                 ),
+
+                                // const SizedBox(height: 16),
+                                // _rpgMenuButton(
+                                //   text: 'Configurações',
+                                //   onPressed: () {},
+                                // ),
                               ],
                             ),
                           ),
@@ -430,13 +415,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// ══════════════════════════════════════════════════════════
-// DIÁLOGO DO MAPA
-// ══════════════════════════════════════════════════════════
-// ══════════════════════════════════════════════════════════
-// MODELO DOS AMBIENTES (gerado dinamicamente do Firebase)
-// ══════════════════════════════════════════════════════════
-
 class _Ambiente {
   final String nome;
   final String nomeLegivel;
@@ -450,10 +428,6 @@ class _Ambiente {
     required this.concluido,
   });
 }
-
-// ══════════════════════════════════════════════════════════
-// DIÁLOGO DO MAPA — dados do Firebase
-// ══════════════════════════════════════════════════════════
 
 class _MapaDialog extends StatefulWidget {
   final double latitude;
