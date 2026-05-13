@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:rpg_game/features/mundo_maria/screens/mundo_maria.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:audioplayers/audioplayers.dart';
 
@@ -818,7 +819,12 @@ Widget _buildNpc() {
 
                       Navigator.of(context).pop();
 
-                      Navigator.of(this.context).pop();
+                      Navigator.push(
+                        this.context,
+                        MaterialPageRoute(
+                          builder: (_) => MundoMariaScreen(),
+                        ),
+                      );
                     }
                   },
 
