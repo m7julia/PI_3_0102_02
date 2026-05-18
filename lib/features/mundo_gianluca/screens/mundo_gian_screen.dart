@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rpg_game/features/mundo_maria/screens/mundo_maria.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 // ================= ENUMS E CLASSES AUXILIARES =================
 enum _Etapa {
@@ -104,7 +105,7 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
 
     final prefs = await SharedPreferences.getInstance();
 
-      _personagemId = 'Z4zP83zZeHKjXMv7ALoM';
+      _personagemId = FirebaseAuth.instance.currentUser?.uid;
     
     if (_personagemId == null) {
 
