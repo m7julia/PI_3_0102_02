@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -374,7 +373,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
     );
   }
 
-  // FIRESTORE — salva progresso do Bar Pirata
   Future<void> _salvarProgressoBarPirata() async {
     if (_personagemId == null) return;
 

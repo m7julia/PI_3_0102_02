@@ -5,6 +5,7 @@ import 'package:audioplayers/audioplayers.dart';
 import '../../../services/personagem_service.dart';
 import '../../../models/personagem.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:rpg_game/features/mundo_rafael/screens/mundo_rafael_screen.dart';
 
 class CriarPersonagemScreen extends StatefulWidget {
   const CriarPersonagemScreen({super.key});
@@ -224,7 +225,6 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen>
 
     final personagem = Personagem(
       nome: nomeJogador,
-      // criadoEm será definido automaticamente pelo service
     );
 
     final personagemId = await service.criarPersonagem(personagem);
@@ -236,7 +236,13 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen>
     _mostrarMensagem('Personagem criado com sucesso!');
 
     if (!mounted) return;
-    Navigator.pop(context);
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const MundoRafaelScreen(),
+      ),
+    );
   } catch (e) {
     _mostrarMensagem('Erro ao salvar: $e');
   } finally {
