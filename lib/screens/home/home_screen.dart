@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +9,8 @@ import 'package:rpg_game/features/mundo_rafael/screens/mundo_rafael_screen.dart'
 import 'package:rpg_game/features/mundo_luis/screens/mundo_luis.dart';
 import 'package:rpg_game/features/mundo_gianluca/screens/mundo_gian_screen.dart';
 import '../game/../game/personagem/criar_personagem_screen.dart';
+import 'package:rpg_game/features/mundo_final/screens/mundo_final_screen.dart';
+import '../creditos/creditos_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -33,6 +36,113 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => estaMutado = true);
     } else {
       tocarMusica();
+    }
+  }
+
+  Future<void> irParaContinuar() async {
+    const ordemMundos = [
+      'estacionamento_caotico',
+      'terrasen',
+      'conservatorio_diminuto',
+      'fazenda_vale_dourado',
+      'bar_pirata',
+    ];
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Center(
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A0E06),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFF8E7B9), width: 1.5),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(color: Color(0xFFF8E7B9)),
+              const SizedBox(height: 16),
+              Text(
+                'Carregando jornada...',
+                style: GoogleFonts.cinzel(
+                  color: const Color(0xFFF8E7B9),
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final personagemId = FirebaseAuth.instance.currentUser?.uid;
+
+      if (personagemId == null) {
+        Navigator.pop(context);
+        _mostrarSnackBar('Nenhum jogador logado!');
+        return;
+      }
+
+      final doc = await FirebaseFirestore.instance
+          .collection('personagens')
+          .doc(personagemId)
+          .get();
+
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      if (!doc.exists) {
+        _mostrarSnackBar('Nenhum save encontrado. Inicie uma nova jornada!');
+        return;
+      }
+
+      final data = doc.data() ?? {};
+      String mundoDestino = ordemMundos.first;
+      bool todosConcluidos = true;
+
+      for (final mundo in ordemMundos) {
+        final campo = data[mundo];
+        final concluido = (campo is List && campo.isNotEmpty)
+            ? campo[0] == true
+            : false;
+        if (!concluido) {
+          mundoDestino = mundo;
+          todosConcluidos = false;
+          break;
+        }
+      }
+
+      await player.stop();
+      if (!mounted) return;
+
+      if (todosConcluidos) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MundoFinalScreen()),
+        );
+        return;
+      }
+
+      final rotas = <String, Widget Function()>{
+        'estacionamento_caotico': () => const MundoRafaelScreen(),
+        'terrasen': () => const MundoAnaScreen(),
+        'conservatorio_diminuto': () => const MundoGianlucaScreen() ,
+        'fazenda_vale_dourado': () => const MundoMariaScreen(),
+        'bar_pirata': () => const MundoLuisScreen(),
+      };
+
+      final builder = rotas[mundoDestino];
+      if (builder != null) {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => builder()));
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        _mostrarSnackBar('Erro ao carregar jornada: $e');
+      }
     }
   }
 
@@ -110,6 +220,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> irParaCreditos() async {
+    await player.stop();
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CreditosScreen()),
+    );
+  }
+
   Future<Position?> _solicitarLocalizacao() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -153,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (_) => _MapaDialog(
         latitude: position.latitude,
         longitude: position.longitude,
-        personagemId: 'Z4zP83zZeHKjXMv7ALoM',
+        personagemId: FirebaseAuth.instance.currentUser?.uid ?? '',
       ),
     );
   }
@@ -316,24 +435,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const SizedBox(height: 16),
                                 _rpgMenuButton(
                                   text: 'Continuar',
-                                  onPressed: () {},
-                                ),
-                                const SizedBox(height: 16),
-                                _rpgMenuButton(
-                                  text: 'Estacionamento',
-                                  onPressed: irParaMundoRafa,
-                                ),
-                                const SizedBox(height: 16),
-                                _rpgMenuButton(
-                                  text: 'Fazenda vale dourado',
-                                  onPressed: irParaMundoMaria,
+                                  onPressed: irParaContinuar,
                                 ),
 
-                                // const SizedBox(height: 16),
-                                // _rpgMenuButton(
-                                //   text: 'Configurações',
-                                //   onPressed: () {},
-                                // ),
+                                const SizedBox(height: 16),
+                                _rpgMenuButton(
+                                  text: 'Créditos',
+                                  onPressed: irParaCreditos,
+                                ),
                               ],
                             ),
                           ),
