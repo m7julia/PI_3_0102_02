@@ -181,12 +181,101 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
 
   // Escolhas interacao com o NPC
 
-  void escolhaPedirAjuda() {
+  Future<void> escolhaPedirAjuda() async {
     setState(() {
       _hp = (_hp + curaAjuda).clamp(0, hpInicial);
       _temChave = true;
       _etapa = _Etapa.resolucaoAjuda;
     });
+    await _mostrarPopupChave();
+  }
+
+  Future<void> _mostrarPopupChave() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.amber.shade300.withValues(alpha: 0.7),
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.amber.withValues(alpha: 0.3),
+                  blurRadius: 25,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(
+                  'assets/images/chave_estacionamento.png',
+                  height: 150,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => Icon(
+                    Icons.vpn_key,
+                    size: 100,
+                    color: Colors.amber.shade300,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Chave do Estacionamento Obtida',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.amber.shade200,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'O motorista te entrega a chave do estacionamento.\n\n'
+                  'Ela pode te salvar de uma falha no caminho.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.arrow_forward, size: 18),
+                  label: const Text(
+                    'Continuar',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amber.shade700,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 26,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: Colors.amber, width: 1.5),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void escolhaIgnorar() {
@@ -300,6 +389,12 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
       _etapa == _Etapa.resultadoReroll ||
       _etapa == _Etapa.resultadoSucesso;
 
+  bool get _mostrarMotorista =>
+      _etapa == _Etapa.encontroNpc ||
+      _etapa == _Etapa.resolucaoAjuda ||
+      _etapa == _Etapa.resolucaoIgnorar ||
+      _etapa == _Etapa.resolucaoEnfrentar;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -346,7 +441,41 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(20),
-              child: Column(children: [const Spacer(), _caixaDialogo()]),
+              child: Column(
+                children: [
+                  const Spacer(),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeOut,
+                    alignment: Alignment.bottomLeft,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 500),
+                      opacity: _mostrarMotorista ? 1 : 0,
+                      child: Align(
+                        alignment: Alignment.bottomLeft,
+                        child: Transform.translate(
+                          offset: const Offset(0, 14),
+                          child: Image.asset(
+                            'assets/images/personagem_rafa.png',
+                            height: _mostrarMotorista ? 260 : 0,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, _, _) => const SizedBox(
+                              height: 260,
+                              width: 160,
+                              child: Icon(
+                                Icons.person,
+                                size: 100,
+                                color: Colors.amber,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  _caixaDialogo(),
+                ],
+              ),
             ),
           ),
         ],
