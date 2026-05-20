@@ -18,22 +18,6 @@ class CreditosScreen extends StatelessWidget {
 
           Container(color: Colors.black.withValues(alpha: 0.45)),
 
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new,
-                    color: Color(0xFFF8E7B9),
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-            ),
-          ),
-
           // Conteúdo scrollável
           SafeArea(
             child: SingleChildScrollView(
@@ -66,16 +50,30 @@ class CreditosScreen extends StatelessWidget {
 
                   const SizedBox(height: 32),
 
-                  // ── Equipe ──
                   _buildCard(
                     titulo: 'A EQuipe',
                     conteudo: Column(
                       children: [
-                        _buildMembro('ANA CAROLINA FERREIRA ALVES BARCARO', 'TERRASEN'),
-                        _buildMembro('GIANLUCA PRESTELLO CRUGEL', 'CONSERVATÓRIO DIMINUTO'),
-                        _buildMembro('LUIS FILIPPI AGUIAR DA ROCHA', 'BAR PIRATA'),
-                        _buildMembro('MARIA JULIA HOFSTETTER TREVISAN PEREIRA', 'FAZENDA VALE DOURADO'),
-                        _buildMembro('RAFAEL FERREIRA LUCIETTO', 'ESTACIONAMENTO CAÓTICO'),
+                        _buildMembro(
+                          'ANA CAROLINA FERREIRA ALVES BARCARO',
+                          'TERRASEN',
+                        ),
+                        _buildMembro(
+                          'GIANLUCA PRESTELLO CRUGEL',
+                          'CONSERVATÓRIO DIMINUTO',
+                        ),
+                        _buildMembro(
+                          'LUIS FILIPPI AGUIAR DA ROCHA',
+                          'BAR PIRATA',
+                        ),
+                        _buildMembro(
+                          'MARIA JULIA HOFSTETTER TREVISAN PEREIRA',
+                          'FAZENDA VALE DOURADO',
+                        ),
+                        _buildMembro(
+                          'RAFAEL FERREIRA LUCIETTO',
+                          'ESTACIONAMENTO CAÓTICO',
+                        ),
                       ],
                     ),
                   ),
@@ -129,6 +127,23 @@ class CreditosScreen extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+
+          // Botão de voltar (por último para ficar em cima)
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new,
+                    color: Color(0xFFF8E7B9),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
               ),
             ),
           ),

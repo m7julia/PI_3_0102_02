@@ -129,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final rotas = <String, Widget Function()>{
         'estacionamento_caotico': () => const MundoRafaelScreen(),
         'terrasen': () => const MundoAnaScreen(),
-        'conservatorio_diminuto': () => const MundoGianlucaScreen() ,
+        'conservatorio_diminuto': () => const MundoGianlucaScreen(),
         'fazenda_vale_dourado': () => const MundoMariaScreen(),
         'bar_pirata': () => const MundoLuisScreen(),
       };
@@ -174,7 +174,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ← novo
   Future<void> irParaMundoAna() async {
     await player.stop();
     if (!mounted) return;
@@ -297,6 +296,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final menuWidth = size.width * 0.80 > 300 ? 300.0 : size.width * 0.80;
+    final titleFontSize = (size.width * 0.09).clamp(24.0, 44.0);
+
     return Scaffold(
       body: Stack(
         children: [
@@ -342,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                // ── BOTÃO DO MAPA (topo esquerdo) ──
+                // Botão do mapa (topo esquerdo)
                 Positioned(
                   top: 16,
                   left: 16,
@@ -359,8 +362,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 Center(
                   child: SingleChildScrollView(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 74,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: size.width * 0.08,
                         vertical: 24,
                       ),
                       child: Column(
@@ -375,7 +378,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               'MagIAlurA',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.cinzelDecorative(
-                                fontSize: 38,
+                                fontSize: titleFontSize,
                                 fontWeight: FontWeight.bold,
                                 color: const Color(0xFFF8E7B9),
                                 letterSpacing: 3,
@@ -406,7 +409,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 50),
 
                           Container(
-                            width: 300,
+                            width: menuWidth,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 10,
                               vertical: 15,
@@ -437,7 +440,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   text: 'Continuar',
                                   onPressed: irParaContinuar,
                                 ),
-
                                 const SizedBox(height: 16),
                                 _rpgMenuButton(
                                   text: 'Créditos',
@@ -459,7 +461,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ── Widget helper: ícone RPG (mudo / mapa) ──
   Widget _rpgIconButton({
     required IconData icon,
     required VoidCallback onPressed,
@@ -541,7 +542,7 @@ class _Ambiente {
 class _MapaDialog extends StatefulWidget {
   final double latitude;
   final double longitude;
-  final String personagemId; // ID do documento do personagem logado
+  final String personagemId;
 
   const _MapaDialog({
     required this.latitude,
@@ -554,7 +555,6 @@ class _MapaDialog extends StatefulWidget {
 }
 
 class _MapaDialogState extends State<_MapaDialog> {
-  // Mapeamento: chave Firestore → nome legível
   static const Map<String, String> _nomesLegiveis = {
     'bar_pirata': 'Bar Pirata',
     'conservatorio_diminuto': 'Conservatório Diminuto',
@@ -630,7 +630,6 @@ class _MapaDialogState extends State<_MapaDialog> {
     }
   }
 
-  /// Converte string "[22.83365° S, 47.05197° W]" → LatLng
   LatLng? _parsearGeoString(String raw) {
     try {
       final limpo = raw.replaceAll(RegExp(r'[°\[\]]'), '').trim();
@@ -654,214 +653,230 @@ class _MapaDialogState extends State<_MapaDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
     final ponto = LatLng(widget.latitude, widget.longitude);
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(20),
-      child: Container(
-        height: 500,
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A0E06),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: const Color.fromARGB(255, 158, 138, 74),
-            width: 2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.7),
-              blurRadius: 24,
-              offset: const Offset(0, 12),
-            ),
-          ],
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: size.width * 0.05,
+        vertical: size.height * 0.05,
+      ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: size.height * 0.80,
+          maxWidth: 640,
         ),
-        child: Column(
-          children: [
-            // Cabeçalho
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.my_location,
-                    color: Color(0xFFF8E7B9),
-                    size: 22,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Mapa dos Mundos',
-                      style: GoogleFonts.cinzelDecorative(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFFF8E7B9),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A0E06),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: const Color.fromARGB(255, 158, 138, 74),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.7),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // Cabeçalho
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.my_location,
+                      color: Color(0xFFF8E7B9),
+                      size: 22,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Mapa dos Mundos',
+                        style: GoogleFonts.cinzelDecorative(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFFF8E7B9),
+                        ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, color: Color(0xFFF8E7B9)),
-                  ),
-                ],
-              ),
-            ),
-
-            // Legenda
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Row(
-                children: [
-                  _legendaItem(
-                    cor: const Color(0xFF4CAF50),
-                    icone: Icons.place,
-                    texto: 'Desbloqueado',
-                  ),
-                  const SizedBox(width: 16),
-                  _legendaItem(
-                    cor: const Color(0xFF9E9E9E),
-                    icone: Icons.lock,
-                    texto: 'Bloqueado',
-                  ),
-                  const SizedBox(width: 16),
-                  _legendaItem(
-                    cor: const Color(0xFF2196F3),
-                    icone: Icons.my_location,
-                    texto: 'Você',
-                  ),
-                ],
-              ),
-            ),
-
-            // Mapa ou estado de carregamento/erro
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(18),
-                  bottomRight: Radius.circular(18),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close, color: Color(0xFFF8E7B9)),
+                    ),
+                  ],
                 ),
-                child: _carregando
-                    ? _telaCarregando()
-                    : _erro != null
-                    ? _telaErro()
-                    : FlutterMap(
-                        options: MapOptions(
-                          initialCenter: ponto,
-                          initialZoom: 16,
-                        ),
-                        children: [
-                          TileLayer(
-                            urlTemplate:
-                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            userAgentPackageName: 'com.exemplo.magialura',
-                          ),
+              ),
 
-                          // Círculos de 10m
-                          CircleLayer(
-                            circles: _ambientes
-                                .map(
-                                  (a) => CircleMarker(
+              // Legenda
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
+                child: Row(
+                  children: [
+                    _legendaItem(
+                      cor: const Color(0xFF4CAF50),
+                      icone: Icons.place,
+                      texto: 'Desbloqueado',
+                    ),
+                    const SizedBox(width: 16),
+                    _legendaItem(
+                      cor: const Color(0xFF9E9E9E),
+                      icone: Icons.lock,
+                      texto: 'Bloqueado',
+                    ),
+                    const SizedBox(width: 16),
+                    _legendaItem(
+                      cor: const Color(0xFF2196F3),
+                      icone: Icons.my_location,
+                      texto: 'Você',
+                    ),
+                  ],
+                ),
+              ),
+
+              // Mapa ou estado de carregamento/erro
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(18),
+                    bottomRight: Radius.circular(18),
+                  ),
+                  child: _carregando
+                      ? _telaCarregando()
+                      : _erro != null
+                      ? _telaErro()
+                      : FlutterMap(
+                          options: MapOptions(
+                            initialCenter: ponto,
+                            initialZoom: 16,
+                          ),
+                          children: [
+                            TileLayer(
+                              urlTemplate:
+                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              userAgentPackageName: 'com.exemplo.magialura',
+                            ),
+
+                            // Círculos de 10m
+                            CircleLayer(
+                              circles: _ambientes
+                                  .map(
+                                    (a) => CircleMarker(
+                                      point: a.posicao,
+                                      radius: 10,
+                                      useRadiusInMeter: true,
+                                      color: a.concluido
+                                          ? const Color(
+                                              0xFF4CAF50,
+                                            ).withOpacity(0.20)
+                                          : const Color(
+                                              0xFF9E9E9E,
+                                            ).withOpacity(0.20),
+                                      borderColor: a.concluido
+                                          ? const Color(0xFF4CAF50)
+                                          : const Color(0xFF9E9E9E),
+                                      borderStrokeWidth: 2,
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+
+                            // Marcadores
+                            MarkerLayer(
+                              markers: [
+                                // Jogador
+                                Marker(
+                                  point: ponto,
+                                  width: 48,
+                                  height: 48,
+                                  child: const Icon(
+                                    Icons.my_location,
+                                    color: Color(0xFF2196F3),
+                                    size: 36,
+                                  ),
+                                ),
+
+                                // Ambientes
+                                ..._ambientes.map(
+                                  (a) => Marker(
                                     point: a.posicao,
-                                    radius: 10,
-                                    useRadiusInMeter: true,
-                                    color: a.concluido
-                                        ? const Color(
-                                            0xFF4CAF50,
-                                          ).withOpacity(0.20)
-                                        : const Color(
-                                            0xFF9E9E9E,
-                                          ).withOpacity(0.20),
-                                    borderColor: a.concluido
-                                        ? const Color(0xFF4CAF50)
-                                        : const Color(0xFF9E9E9E),
-                                    borderStrokeWidth: 2,
-                                  ),
-                                )
-                                .toList(),
-                          ),
-
-                          // Marcadores
-                          MarkerLayer(
-                            markers: [
-                              // Jogador
-                              Marker(
-                                point: ponto,
-                                width: 48,
-                                height: 48,
-                                child: const Icon(
-                                  Icons.my_location,
-                                  color: Color(0xFF2196F3),
-                                  size: 36,
-                                ),
-                              ),
-
-                              // Ambientes
-                              ..._ambientes.map(
-                                (a) => Marker(
-                                  point: a.posicao,
-                                  width: 80,
-                                  height: 70,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 4,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.65),
-                                          borderRadius: BorderRadius.circular(
-                                            4,
+                                    width: 80,
+                                    height: 70,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withOpacity(
+                                              0.65,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            a.nomeLegivel,
+                                            style: GoogleFonts.cinzel(
+                                              fontSize: 7,
+                                              color: a.concluido
+                                                  ? const Color(0xFF4CAF50)
+                                                  : const Color(0xFF9E9E9E),
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
-                                        child: Text(
-                                          a.nomeLegivel,
-                                          style: GoogleFonts.cinzel(
-                                            fontSize: 7,
-                                            color: a.concluido
-                                                ? const Color(0xFF4CAF50)
-                                                : const Color(0xFF9E9E9E),
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
+                                        const SizedBox(height: 2),
+                                        Icon(
+                                          a.concluido
+                                              ? Icons.place
+                                              : Icons.lock,
+                                          color: a.concluido
+                                              ? const Color(0xFF4CAF50)
+                                              : const Color(0xFF9E9E9E),
+                                          size: 28,
                                         ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Icon(
-                                        a.concluido ? Icons.place : Icons.lock,
-                                        color: a.concluido
-                                            ? const Color(0xFF4CAF50)
-                                            : const Color(0xFF9E9E9E),
-                                        size: 28,
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-              ),
-            ),
-
-            // Coordenadas
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Text(
-                '${widget.latitude.toStringAsFixed(5)}, '
-                '${widget.longitude.toStringAsFixed(5)}',
-                style: GoogleFonts.cinzel(
-                  fontSize: 12,
-                  color: const Color(0xFFF8E7B9).withOpacity(0.6),
-                  letterSpacing: 1,
+                              ],
+                            ),
+                          ],
+                        ),
                 ),
               ),
-            ),
-          ],
+
+              // Coordenadas
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  '${widget.latitude.toStringAsFixed(5)}, '
+                  '${widget.longitude.toStringAsFixed(5)}',
+                  style: GoogleFonts.cinzel(
+                    fontSize: 12,
+                    color: const Color(0xFFF8E7B9).withOpacity(0.6),
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

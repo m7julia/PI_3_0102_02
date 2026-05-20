@@ -1,7 +1,6 @@
-import 'dart:math';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:audioplayers/audioplayers.dart';
 import '../../../services/personagem_service.dart';
 import '../../../models/personagem.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,56 +13,19 @@ class CriarPersonagemScreen extends StatefulWidget {
   State<CriarPersonagemScreen> createState() => _CriarPersonagemScreenState();
 }
 
-class _CriarPersonagemScreenState extends State<CriarPersonagemScreen>
-    with TickerProviderStateMixin {
+class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
   final TextEditingController nomeController = TextEditingController();
 
   bool _salvando = false;
   int etapa = 0;
   String nomeJogador = '';
 
-  String textoExibido = '';
-  bool textoTerminou = false;
+  String textoVisivel = '';
+  bool textoCompleto = false;
 
-  bool mostrarNpc = false;
-  bool mostrarDialogo = false;
+  Timer? timerTexto;
 
-  bool _somAtivado = false;
-  bool _audioLiberado = false;
-  bool _tocandoSomLetra = false;
-
-  late AnimationController _npcAnimationController;
-  late AnimationController _buttonAnimationController;
-  late AnimationController _npcShakeController;
-  late Animation<double> _npcScaleAnimation;
-  late Animation<double> _npcRotateAnimation;
-  late Animation<double> _npcShakeAnimation;
-  late Animation<double> _buttonScaleAnimation;
-
-  late AudioPlayer _audioPlayer;
-
-  Future<void> _toggleSom() async {
-    if (!_somAtivado) {
-      try {
-        await _audioPlayer.setVolume(0.01);
-        await _audioPlayer.play(AssetSource('audio/typewriter_click.mp3'));
-        await Future.delayed(const Duration(milliseconds: 80));
-        await _audioPlayer.stop();
-        await _audioPlayer.setVolume(1.0);
-
-        setState(() {
-          _somAtivado = true;
-          _audioLiberado = true;
-        });
-      } catch (e) {
-        debugPrint('Erro ao ativar som: $e');
-      }
-    } else {
-      setState(() {
-        _somAtivado = false;
-      });
-    }
-  }
+  bool mostrarConteudo = false;
 
   final List<String> falasIniciais = [
     'Saudações, viajante...',
@@ -71,132 +33,64 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen>
     'Antes de começar sua jornada, diga-me: qual é o seu nome?',
   ];
 
+  String get falaAtual {
+    if (etapa == 3) {
+      return 'Muito bem... então você será conhecido como $nomeJogador.\nSua jornada está prestes a começar.';
+    }
+    return falasIniciais[etapa];
+  }
+
   @override
   void initState() {
     super.initState();
-
-    _npcAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-
-    _npcScaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _npcAnimationController,
-        curve: Curves.elasticOut,
-      ),
-    );
-
-    _npcRotateAnimation = Tween<double>(begin: -0.05, end: 0.0).animate(
-      CurvedAnimation(parent: _npcAnimationController, curve: Curves.easeOut),
-    );
-
-    _buttonAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-
-    _buttonScaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _buttonAnimationController,
-        curve: Curves.elasticOut,
-      ),
-    );
-
-    _npcShakeController = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
-    );
-
-    _npcShakeAnimation = Tween<double>(begin: 0, end: 10).animate(
-      CurvedAnimation(parent: _npcShakeController, curve: Curves.elasticIn),
-    );
-
-    _audioPlayer = AudioPlayer();
-
     _iniciarCena();
   }
 
   Future<void> _iniciarCena() async {
-    await Future.delayed(const Duration(milliseconds: 200));
-
+    await Future.delayed(const Duration(milliseconds: 400));
     if (!mounted) return;
-    setState(() => mostrarNpc = true);
-    _npcAnimationController.forward();
-
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    if (!mounted) return;
-    setState(() => mostrarDialogo = true);
-    _buttonAnimationController.forward();
-
-    await _animarTexto(textoAtualCompleto);
+    setState(() => mostrarConteudo = true);
+    mostrarTexto(falaAtual);
   }
 
-  String get textoAtualCompleto {
-    if (etapa == 3) {
-      return 'Muito bem... então você será conhecido como $nomeJogador.\nSua jornada está prestes a começar.';
-    }
+  void mostrarTexto(String texto) {
+    timerTexto?.cancel();
+    textoVisivel = '';
+    textoCompleto = false;
 
-    return falasIniciais[etapa];
-  }
+    int index = 0;
 
-  Future<void> _tocarSomLetra() async {
-    if (!_somAtivado || !_audioLiberado || _tocandoSomLetra) return;
-
-    try {
-      _tocandoSomLetra = true;
-      await _audioPlayer.stop();
-      await _audioPlayer.play(AssetSource('audio/typewriter_click.mp3'));
-    } catch (e) {
-      debugPrint('Erro ao tocar som da letra: $e');
-    } finally {
-      _tocandoSomLetra = false;
-    }
-  }
-
-  Future<void> _animarTexto(String texto) async {
-    setState(() {
-      textoExibido = '';
-      textoTerminou = false;
-    });
-
-    for (int i = 0; i < texto.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 35));
-
-      if (!mounted) return;
-
-      setState(() {
-        textoExibido += texto[i];
-      });
-
-      if (texto[i] != ' ' && i % 2 == 0) {
-        _tocarSomLetra();
+    timerTexto = Timer.periodic(const Duration(milliseconds: 35), (timer) {
+      if (index < texto.length) {
+        setState(() {
+          textoVisivel += texto[index];
+        });
+        index++;
+      } else {
+        timer.cancel();
+        setState(() {
+          textoCompleto = true;
+        });
       }
-    }
-
-    if (!mounted) return;
-
-    setState(() {
-      textoTerminou = true;
     });
   }
 
-  Future<void> _animarNpcShake() async {
-    _npcShakeController.reset();
-    await _npcShakeController.forward();
+  void acelerarTexto() {
+    if (!textoCompleto) {
+      timerTexto?.cancel();
+      setState(() {
+        textoVisivel = falaAtual;
+        textoCompleto = true;
+      });
+    }
   }
 
   void avancarDialogo() {
-    if (!textoTerminou) return;
+    if (!textoCompleto) return;
 
     if (etapa < 2) {
-      _animarNpcShake();
-      setState(() {
-        etapa++;
-      });
-
-      _animarTexto(textoAtualCompleto);
+      setState(() => etapa++);
+      mostrarTexto(falaAtual);
     }
   }
 
@@ -208,59 +102,39 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen>
       return;
     }
 
-    await _animarNpcShake();
     setState(() {
       nomeJogador = nome;
       etapa = 3;
     });
 
-    await _animarTexto(textoAtualCompleto);
+    mostrarTexto(falaAtual);
   }
 
   Future<void> finalizarCriacao() async {
-  setState(() => _salvando = true);
+    setState(() => _salvando = true);
 
-  try {
-    final service = PersonagemService();
+    try {
+      final service = PersonagemService();
 
-    final personagem = Personagem(
-      nome: nomeJogador,
-    );
+      final personagem = Personagem(nome: nomeJogador);
 
-    final personagemId = await service.criarPersonagem(personagem);
+      final personagemId = await service.criarPersonagem(personagem);
 
-    final prefs = await SharedPreferences.getInstance();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('personagemAtualId', personagemId);
 
-    await prefs.setString('personagemAtualId', personagemId);
+      _mostrarMensagem('Personagem criado com sucesso!');
 
-    _mostrarMensagem('Personagem criado com sucesso!');
+      if (!mounted) return;
 
-    if (!mounted) return;
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const MundoRafaelScreen(),
-      ),
-    );
-  } catch (e) {
-    _mostrarMensagem('Erro ao salvar: $e');
-  } finally {
-    if (mounted) {
-      setState(() => _salvando = false);
-    }
-  }
-}
-
-  Future<void> _acaoBotaoPrincipal() async {
-    if (_salvando || !textoTerminou) return;
-
-    if (etapa == 2) {
-      await confirmarNome();
-    } else if (etapa == 3) {
-      await finalizarCriacao();
-    } else {
-      avancarDialogo();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MundoRafaelScreen()),
+      );
+    } catch (e) {
+      _mostrarMensagem('Erro ao salvar: $e');
+    } finally {
+      if (mounted) setState(() => _salvando = false);
     }
   }
 
@@ -276,21 +150,47 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen>
     );
   }
 
+  List<String> get opcoesAtuais {
+    if (etapa == 2) return ['Confirmar nome'];
+    if (etapa == 3) return ['Começar jornada'];
+    return ['Continuar'];
+  }
+
+  void escolherOpcao(String opcao) {
+    if (!textoCompleto || _salvando) return;
+
+    if (opcao == 'Continuar') {
+      avancarDialogo();
+    } else if (opcao == 'Confirmar nome') {
+      confirmarNome();
+    } else if (opcao == 'Começar jornada') {
+      finalizarCriacao();
+    }
+  }
+
   @override
   void dispose() {
+    timerTexto?.cancel();
     nomeController.dispose();
-    _npcAnimationController.dispose();
-    _buttonAnimationController.dispose();
-    _npcShakeController.dispose();
-    _audioPlayer.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isSmall = size.height < 600;
+
+    // Tamanhos responsivos
+    final titleFontSize = (size.width * 0.08).clamp(22.0, 38.0);
+    final subtitleFontSize = (size.width * 0.045).clamp(14.0, 22.0);
+    final personagemHeight = (size.height * 0.38).clamp(180.0, 340.0);
+    final dialogMargin = size.width * 0.04;
+    final dialogPadding = size.width * 0.045;
+
     return Scaffold(
       body: Stack(
         children: [
+          // Background
           SizedBox.expand(
             child: Image.asset(
               'assets/images/criar_personagem.png',
@@ -299,256 +199,304 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen>
               height: double.infinity,
             ),
           ),
-          SafeArea(
+
+          Container(color: Colors.black.withValues(alpha: 0.6)),
+
+          // Personagem (canto inferior esquerdo)
+          Align(
+            alignment: Alignment.bottomLeft,
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.only(
+                left: size.width * 0.02,
+                bottom: size.height * 0.28,
+              ),
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 700),
+                opacity: mostrarConteudo ? 1.0 : 0.0,
+                child: Image.asset(
+                  'assets/images/personagem_rafa.png',
+                  height: personagemHeight,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
+
+          // Botão voltar
+          Positioned(
+            top: 50,
+            left: 16,
+            child: SafeArea(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF9E8A4A),
+                    width: 1.5,
+                  ),
+                ),
+                child: IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new,
+                    color: Color(0xFFF8E7B9),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Título e subtítulo
+          Positioned(
+            top: isSmall ? 40 : 70,
+            left: 80,
+            right: 24,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 700),
+              opacity: mostrarConteudo ? 1.0 : 0.0,
               child: Column(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.45),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: const Color.fromARGB(255, 158, 138, 74),
-                            width: 1.5,
-                          ),
+                  Text(
+                    'Nova Jornada',
+                    style: GoogleFonts.cinzel(
+                      fontSize: titleFontSize,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFFF8E7B9),
+                      letterSpacing: 2,
+                      shadows: const [
+                        Shadow(
+                          color: Colors.black,
+                          blurRadius: 10,
+                          offset: Offset(2, 2),
                         ),
-                        child: IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(
-                            Icons.arrow_back_ios_new,
-                            color: Color(0xFFF8E7B9),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.45),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: const Color.fromARGB(255, 158, 138, 74),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: IconButton(
-                          onPressed: _toggleSom,
-                          icon: Icon(
-                            _somAtivado ? Icons.volume_up : Icons.volume_off,
-                            color: const Color(0xFFF8E7B9),
-                          ),
-                        ),
+                      ],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Motorista Suspeito',
+                    style: GoogleFonts.cinzel(
+                      fontSize: subtitleFontSize,
+                      color: Colors.white70,
+                      letterSpacing: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Caixa de diálogo inferior
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 700),
+              opacity: mostrarConteudo ? 1.0 : 0.0,
+              child: SingleChildScrollView(
+                child: Container(
+                  width: double.infinity,
+                  margin: EdgeInsets.all(dialogMargin),
+                  padding: EdgeInsets.all(dialogPadding),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.78),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFF9E8A4A),
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF9E8A4A).withValues(alpha: 0.2),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
-                  const Spacer(),
-                  AnimatedSlide(
-                    duration: const Duration(milliseconds: 700),
-                    curve: Curves.easeOut,
-                    offset: mostrarNpc ? Offset.zero : const Offset(0, 0.25),
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 700),
-                      opacity: mostrarNpc ? 1 : 0,
-                      child: AnimatedBuilder(
-                        animation: _npcShakeAnimation,
-                        builder: (context, child) {
-                          final shake =
-                              sin(_npcShakeAnimation.value * 6 * pi) * 8;
-                          return Transform.translate(
-                            offset: Offset(shake, 0),
-                            child: child,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Tag de quem fala
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(
+                            0xFF6B3F1D,
+                          ).withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(
+                              0xFFF8E7B9,
+                            ).withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Text(
+                          'Motorista Suspeito',
+                          style: GoogleFonts.cinzel(
+                            fontSize: (size.width * 0.025).clamp(10.0, 13.0),
+                            fontWeight: FontWeight.bold,
+                            color: const Color(
+                              0xFFF8E7B9,
+                            ).withValues(alpha: 0.65),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Texto animado
+                      Text(
+                        textoVisivel,
+                        style: GoogleFonts.cinzel(
+                          fontSize: (size.width * 0.037).clamp(13.0, 16.0),
+                          height: 1.65,
+                          color: const Color(0xFFF8E7B9),
+                        ),
+                        textAlign: TextAlign.left,
+                      ),
+
+                      // Campo de nome (etapa 2)
+                      if (etapa == 2 && textoCompleto) ...[
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: nomeController,
+                          style: GoogleFonts.cinzel(
+                            color: const Color(0xFFF8E7B9),
+                            fontSize: (size.width * 0.037).clamp(13.0, 16.0),
+                          ),
+                          cursorColor: const Color(0xFFF8E7B9),
+                          decoration: InputDecoration(
+                            hintText: 'Digite o nome do personagem',
+                            hintStyle: GoogleFonts.cinzel(
+                              color: const Color(
+                                0xFFF8E7B9,
+                              ).withValues(alpha: 0.4),
+                              fontSize: (size.width * 0.035).clamp(12.0, 15.0),
+                            ),
+                            filled: true,
+                            fillColor: Colors.black.withValues(alpha: 0.35),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: size.height * 0.014,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF9E8A4A),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFF8E7B9),
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      SizedBox(height: size.height * 0.02),
+
+                      // Botão acelerar texto
+                      if (!textoCompleto)
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton(
+                            onPressed: acelerarTexto,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF6B3F1D),
+                              foregroundColor: const Color(0xFFF8E7B9),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: size.width * 0.05,
+                                vertical: size.height * 0.014,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: const BorderSide(
+                                  color: Color(0xFF9E8A4A),
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              'Continuar →',
+                              style: GoogleFonts.cinzel(
+                                fontWeight: FontWeight.bold,
+                                fontSize: (size.width * 0.035).clamp(
+                                  12.0,
+                                  15.0,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                      // Botões de ação
+                      if (textoCompleto) ...[
+                        SizedBox(height: size.height * 0.01),
+                        ...opcoesAtuais.map((opcao) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _salvando
+                                    ? null
+                                    : () => escolherOpcao(opcao),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF6B3F1D),
+                                  foregroundColor: const Color(0xFFF8E7B9),
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: size.height * 0.016,
+                                  ),
+                                  elevation: 4,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: const BorderSide(
+                                      color: Color(0xFF9E8A4A),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                ),
+                                child: _salvando && opcao == 'Começar jornada'
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Color(0xFFF8E7B9),
+                                        ),
+                                      )
+                                    : Text(
+                                        opcao,
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.cinzel(
+                                          fontSize: (size.width * 0.035).clamp(
+                                            12.0,
+                                            15.0,
+                                          ),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                              ),
+                            ),
                           );
-                        },
-                        child: ScaleTransition(
-                          scale: _npcScaleAnimation,
-                          child: RotationTransition(
-                            turns: _npcRotateAnimation,
-                            child: Column(
-                              children: [
-                                Container(
-                                  decoration: const BoxDecoration(),
-                                  child: Image.asset(
-                                    'assets/images/personagem_rafa.png',
-                                    width: 210,
-                                    height: 210,
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                ScaleTransition(
-                                  scale: Tween<double>(begin: 0.8, end: 1.0)
-                                      .animate(
-                                        CurvedAnimation(
-                                          parent: _npcAnimationController,
-                                          curve: Curves.elasticOut,
-                                        ),
-                                      ),
-                                  child: Text(
-                                    'Motorista Suspeito',
-                                    style: GoogleFonts.cinzelDecorative(
-                                      fontSize: 22,
-                                      color: const Color(0xFFF8E7B9),
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                        }),
+                      ],
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  AnimatedSlide(
-                    duration: const Duration(milliseconds: 700),
-                    curve: Curves.easeOut,
-                    offset: mostrarDialogo
-                        ? Offset.zero
-                        : const Offset(0, 0.35),
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 700),
-                      opacity: mostrarDialogo ? 1 : 0,
-                      child: ScaleTransition(
-                        scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-                          CurvedAnimation(
-                            parent: _buttonAnimationController,
-                            curve: Curves.easeOut,
-                          ),
-                        ),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.75),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: const Color.fromARGB(255, 158, 138, 74),
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color.fromARGB(
-                                  255,
-                                  158,
-                                  138,
-                                  74,
-                                ).withOpacity(0.2),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                textoExibido,
-                                style: GoogleFonts.cinzel(
-                                  fontSize: 18,
-                                  height: 1.5,
-                                  color: const Color(0xFFF8E7B9),
-                                ),
-                              ),
-                              if (etapa == 2 && textoTerminou) ...[
-                                const SizedBox(height: 20),
-                                TextField(
-                                  controller: nomeController,
-                                  style: GoogleFonts.cinzel(
-                                    color: const Color(0xFFF8E7B9),
-                                  ),
-                                  cursorColor: const Color(0xFFF8E7B9),
-                                  decoration: InputDecoration(
-                                    hintText: 'Digite o nome do personagem',
-                                    hintStyle: GoogleFonts.cinzel(
-                                      color: const Color(
-                                        0xFFF8E7B9,
-                                      ).withOpacity(0.4),
-                                    ),
-                                    filled: true,
-                                    fillColor: Colors.black.withOpacity(0.35),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(
-                                        color: Color.fromARGB(
-                                          255,
-                                          158,
-                                          138,
-                                          74,
-                                        ),
-                                      ),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(
-                                        color: Color(0xFFF8E7B9),
-                                        width: 2,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(height: 20),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: ScaleTransition(
-                                  scale: _buttonScaleAnimation,
-                                  alignment: Alignment.centerRight,
-                                  child: ElevatedButton(
-                                    onPressed: _salvando || !textoTerminou
-                                        ? null
-                                        : _acaoBotaoPrincipal,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF6B3F1D),
-                                      foregroundColor: const Color(0xFFF8E7B9),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        side: const BorderSide(
-                                          color: Color.fromARGB(
-                                            255,
-                                            158,
-                                            138,
-                                            74,
-                                          ),
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                    ),
-                                    child: _salvando
-                                        ? const SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Color(0xFFF8E7B9),
-                                            ),
-                                          )
-                                        : Text(
-                                            etapa == 2
-                                                ? 'Confirmar'
-                                                : etapa == 3
-                                                ? 'Começar'
-                                                : 'Continuar',
-                                            style: GoogleFonts.cinzel(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                ],
+                ),
               ),
             ),
           ),
