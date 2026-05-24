@@ -153,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (_) => _MapaDialog(
         latitude: position.latitude,
         longitude: position.longitude,
-        personagemId: 'Z4zP83zZeHKjXMv7ALoM',
+        personagemId: FirebaseAuth.instance.currentUser!.uid,
       ),
     );
   }

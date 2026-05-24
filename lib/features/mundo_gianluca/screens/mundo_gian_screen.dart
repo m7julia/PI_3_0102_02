@@ -3,14 +3,29 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rpg_game/features/mundo_maria/screens/mundo_maria.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 // ================= ENUMS E CLASSES AUXILIARES =================
 enum _Etapa {
-  carregando, bloqueado, chegada1, chegada2, dialogo1, dialogo2, dialogo3, 
-  espera, positivo, dialogo5, desafio1, reuniao1, reuniao2, finalHist
+  carregando,
+bloqueado,
+chegada1,
+chegada2,
+dialogo1,
+dialogo2,
+dialogo3,
+espera,
+positivo,
+dialogo5,
+
+introPiano,
+demonstrandoPiano,
+tocandoPiano,
+
+reuniao1,
+reuniao2,
+finalHist
 }
 
 // A CLASSE _OpcaoBtn AGORA ESTÁ NO LUGAR CERTO (FORA DO ESTADO)
@@ -44,6 +59,39 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
 
   late AudioPlayer _audioPlayer;
   int _fragmentos = 0;
+  final List<String> _sequenciaCorreta = [
+  'do',
+  're',
+  'mi',
+  'fa',
+  'fa',
+  'fa',
+  'do',
+  're',
+  'do',
+  're',
+  're',
+  're',
+  'do',
+  'sol',
+  'fa',
+  'mi',
+  'mi',
+  'mi',
+  'do',
+  're',
+  'mi',
+  'fa',
+  'fa',
+  'fa',
+];
+
+List<String> _entradaJogador = [];
+
+bool _podeTocar = false;
+bool _mostrandoSequencia = false;
+
+String? _notaAtualDemo;
 
   Timer? _timerTexto;
 
@@ -65,8 +113,10 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
       case _Etapa.dialogo3: return 'E me transformou em um cachorro! Para recuperar minha forma humana, preciso ensinar a harmonia natural para alguém. "AU"ceita ser meu aluno?';
       case _Etapa.espera: return 'Bom, nesse caso vamos esperar... Estarei aqui praticando minhas escalas. Me avise se mudar de ideia.';
       case _Etapa.positivo: return 'AU-migo! Fico feliz que decidiu me "AU"xiliar, vamos nessa!';
-      case _Etapa.dialogo5: return 'A primeira lição é sentir o ritmo do coração de Terrasen...';
-      case _Etapa.desafio1: return 'Qual destas notas deve iniciar a nossa sinfonia de restauração?';
+      case _Etapa.dialogo5: return 'A primeira lição é ouvir o coração da música. Observe atentamente a melodia que irei tocar.';
+      case _Etapa.introPiano: return 'Repita corretamente a melodia usando o piano. Se errar uma única nota, será necessário começar novamente.';
+      case _Etapa.demonstrandoPiano: return 'Observe a sequência musical...';
+      case _Etapa.tocandoPiano: return 'Agora é sua vez. Toque a melodia correta.'; 
       case _Etapa.reuniao1: return 'Incrível! Os fragmentos musicais ressoam perfeitamente. A partitura está completa.';
       case _Etapa.reuniao2: return 'Coragem. Sabedoria. Coração. Três notas, um único acorde. 🎵';
       case _Etapa.finalHist: return 'O feitiço foi quebrado! Te agradeço por tudo, ótima sorte nessa sua jornada $_nomeJogador.';
@@ -101,22 +151,37 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
 
   // ================= LÓGICA DE FIREBASE =================
   Future<void> _checarAcessoEIniciar() async {
+
   try {
 
-    final prefs = await SharedPreferences.getInstance();
+    await Future.delayed(
+      const Duration(milliseconds: 500),
+    );
 
-      _personagemId = FirebaseAuth.instance.currentUser?.uid;
-    
-    if (_personagemId == null) {
+    User? user = FirebaseAuth.instance.currentUser;
 
-      debugPrint('[Gianluca] Personagem não encontrado');
+    if (user == null) {
+      await Future.delayed(const Duration(seconds: 1));
+      user = FirebaseAuth.instance.currentUser;
+    }
+    if (user == null) {
 
-      if (mounted && Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
+      debugPrint('[Gianluca] Usuário ainda não autenticado');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Erro de autenticação. Entre novamente.',
+          ),
+        ),
+      );
 
       return;
     }
+
+    _personagemId = user.uid;
 
     final doc = await FirebaseFirestore.instance
         .collection('personagens')
@@ -126,7 +191,6 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
     if (!doc.exists) {
 
       debugPrint('[Gianluca] Documento inexistente');
-
       return;
     }
 
@@ -142,7 +206,8 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
     if (progressoAnterior is List &&
         progressoAnterior.isNotEmpty) {
 
-      podeEntrar = progressoAnterior[0] == true;
+      podeEntrar =
+          progressoAnterior[0] == true;
     }
 
     if (!podeEntrar) {
@@ -386,7 +451,11 @@ Future<void> _toggleSom() async {
       break;
 
     case _Etapa.dialogo5:
-      await _mudarEtapa(_Etapa.desafio1);
+      await _mudarEtapa(_Etapa.introPiano);
+      break;
+
+    case _Etapa.introPiano:
+      await _iniciarMiniGamePiano();
       break;
 
     case _Etapa.reuniao1:
@@ -417,6 +486,156 @@ Future<void> _toggleSom() async {
   _exibirTexto(_textoAtual);
 }
 
+Future<void> _iniciarMiniGamePiano() async {
+
+  _entradaJogador.clear();
+
+  setState(() {
+    _etapa = _Etapa.demonstrandoPiano;
+    _mostrandoSequencia = true;
+    _podeTocar = false;
+  });
+
+  for (final nota in _sequenciaCorreta) {
+    
+    if (!mounted) return;
+
+    setState(() {
+      _notaAtualDemo = nota;
+    });
+
+    await _tocarNota(nota);
+
+    await Future.delayed(
+      const Duration(milliseconds: 700),
+    );
+  }
+
+  setState(() {
+    _mostrandoSequencia = false;
+    _notaAtualDemo = null;
+    _podeTocar = true;
+    _etapa = _Etapa.tocandoPiano;
+  });
+
+  _exibirTexto(_textoAtual);
+}
+
+Future<void> _tocarNota(String nota) async {
+
+  try {
+
+    await _audioPlayer.stop();
+
+    await _audioPlayer.play(
+      AssetSource('audio/piano/$nota.mp3'),
+    );
+
+  } catch (e) {
+
+    debugPrint('Erro tocando nota: $e');
+  }
+}
+
+Future<void> _pressionarNota(String nota) async {
+
+  if (!_podeTocar) return;
+
+  await _tocarNota(nota);
+
+  _entradaJogador.add(nota);
+
+  final index = _entradaJogador.length - 1;
+
+  if (_entradaJogador[index] != _sequenciaCorreta[index]) {
+
+    await _tocarErro();
+
+    _entradaJogador.clear();
+
+    await _mostrarPopupErroPiano();
+
+    return;
+  }
+
+  if (_entradaJogador.length ==
+      _sequenciaCorreta.length) {
+
+    _podeTocar = false;
+
+    setState(() {
+      _fragmentos++;
+    });
+
+    await Future.delayed(
+      const Duration(milliseconds: 500),
+    );
+
+    await _mudarEtapa(_Etapa.reuniao1);
+  }
+}
+
+Future<void> _tocarErro() async {
+
+  try {
+
+    await _audioPlayer.stop();
+
+    await _audioPlayer.play(
+      AssetSource('audio/piano/erro.mp3'),
+    );
+
+  } catch (_) {}
+}
+
+Future<void> _mostrarPopupErroPiano() async {
+
+  await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) {
+
+      return AlertDialog(
+        backgroundColor: const Color(0xFF1E1208),
+
+        title: Text(
+          'Melodia incorreta 🎺',
+          style: GoogleFonts.cinzel(
+            color: const Color(0xFFF8E7B9),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+
+        content: Text(
+          'Você errou a sequência musical.\n\nTente novamente.',
+          style: GoogleFonts.cinzel(
+            color: const Color(0xFFF8E7B9),
+          ),
+        ),
+
+        actions: [
+
+          TextButton(
+            onPressed: () {
+
+              Navigator.pop(context);
+
+              _iniciarMiniGamePiano();
+            },
+
+            child: Text(
+              'Tentar novamente',
+              style: GoogleFonts.cinzel(
+                color: const Color(0xFFF8E7B9),
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
   // ================= WIDGETS (BUILD) =================
   @override
   Widget build(BuildContext context) {
@@ -433,7 +652,7 @@ Future<void> _toggleSom() async {
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
               child: Chip(
                 backgroundColor: const Color(0xFF9E8A4A).withValues(alpha:0.3),
-                label: Text('💎 $_fragmentos/3', style: GoogleFonts.cinzel(color: const Color(0xFFF8E7B9), fontSize: 12, fontWeight: FontWeight.bold)),
+                label: Text('💎 $_fragmentos/1', style: GoogleFonts.cinzel(color: const Color(0xFFF8E7B9), fontSize: 12, fontWeight: FontWeight.bold)),
                 side: const BorderSide(color: Color(0xFF9E8A4A)),
               ),
             ),
@@ -451,15 +670,23 @@ Future<void> _toggleSom() async {
           if (_etapa == _Etapa.carregando) const Center(child: CircularProgressIndicator(color: Color(0xFFF8E7B9))),
           
           if (_etapa != _Etapa.carregando && _etapa != _Etapa.bloqueado) ...[
+
             _buildNpc(),
+
+            if (_etapa == _Etapa.demonstrandoPiano ||
+                _etapa == _Etapa.tocandoPiano)
+              _buildPiano(),
+
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(children: [
-                  const Spacer(),
-                  _buildCaixaDialogo(),
-                  const SizedBox(height: 28),
-                ]),
+                child: Column(
+                  children: [
+                    const Spacer(),
+                    _buildCaixaDialogo(),
+                    const SizedBox(height: 28),
+                  ],
+                ),
               ),
             ),
           ],
@@ -561,16 +788,6 @@ Widget _buildNpc() {
           _OpcaoBtn(label: '1. Aceitar ser o aluno 🎵', onTap: () => _mudarEtapa(_Etapa.positivo)),
           _OpcaoBtn(label: '2. Recusar por enquanto', onTap: () => _mudarEtapa(_Etapa.espera), secundario: true),
         ]);
-      case _Etapa.desafio1:
-        return _buildEscolhas([
-          _OpcaoBtn(label: '🎹 Dó Maior', onTap: () {
-            setState(() => _fragmentos++);
-            _mudarEtapa(_Etapa.reuniao1);
-          }),
-          _OpcaoBtn(label: '🎸 Sol Menor', onTap: () {
-            _mudarEtapa(_Etapa.reuniao1); 
-          }, secundario: true),
-        ]);
       default:
         return Align(
           alignment: Alignment.centerRight,
@@ -607,6 +824,97 @@ Widget _buildNpc() {
       )).toList(),
     );
   }
+
+  Widget _buildPiano() {
+
+  final notas = [
+    'do',
+    're',
+    'mi',
+    'fa',
+    'sol',
+    'la',
+    'si',
+  ];
+
+  return Padding(
+    padding: const EdgeInsets.only(
+      bottom: 260,
+      left: 10,
+      right: 10,
+    ),
+    child: SizedBox(
+      height: 220,
+      child: Row(
+        children: notas.map((nota) {
+
+          final destaque = _notaAtualDemo == nota;
+
+          return Expanded(
+            child: GestureDetector(
+
+              onTap: _podeTocar
+                  ? () => _pressionarNota(nota)
+                  : null,
+
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 2,
+                ),
+
+                decoration: BoxDecoration(
+
+                  color: destaque
+                      ? Colors.amber
+                      : Colors.white,
+
+                  borderRadius: BorderRadius.circular(6),
+
+                  border: Border.all(
+                    color: Colors.black,
+                    width: 2,
+                  ),
+
+                  boxShadow: destaque
+                      ? [
+                          BoxShadow(
+                            color: Colors.amber.withValues(alpha: 0.7),
+                            blurRadius: 12,
+                            spreadRadius: 2,
+                          ),
+                        ]
+                      : [],
+                ),
+
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      bottom: 12,
+                    ),
+
+                    child: Text(
+                      nota.toUpperCase(),
+
+                      style: GoogleFonts.cinzel(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    ),
+  );
+}
 
   Widget _buildBadgeFalante() {
     return Container(
@@ -818,12 +1126,16 @@ Widget _buildNpc() {
 
                     if (mounted) {
 
-                      Navigator.of(context).pop();
+                    Navigator.of(context).pop();
 
-                      Navigator.push(
+                      await Future.delayed(
+                        const Duration(milliseconds: 100),
+                      );
+
+                      Navigator.pushReplacement(
                         this.context,
                         MaterialPageRoute(
-                          builder: (_) => MundoMariaScreen(),
+                          builder: (_) => const MundoMariaScreen(),
                         ),
                       );
                     }
