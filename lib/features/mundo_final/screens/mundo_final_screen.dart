@@ -72,35 +72,6 @@ class MundoFinalScreen extends StatelessWidget {
 
                     const SizedBox(height: 30),
 
-                    // Créditos
-                    Text(
-                      'Créditos',
-                      style: GoogleFonts.cinzel(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFFF8E7B9),
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    Text(
-                      'Equipe do RPG\n'
-                      'Ana '
-                      'Gian '
-                      'Luis '
-                      'Maju '
-                      'Rafa ',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.cinzel(
-                        fontSize: 16,
-                        height: 1.8,
-                        color: Colors.white70,
-                      ),
-                    ),
-
-                    const SizedBox(height: 40),
-
                     // Botão final
                     SizedBox(
                       width: 240,

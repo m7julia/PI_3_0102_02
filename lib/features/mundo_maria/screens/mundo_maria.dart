@@ -68,167 +68,198 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
   // ─── Popup: Fase bloqueada ────────────────────────────────────────────────
 
   Future<void> _mostrarPopupBloqueado() async {
+    final size = MediaQuery.of(context).size;
+
     await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1208),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
-                  blurRadius: 25,
-                  spreadRadius: 2,
-                ),
-              ],
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: size.width * 0.06,
+            vertical: size.height * 0.06,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 420,
+              maxHeight: size.height * 0.80,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.lock, size: 70, color: Color(0xFFF8E7B9)),
-                const SizedBox(height: 20),
-                Text(
-                  'Portal Bloqueado',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cinzel(
-                    color: const Color(0xFFF8E7B9),
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+            child: Container(
+              padding: EdgeInsets.all(size.width * 0.06),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1208),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                    blurRadius: 25,
+                    spreadRadius: 2,
                   ),
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  'Você ainda não possui a chave necessária para acessar a Fazenda Vale-Dourado.\n\nConclua primeiro o mundo anterior e obtenha sua chave antes de prosseguir.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cinzel(
-                    color: const Color(0xFFF8E7B9),
-                    fontSize: 15,
-                    height: 1.6,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6B3F1D),
-                    foregroundColor: const Color(0xFFF8E7B9),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 28,
-                      vertical: 14,
+                ],
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.lock,
+                      size: (size.width * 0.16).clamp(48.0, 70.0),
+                      color: const Color(0xFFF8E7B9),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      side: const BorderSide(
-                        color: Color(0xFF9E8A4A),
-                        width: 1.5,
+                    SizedBox(height: size.height * 0.025),
+                    Text(
+                      'Portal Bloqueado',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cinzel(
+                        color: const Color(0xFFF8E7B9),
+                        fontSize: (size.width * 0.055).clamp(18.0, 26.0),
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  child: Text(
-                    'Voltar',
-                    style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-                  ),
+                    SizedBox(height: size.height * 0.022),
+                    Text(
+                      'Você ainda não possui a chave necessária para acessar a Fazenda Vale-Dourado.\n\nConclua primeiro o mundo anterior e obtenha sua chave antes de prosseguir.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cinzel(
+                        color: const Color(0xFFF8E7B9),
+                        fontSize: (size.width * 0.036).clamp(13.0, 16.0),
+                        height: 1.6,
+                      ),
+                    ),
+                    SizedBox(height: size.height * 0.032),
+                    ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6B3F1D),
+                        foregroundColor: const Color(0xFFF8E7B9),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: size.width * 0.07,
+                          vertical: size.height * 0.016,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: const BorderSide(
+                            color: Color(0xFF9E8A4A),
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        'Voltar',
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         );
       },
     );
 
-    // Volta para a tela anterior após fechar o popup
     if (mounted) Navigator.of(context).pop();
   }
 
   // ─── Popup: Conclusão / Chave obtida ─────────────────────────────────────
 
   Future<void> _mostrarPopupConclusao() async {
+    final size = MediaQuery.of(context).size;
+
     await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1208),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
-                  blurRadius: 25,
-                  spreadRadius: 2,
-                ),
-              ],
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: size.width * 0.06,
+            vertical: size.height * 0.06,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 420,
+              maxHeight: size.height * 0.85,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset(
-                  'assets/images/chave_amuleto.png',
-                  height: 150,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Icon(
-                    Icons.vpn_key_rounded,
-                    size: 80,
-                    color: Color(0xFFF8E7B9),
+            child: Container(
+              padding: EdgeInsets.all(size.width * 0.06),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1208),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                    blurRadius: 25,
+                    spreadRadius: 2,
                   ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Chave da Fazenda Obtida',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cinzel(
-                    color: const Color(0xFFF8E7B9),
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  'Muito bem, $_nomeJogador.\n\nVocê concluiu a jornada pela Fazenda Vale-Dourado e ajudou Margarida com a colheita.\n\nA chave deste mundo agora pertence a você.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cinzel(
-                    color: const Color(0xFFF8E7B9),
-                    fontSize: 15,
-                    height: 1.6,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                ElevatedButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop();
-                    await _mostrarPopupEscolhaFinal();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6B3F1D),
-                    foregroundColor: const Color(0xFFF8E7B9),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 28,
-                      vertical: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      side: const BorderSide(
-                        color: Color(0xFF9E8A4A),
-                        width: 1.5,
+                ],
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/images/chave_amuleto.png',
+                      height: (size.height * 0.18).clamp(100.0, 150.0),
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.vpn_key_rounded,
+                        size: (size.width * 0.18).clamp(56.0, 80.0),
+                        color: const Color(0xFFF8E7B9),
                       ),
                     ),
-                  ),
-                  child: Text(
-                    'Abrir portal 🌀',
-                    style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-                  ),
+                    SizedBox(height: size.height * 0.025),
+                    Text(
+                      'Chave da Fazenda Obtida',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cinzel(
+                        color: const Color(0xFFF8E7B9),
+                        fontSize: (size.width * 0.055).clamp(18.0, 26.0),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: size.height * 0.022),
+                    Text(
+                      'Muito bem, $_nomeJogador.\n\nVocê concluiu a jornada pela Fazenda Vale-Dourado e ajudou Margarida com a colheita.\n\nA chave deste mundo agora pertence a você.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cinzel(
+                        color: const Color(0xFFF8E7B9),
+                        fontSize: (size.width * 0.036).clamp(13.0, 16.0),
+                        height: 1.6,
+                      ),
+                    ),
+                    SizedBox(height: size.height * 0.032),
+                    ElevatedButton(
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        await _mostrarPopupEscolhaFinal();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6B3F1D),
+                        foregroundColor: const Color(0xFFF8E7B9),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: size.width * 0.07,
+                          vertical: size.height * 0.016,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: const BorderSide(
+                            color: Color(0xFF9E8A4A),
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        'Abrir portal 🌀',
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         );
@@ -236,119 +267,133 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
     );
   }
 
-  // ─── Popup: Escolha final (sair ou continuar) ─────────────────────────────
+  // ─── Popup: Escolha final ─────────────────────────────────────────────────
 
   Future<void> _mostrarPopupEscolhaFinal() async {
+    final size = MediaQuery.of(context).size;
+
     await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1208),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
-                  blurRadius: 25,
-                  spreadRadius: 2,
-                ),
-              ],
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: size.width * 0.06,
+            vertical: size.height * 0.06,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 420,
+              maxHeight: size.height * 0.85,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'O Portal Está Aberto',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cinzel(
-                    color: const Color(0xFFF8E7B9),
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+            child: Container(
+              padding: EdgeInsets.all(size.width * 0.06),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1208),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                    blurRadius: 25,
+                    spreadRadius: 2,
                   ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Sua jornada pela Fazenda Vale-Dourado foi registrada.\n\nDeseja encerrar sua aventura agora ou continuar explorando os mundos?',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cinzel(
-                    color: const Color(0xFFF8E7B9),
-                    fontSize: 15,
-                    height: 1.6,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                // Salvar e sair
-                Center(
-                  child: SizedBox(
-                    width: 260,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await NivelService.completarNivelMaju();
-                        Navigator.of(context).pop();
-                        Navigator.of(this.context).pop();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6B3F1D),
-                        foregroundColor: const Color(0xFFF8E7B9),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: const BorderSide(
-                            color: Color(0xFF9E8A4A),
-                            width: 1.5,
+                ],
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'O Portal Está Aberto',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cinzel(
+                        color: const Color(0xFFF8E7B9),
+                        fontSize: (size.width * 0.055).clamp(18.0, 26.0),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: size.height * 0.025),
+                    Text(
+                      'Sua jornada pela Fazenda Vale-Dourado foi registrada.\n\nDeseja encerrar sua aventura agora ou continuar explorando os mundos?',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cinzel(
+                        color: const Color(0xFFF8E7B9),
+                        fontSize: (size.width * 0.036).clamp(13.0, 16.0),
+                        height: 1.6,
+                      ),
+                    ),
+                    SizedBox(height: size.height * 0.032),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          await NivelService.completarNivelMaju();
+                          Navigator.of(context).pop();
+                          Navigator.of(this.context).pop();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6B3F1D),
+                          foregroundColor: const Color(0xFFF8E7B9),
+                          padding: EdgeInsets.symmetric(
+                            vertical: size.height * 0.016,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            side: const BorderSide(
+                              color: Color(0xFF9E8A4A),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          '💾 Salvar e sair',
+                          style: GoogleFonts.cinzel(
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      child: Text(
-                        '💾 Salvar e sair',
-                        style: GoogleFonts.cinzel(
-                            fontWeight: FontWeight.bold),
-                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Salvar e continuar para o próximo mundo
-                Center(
-                  child: SizedBox(
-                    width: 260,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await NivelService.completarNivelMaju();
-                        Navigator.of(context).pop();
-                        Navigator.push(
-                          this.context,
-                          MaterialPageRoute(
-                            builder: (_) => const MundoAnaScreen(),
+                    SizedBox(height: size.height * 0.015),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          await NivelService.completarNivelMaju();
+                          Navigator.of(context).pop();
+                          Navigator.push(
+                            this.context,
+                            MaterialPageRoute(
+                              builder: (_) => const MundoAnaScreen(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6B3F1D),
+                          foregroundColor: const Color(0xFFF8E7B9),
+                          padding: EdgeInsets.symmetric(
+                            vertical: size.height * 0.016,
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6B3F1D),
-                        foregroundColor: const Color(0xFFF8E7B9),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: const BorderSide(
-                            color: Color(0xFF9E8A4A),
-                            width: 1.5,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            side: const BorderSide(
+                              color: Color(0xFF9E8A4A),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          '⚔️ Salvar e continuar',
+                          style: GoogleFonts.cinzel(
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      child: Text(
-                        '⚔️ Salvar e continuar',
-                        style: GoogleFonts.cinzel(
-                            fontWeight: FontWeight.bold),
-                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         );
@@ -422,7 +467,9 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
   Future<void> _iniciarMusica() async {
     try {
       await _musicPlayer.setVolume(0.5);
-      await _musicPlayer.play(AssetSource('audio/music/audio_fazenda_vale_dourado.mp3'));
+      await _musicPlayer.play(
+        AssetSource('audio/music/audio_fazenda_vale_dourado.mp3'),
+      );
       await _musicPlayer.setReleaseMode(ReleaseMode.loop);
     } catch (e) {
       debugPrint('Erro ao iniciar música: $e');
@@ -464,12 +511,14 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _npcScale = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(parent: _npcAnimCtrl, curve: Curves.elasticOut),
-    );
-    _npcRotate = Tween<double>(begin: -0.05, end: 0.0).animate(
-      CurvedAnimation(parent: _npcAnimCtrl, curve: Curves.easeOut),
-    );
+    _npcScale = Tween<double>(
+      begin: 0.5,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _npcAnimCtrl, curve: Curves.elasticOut));
+    _npcRotate = Tween<double>(
+      begin: -0.05,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _npcAnimCtrl, curve: Curves.easeOut));
 
     _dialogoAnimCtrl = AnimationController(
       duration: const Duration(milliseconds: 600),
@@ -480,9 +529,10 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    _shakeAnim = Tween<double>(begin: 0, end: 10).animate(
-      CurvedAnimation(parent: _shakeCtrl, curve: Curves.elasticIn),
-    );
+    _shakeAnim = Tween<double>(
+      begin: 0,
+      end: 10,
+    ).animate(CurvedAnimation(parent: _shakeCtrl, curve: Curves.elasticIn));
 
     _opcaoAnimCtrl = AnimationController(
       duration: const Duration(milliseconds: 500),
@@ -515,7 +565,6 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
         }
       }
 
-      // Fallback: personagem mais recente
       if (docId == null) {
         final snapshot = await FirebaseFirestore.instance
             .collection('personagens')
@@ -541,7 +590,6 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
         setState(() => _nomeJogador = nome!);
       }
 
-      // Verifica se o Conservatório Diminuto (mundo anterior) foi concluído
       final doc = await FirebaseFirestore.instance
           .collection('personagens')
           .doc(docId)
@@ -594,7 +642,7 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
     await _animarTexto(_textoAtual);
   }
 
-  // ─── Texto animado (sem som) ─────────────────────────────────────────────
+  // ─── Texto animado ───────────────────────────────────────────────────────
 
   void _pularTexto() {
     if (!_textoTerminou) {
@@ -745,6 +793,9 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final npcSize = (size.width * 0.50).clamp(140.0, 240.0);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -752,6 +803,7 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
           style: GoogleFonts.cinzel(
             color: const Color(0xFFF8E7B9),
             fontWeight: FontWeight.bold,
+            fontSize: (size.width * 0.045).clamp(15.0, 20.0),
           ),
         ),
         backgroundColor: const Color(0xFF6B3F1D),
@@ -786,9 +838,11 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
             ),
           ),
           Container(color: Colors.black.withValues(alpha: 0.50)),
+
+          // NPC Margarida
           Positioned(
-            bottom: 200,
-            left: 20,
+            bottom: size.height * 0.24,
+            left: size.width * 0.03,
             child: AnimatedSlide(
               duration: const Duration(milliseconds: 700),
               curve: Curves.easeOut,
@@ -798,40 +852,42 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
                 opacity: _mostrarNpc ? 1 : 0,
                 child: Image.asset(
                   'assets/images/personagem_margarida.png',
-                  width: 220,
-                  height: 220,
+                  width: npcSize,
+                  height: npcSize,
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => Container(
-                    width: 220,
-                    height: 220,
+                    width: npcSize,
+                    height: npcSize,
                     decoration: const BoxDecoration(
                       color: Color(0xFF6B3F1D),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.person,
-                      size: 80,
-                      color: Color(0xFFF8E7B9),
+                      size: npcSize * 0.4,
+                      color: const Color(0xFFF8E7B9),
                     ),
                   ),
                 ),
               ),
             ),
           ),
+
           if (_etapa == _Etapa.carregando)
             const Center(
               child: CircularProgressIndicator(color: Color(0xFFF8E7B9)),
             ),
+
           if (_etapa != _Etapa.carregando && _etapa != _Etapa.bloqueado)
             SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(horizontal: size.width * 0.04),
                 child: Column(
                   children: [
                     const Spacer(),
-                    const SizedBox(height: 20),
-                    _buildCaixaDialogo(),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 12),
+                    _buildCaixaDialogo(size),
+                    SizedBox(height: size.height * 0.03),
                   ],
                 ),
               ),
@@ -843,7 +899,7 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
 
   // ─── Widgets ──────────────────────────────────────────────────────────────
 
-  Widget _buildCaixaDialogo() {
+  Widget _buildCaixaDialogo(Size size) {
     return AnimatedSlide(
       duration: const Duration(milliseconds: 700),
       curve: Curves.easeOut,
@@ -853,7 +909,7 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
         opacity: _mostrarDialogo ? 1 : 0,
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(size.width * 0.045),
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(20),
@@ -869,40 +925,40 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildBadgeFalante(),
-              const SizedBox(height: 8),
+              _buildBadgeFalante(size),
+              SizedBox(height: size.height * 0.01),
               Text(
                 _textoExibido,
                 style: GoogleFonts.cinzel(
-                  fontSize: 15,
+                  fontSize: (size.width * 0.037).clamp(13.0, 16.0),
                   height: 1.65,
                   color: _ehFalaJogador
                       ? const Color(0xFFF8E7B9).withValues(alpha: 0.7)
                       : const Color(0xFFF8E7B9),
-                  fontStyle:
-                      _ehFalaJogador ? FontStyle.italic : FontStyle.normal,
+                  fontStyle: _ehFalaJogador
+                      ? FontStyle.italic
+                      : FontStyle.normal,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: size.height * 0.018),
               if (_etapa == _Etapa.escolha && _textoTerminou)
                 ScaleTransition(
                   scale: _opcaoScale,
-                  child: _buildOpcoesCaminho(),
+                  child: _buildOpcoesCaminho(size),
                 ),
               if (_mostrarBotaoContinuar)
                 Align(
                   alignment: Alignment.centerRight,
                   child: ElevatedButton(
-                    onPressed:
-                        _textoTerminou ? _avancarDialogo : _pularTexto,
+                    onPressed: _textoTerminou ? _avancarDialogo : _pularTexto,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _textoTerminou
                           ? const Color(0xFF6B3F1D)
                           : const Color(0xFF9E8A4A),
                       foregroundColor: const Color(0xFFF8E7B9),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: size.width * 0.06,
+                        vertical: size.height * 0.014,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -914,7 +970,10 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
                     ),
                     child: Text(
                       _labelBotao,
-                      style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                      style: GoogleFonts.cinzel(
+                        fontWeight: FontWeight.bold,
+                        fontSize: (size.width * 0.035).clamp(12.0, 15.0),
+                      ),
                     ),
                   ),
                 ),
@@ -925,11 +984,12 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
     );
   }
 
-  Widget _buildBadgeFalante() {
+  Widget _buildBadgeFalante(Size size) {
     final bool isJogador = _ehFalaJogador;
     final String nome = isJogador ? _nomeJogador : 'Margarida';
-    final Color cor =
-        isJogador ? const Color(0xFF9E8A4A) : const Color(0xFF6B3F1D);
+    final Color cor = isJogador
+        ? const Color(0xFF9E8A4A)
+        : const Color(0xFF6B3F1D);
     final Color bordaCor = isJogador
         ? const Color(0xFF9E8A4A).withValues(alpha: 0.5)
         : const Color(0xFFF8E7B9).withValues(alpha: 0.3);
@@ -944,7 +1004,7 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
       child: Text(
         nome,
         style: GoogleFonts.cinzel(
-          fontSize: 11,
+          fontSize: (size.width * 0.025).clamp(10.0, 13.0),
           fontWeight: FontWeight.bold,
           color: const Color(0xFFF8E7B9).withValues(alpha: 0.65),
           letterSpacing: 0.5,
@@ -953,28 +1013,31 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
     );
   }
 
-  Widget _buildOpcoesCaminho() {
+  Widget _buildOpcoesCaminho(Size size) {
     return Column(
       children: [
         _buildBotaoOpcao(
+          size: size,
           label: '⚔️  Caminho curto e difícil',
           descricao: 'Jogo da Memória',
           cor: const Color(0xFFE24B4A),
           onPressed: _escolherCaminhoMemoria,
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: size.height * 0.012),
         _buildBotaoOpcao(
+          size: size,
           label: '🌿  Caminho longo e mais fácil',
           descricao: 'Ligue 3',
           cor: const Color(0xFF639922),
           onPressed: _escolherCaminhoLigue3,
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: size.height * 0.005),
       ],
     );
   }
 
   Widget _buildBotaoOpcao({
+    required Size size,
     required String label,
     required String descricao,
     required Color cor,
@@ -988,12 +1051,14 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
         splashColor: cor.withValues(alpha: 0.15),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: EdgeInsets.symmetric(
+            horizontal: size.width * 0.04,
+            vertical: size.height * 0.016,
+          ),
           decoration: BoxDecoration(
             color: cor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
-            border:
-                Border.all(color: cor.withValues(alpha: 0.5), width: 1.5),
+            border: Border.all(color: cor.withValues(alpha: 0.5), width: 1.5),
           ),
           child: Row(
             children: [
@@ -1004,16 +1069,16 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
                     Text(
                       label,
                       style: GoogleFonts.cinzel(
-                        fontSize: 13,
+                        fontSize: (size.width * 0.033).clamp(12.0, 14.0),
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFFF8E7B9),
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    SizedBox(height: size.height * 0.004),
                     Text(
                       descricao,
                       style: GoogleFonts.cinzel(
-                        fontSize: 11,
+                        fontSize: (size.width * 0.028).clamp(10.0, 12.0),
                         color: cor.withValues(alpha: 0.85),
                       ),
                     ),
@@ -1023,7 +1088,7 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
               Icon(
                 Icons.arrow_forward_ios,
                 color: cor.withValues(alpha: 0.7),
-                size: 15,
+                size: (size.width * 0.038).clamp(13.0, 17.0),
               ),
             ],
           ),
