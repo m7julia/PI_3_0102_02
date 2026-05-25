@@ -29,14 +29,15 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
   String? imagemItemEncontrado;
 
   String falaAtual = 'Temos um invasor! Piratas, ataquem!';
-
   String textoVisivel = '';
-
   Timer? timerTexto;
-
   bool textoCompleto = false;
 
   List<String> opcoesAtuais = ['Continuar'];
+
+  // ─── Mostrar NPC e diálogo (igual ao MundoMaria) ─────────────────────────
+  bool _mostrarNpc = false;
+  bool _mostrarDialogo = false;
 
   int get itensTotais => 3;
   int get itensEncontrados =>
@@ -86,7 +87,7 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
     }
   }
 
-  // POPUP: mundo bloqueado
+  // ─── Popup: mundo bloqueado ───────────────────────────────────────────────
   Future<void> _mostrarPopupBloqueado() async {
     final size = MediaQuery.of(context).size;
 
@@ -180,11 +181,10 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
       },
     );
 
-    // Após fechar o popup, volta para a tela anterior
     if (mounted) Navigator.of(context).pop();
   }
 
-  // POPUP: conclusão (chave obtida)
+  // ─── Popup: conclusão (chave obtida) ─────────────────────────────────────
   Future<void> _mostrarPopupConclusao() async {
     final size = MediaQuery.of(context).size;
 
@@ -268,7 +268,7 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
                         ),
                       ),
                       child: Text(
-                        'Abrir portal',
+                        'Abrir portal 🌀',
                         style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -282,7 +282,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
     );
   }
 
-  // POPUP: escolha final (salvar e sair / continuar)
   Future<void> _mostrarPopupEscolhaFinal() async {
     final size = MediaQuery.of(context).size;
 
@@ -363,7 +362,9 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
                         ),
                         child: Text(
                           '💾 Salvar e sair',
-                          style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                          style: GoogleFonts.cinzel(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -397,7 +398,9 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
                         ),
                         child: Text(
                           '⚔️ Salvar e continuar',
-                          style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                          style: GoogleFonts.cinzel(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -411,9 +414,9 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
     );
   }
 
+  // ─── Carregar nome + verificar bloqueio ───────────────────────────────────
   Future<void> carregarNomeJogador() async {
     try {
-      // 1. Tenta pegar o id salvo no SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final personagemId = prefs.getString('personagemAtualId');
 
@@ -432,7 +435,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
         }
       }
 
-      // 2. Fallback: busca o último personagem criado
       if (docId == null) {
         final snapshot = await FirebaseFirestore.instance
             .collection('personagens')
@@ -458,7 +460,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
         setState(() => nomeJogador = nome!);
       }
 
-      // 3. Verifica se concluiu a Fazenda Vale Dourado
       final doc = await FirebaseFirestore.instance
           .collection('personagens')
           .doc(docId)
@@ -479,7 +480,13 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
         return;
       }
 
-      // 4. Tudo certo — inicia a cena normalmente
+      // Inicia a cena com animação igual ao MundoMaria
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (!mounted) return;
+      setState(() {
+        _mostrarNpc = true;
+        _mostrarDialogo = true;
+      });
       mostrarTexto(falaAtual);
     } catch (e) {
       debugPrint('[MundoLuis] Erro: $e');
@@ -493,22 +500,19 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
 
   void mostrarTexto(String texto) {
     timerTexto?.cancel();
-    textoVisivel = '';
-    textoCompleto = false;
+    setState(() {
+      textoVisivel = '';
+      textoCompleto = false;
+    });
 
     int index = 0;
-
-    timerTexto = Timer.periodic(const Duration(milliseconds: 35), (timer) {
+    timerTexto = Timer.periodic(const Duration(milliseconds: 30), (timer) {
       if (index < texto.length) {
-        setState(() {
-          textoVisivel += texto[index];
-        });
+        setState(() => textoVisivel += texto[index]);
         index++;
       } else {
         timer.cancel();
-        setState(() {
-          textoCompleto = true;
-        });
+        setState(() => textoCompleto = true);
       }
     });
   }
@@ -633,7 +637,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
           'Missão concluída!';
       novasOpcoes = [];
 
-      // Aguarda o texto ser exibido antes de mostrar o popup
       await Future.delayed(const Duration(milliseconds: 100));
       if (mounted) {
         Future.delayed(const Duration(milliseconds: 1800), () async {
@@ -688,86 +691,42 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
     }
   }
 
-
-  Widget _buildBarraProgresso(double sw, double sh) {
-    return Positioned(
-      top: sh * 0.06,
-      right: sw * 0.04,
-      child: SafeArea(
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: sw * 0.03,
-            vertical: sh * 0.01,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.75),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFF8E7B9), width: 1.5),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                'Itens encontrados',
-                style: GoogleFonts.cinzel(
-                  fontSize: (sw * 0.025).clamp(10.0, 13.0),
-                  color: Colors.white70,
-                  letterSpacing: 1,
-                ),
-              ),
-              SizedBox(height: sh * 0.005),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '$itensEncontrados',
-                    style: GoogleFonts.cinzel(
-                      fontSize: (sw * 0.055).clamp(18.0, 26.0),
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFFF8E7B9),
-                    ),
-                  ),
-                  Text(
-                    ' / $itensTotais',
-                    style: GoogleFonts.cinzel(
-                      fontSize: (sw * 0.04).clamp(13.0, 16.0),
-                      color: Colors.white54,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: sh * 0.005),
-              SizedBox(
-                width: sw * 0.25,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: itensEncontrados / itensTotais,
-                    backgroundColor: Colors.white24,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color(0xFFF8E7B9),
-                    ),
-                    minHeight: 6,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final sw = MediaQuery.of(context).size.width;
-    final sh = MediaQuery.of(context).size.height;
-
-    // Altura máxima da caixa de diálogo: x da tela
-    final dialogMaxHeight = sh * 0.35;
+    final size = MediaQuery.of(context).size;
+    // Mesmo tamanho de NPC que o MundoMaria
+    final npcSize = (size.width * 0.50).clamp(140.0, 240.0);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: Text(
+          'Bar Pirata',
+          style: GoogleFonts.cinzel(
+            color: const Color(0xFFF8E7B9),
+            fontWeight: FontWeight.bold,
+            fontSize: (size.width * 0.045).clamp(15.0, 20.0),
+          ),
+        ),
+        backgroundColor: const Color(0xFF6B3F1D),
+        foregroundColor: const Color(0xFFF8E7B9),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            _pararMusica();
+            Navigator.pop(context);
+          },
+        ),
+        actions: [
+          IconButton(
+            onPressed: _toggleSom,
+            icon: Icon(
+              _somAtivado ? Icons.volume_up : Icons.volume_off,
+              color: const Color(0xFFF8E7B9),
+            ),
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           // Background
@@ -775,243 +734,292 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
             child: Image.asset(
               'assets/images/bar_pirata.png',
               fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
+              alignment: Alignment.center,
+              errorBuilder: (_, __, ___) =>
+                  Container(color: const Color(0xFF0D0A1A)),
             ),
           ),
 
-          // Overlay escuro
-          SizedBox.expand(
-            child: Container(color: Colors.black.withValues(alpha: 0.6)),
-          ),
+          // Overlay escuro — mesmo alpha do MundoMaria
+          Container(color: Colors.black.withValues(alpha: 0.50)),
 
-          // Personagem
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: Padding(
-              padding: EdgeInsets.only(left: sw * 0.02, bottom: sh * 0.22),
-              child: Image.asset(
-                'assets/images/personagem_luis.png',
-                height: sh * 0.38,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-
-          // Botão de som (canto superior esquerdo)
+          // ── NPC Luis — posicionamento idêntico ao MundoMaria ────────────
           Positioned(
-            top: sh * 0.06,
-            left: sw * 0.04,
-            child: SafeArea(
-              child: IconButton(
-                onPressed: _toggleSom,
-                icon: Icon(
-                  _somAtivado ? Icons.volume_up : Icons.volume_off,
-                  color: const Color(0xFFF8E7B9),
-                  size: sw * 0.07,
+            bottom: size.height * 0.24,
+            left: size.width * 0.03,
+            child: AnimatedSlide(
+              duration: const Duration(milliseconds: 700),
+              curve: Curves.easeOut,
+              offset: _mostrarNpc ? Offset.zero : const Offset(-0.3, 0),
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 700),
+                opacity: _mostrarNpc ? 1 : 0,
+                child: Image.asset(
+                  'assets/images/personagem_luis.png',
+                  width: npcSize,
+                  height: npcSize,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => Container(
+                    width: npcSize,
+                    height: npcSize,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF6B3F1D),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.person,
+                      size: npcSize * 0.4,
+                      color: const Color(0xFFF8E7B9),
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
 
-          // Título
+          // ── Barra de progresso (canto superior direito, compacta) ────────
           Positioned(
-            top: sh * 0.08,
-            left: sw * 0.18,
-            right: sw * 0.32,
+            top: size.height * 0.01,
+            right: size.width * 0.04,
             child: SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Bar Pirata',
-                    style: GoogleFonts.cinzel(
-                      fontSize: sw * 0.08,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFFF8E7B9),
-                      letterSpacing: 2,
-                      shadows: const [
-                        Shadow(
-                          color: Colors.black,
-                          blurRadius: 10,
-                          offset: Offset(2, 2),
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: size.width * 0.03,
+                  vertical: size.height * 0.008,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.75),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: const Color(0xFF9E8A4A),
+                    width: 1.5,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Itens encontrados',
+                      style: GoogleFonts.cinzel(
+                        fontSize: (size.width * 0.025).clamp(10.0, 13.0),
+                        color: Colors.white70,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    SizedBox(height: size.height * 0.004),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '$itensEncontrados',
+                          style: GoogleFonts.cinzel(
+                            fontSize: (size.width * 0.045).clamp(16.0, 22.0),
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFFF8E7B9),
+                          ),
+                        ),
+                        Text(
+                          ' / $itensTotais',
+                          style: GoogleFonts.cinzel(
+                            fontSize: (size.width * 0.033).clamp(12.0, 15.0),
+                            color: Colors.white54,
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                  SizedBox(height: sh * 0.008),
-                  Text(
-                    'A moeda de ouro perdida',
-                    style: GoogleFonts.cinzel(
-                      fontSize: sw * 0.04,
-                      color: Colors.white70,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Barra de progresso
-          _buildBarraProgresso(sw, sh),
-
-          // Imagem do item encontrado
-          if (imagemItemEncontrado != null)
-            Center(
-              child: Container(
-                padding: EdgeInsets.all(sw * 0.045),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.80),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFF8E7B9), width: 2),
-                ),
-                child: Image.asset(
-                  imagemItemEncontrado!,
-                  height: sh * 0.14,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              width: double.infinity,
-              constraints: BoxConstraints(maxHeight: dialogMaxHeight),
-              margin: EdgeInsets.all(sw * 0.05),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.78),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF9E8A4A).withValues(alpha: 0.2),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(sw * 0.05),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Tag do speaker
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: sw * 0.025,
-                        vertical: sh * 0.005,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF6B3F1D).withValues(alpha: 0.25),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: const Color(0xFFF8E7B9).withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Text(
-                        'Luis Gancho-fino',
-                        style: GoogleFonts.cinzel(
-                          fontSize: sw * 0.028,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(
-                            0xFFF8E7B9,
-                          ).withValues(alpha: 0.65),
-                          letterSpacing: 0.5,
+                    SizedBox(height: size.height * 0.004),
+                    SizedBox(
+                      width: size.width * 0.22,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: itensEncontrados / itensTotais,
+                          backgroundColor: Colors.white24,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Color(0xFFF8E7B9),
+                          ),
+                          minHeight: 5,
                         ),
                       ),
                     ),
-
-                    SizedBox(height: sh * 0.012),
-
-                    // Texto animado
-                    Text(
-                      textoVisivel,
-                      style: GoogleFonts.cinzel(
-                        fontSize: (sw * 0.037).clamp(13.0, 16.0),
-                        height: 1.65,
-                        color: const Color(0xFFF8E7B9),
-                      ),
-                    ),
-
-                    SizedBox(height: sh * 0.018),
-
-                    if (!textoCompleto)
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: ElevatedButton(
-                          onPressed: acelerarTexto,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6B3F1D),
-                            foregroundColor: const Color(0xFFF8E7B9),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: sw * 0.05,
-                              vertical: sh * 0.014,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: const BorderSide(
-                                color: Color(0xFF9E8A4A),
-                                width: 1.5,
-                              ),
-                            ),
-                          ),
-                          child: Text(
-                            'Continuar →',
-                            style: GoogleFonts.cinzel(
-                              fontWeight: FontWeight.bold,
-                              fontSize: (sw * 0.035).clamp(12.0, 15.0),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                    // Botões de opção após texto completo
-                    if (textoCompleto) ...[
-                      SizedBox(height: sh * 0.012),
-                      ...opcoesAtuais.map((opcao) {
-                        return Padding(
-                          padding: EdgeInsets.only(bottom: sh * 0.012),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () => escolherOpcao(opcao),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF6B3F1D),
-                                foregroundColor: const Color(0xFFF8E7B9),
-                                padding: EdgeInsets.symmetric(
-                                  vertical: sh * 0.016,
-                                ),
-                                elevation: 4,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: const BorderSide(
-                                    color: Color(0xFF9E8A4A),
-                                    width: 1.5,
-                                  ),
-                                ),
-                              ),
-                              child: Text(
-                                opcao,
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.cinzel(
-                                  fontSize: (sw * 0.033).clamp(12.0, 14.0),
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
                   ],
                 ),
               ),
             ),
           ),
+
+          // ── Imagem do item encontrado (centralizada) ─────────────────────
+          if (imagemItemEncontrado != null)
+            Center(
+              child: Container(
+                padding: EdgeInsets.all(size.width * 0.045),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.80),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+                ),
+                child: Image.asset(
+                  imagemItemEncontrado!,
+                  height: (size.height * 0.14).clamp(80.0, 130.0),
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+
+          // ── Caixa de diálogo — estrutura idêntica ao MundoMaria ──────────
+          SafeArea(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: size.width * 0.04),
+              child: Column(
+                children: [
+                  const Spacer(),
+                  _buildCaixaDialogo(size),
+                  SizedBox(height: size.height * 0.03),
+                ],
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  // ─── Caixa de diálogo (espelho do MundoMaria) ─────────────────────────────
+  Widget _buildCaixaDialogo(Size size) {
+    return AnimatedSlide(
+      duration: const Duration(milliseconds: 700),
+      curve: Curves.easeOut,
+      offset: _mostrarDialogo ? Offset.zero : const Offset(0, 0.3),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 700),
+        opacity: _mostrarDialogo ? 1 : 0,
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(size.width * 0.045),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.85),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF9E8A4A).withValues(alpha: 0.2),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildBadgeFalante(size),
+              SizedBox(height: size.height * 0.01),
+              Text(
+                textoVisivel,
+                style: GoogleFonts.cinzel(
+                  fontSize: (size.width * 0.037).clamp(13.0, 16.0),
+                  height: 1.65,
+                  color: const Color(0xFFF8E7B9),
+                ),
+              ),
+              SizedBox(height: size.height * 0.018),
+
+              // Botão "Pular" enquanto o texto ainda está sendo escrito
+              if (!textoCompleto)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton(
+                    onPressed: acelerarTexto,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF9E8A4A),
+                      foregroundColor: const Color(0xFFF8E7B9),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: size.width * 0.06,
+                        vertical: size.height * 0.014,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(
+                          color: Color(0xFF9E8A4A),
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      'Continuar →',
+                      style: GoogleFonts.cinzel(
+                        fontWeight: FontWeight.bold,
+                        fontSize: (size.width * 0.035).clamp(12.0, 15.0),
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Opções após texto completo
+              if (textoCompleto) ...[
+                ...opcoesAtuais.map((opcao) {
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: size.height * 0.012),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => escolherOpcao(opcao),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6B3F1D),
+                          foregroundColor: const Color(0xFFF8E7B9),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: size.width * 0.06,
+                            vertical: size.height * 0.014,
+                          ),
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: const BorderSide(
+                              color: Color(0xFF9E8A4A),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          opcao,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.cinzel(
+                            fontSize: (size.width * 0.033).clamp(12.0, 14.0),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── Badge do falante (espelho do MundoMaria) ─────────────────────────────
+  Widget _buildBadgeFalante(Size size) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF6B3F1D).withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFF8E7B9).withValues(alpha: 0.3),
+        ),
+      ),
+      child: Text(
+        'Luis Gancho-fino',
+        style: GoogleFonts.cinzel(
+          fontSize: (size.width * 0.025).clamp(10.0, 13.0),
+          fontWeight: FontWeight.bold,
+          color: const Color(0xFFF8E7B9).withValues(alpha: 0.65),
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
