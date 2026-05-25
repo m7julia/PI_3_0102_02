@@ -1,10 +1,10 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rpg_game/features/mundo_final/screens/mundo_final_screen.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class MundoLuisScreen extends StatefulWidget {
   const MundoLuisScreen({super.key});
@@ -14,6 +14,9 @@ class MundoLuisScreen extends StatefulWidget {
 }
 
 class _MundoLuisScreenState extends State<MundoLuisScreen> {
+  late AudioPlayer _musicPlayer;
+  bool _somAtivado = true;
+
   bool missaoAceita = false;
   bool achouLuneta = false;
   bool achouMapa = false;
@@ -26,329 +29,394 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
   String? imagemItemEncontrado;
 
   String falaAtual = 'Temos um invasor! Piratas, ataquem!';
-
   String textoVisivel = '';
-
   Timer? timerTexto;
-
   bool textoCompleto = false;
 
   List<String> opcoesAtuais = ['Continuar'];
+
+  // ─── Mostrar NPC e diálogo (igual ao MundoMaria) ─────────────────────────
+  bool _mostrarNpc = false;
+  bool _mostrarDialogo = false;
 
   int get itensTotais => 3;
   int get itensEncontrados =>
       (achouLuneta ? 1 : 0) + (achouCerveja ? 1 : 0) + (achouMapa ? 1 : 0);
 
-  
-  // // POPUP: mundo bloqueado
-  // Future<void> _mostrarPopupBloqueado() async {
-  //   await showDialog(
-  //     context: context,
-  //     barrierDismissible: false,
-  //     builder: (context) {
-  //       return Dialog(
-  //         backgroundColor: Colors.transparent,
-  //         child: Container(
-  //           padding: const EdgeInsets.all(24),
-  //           decoration: BoxDecoration(
-  //             color: const Color(0xFF1E1208),
-  //             borderRadius: BorderRadius.circular(24),
-  //             border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
-  //             boxShadow: [
-  //               BoxShadow(
-  //                 color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
-  //                 blurRadius: 25,
-  //                 spreadRadius: 2,
-  //               ),
-  //             ],
-  //           ),
-  //           child: Column(
-  //             mainAxisSize: MainAxisSize.min,
-  //             children: [
-  //               const Icon(Icons.lock, size: 70, color: Color(0xFFF8E7B9)),
-  //               const SizedBox(height: 20),
-  //               Text(
-  //                 'Portal Bloqueado',
-  //                 textAlign: TextAlign.center,
-  //                 style: GoogleFonts.cinzel(
-  //                   color: const Color(0xFFF8E7B9),
-  //                   fontSize: 24,
-  //                   fontWeight: FontWeight.bold,
-  //                 ),
-  //               ),
-  //               const SizedBox(height: 18),
-  //               Text(
-  //                 'Você ainda não possui a chave necessária para acessar o Bar Pirata.\n\n'
-  //                 'Conclua primeiro o mundo "Fazenda Vale Dourado" e obtenha sua chave antes de prosseguir.',
-  //                 textAlign: TextAlign.center,
-  //                 style: GoogleFonts.cinzel(
-  //                   color: const Color(0xFFF8E7B9),
-  //                   fontSize: 15,
-  //                   height: 1.6,
-  //                 ),
-  //               ),
-  //               const SizedBox(height: 28),
-  //               ElevatedButton(
-  //                 onPressed: () => Navigator.of(context).pop(),
-  //                 style: ElevatedButton.styleFrom(
-  //                   backgroundColor: const Color(0xFF6B3F1D),
-  //                   foregroundColor: const Color(0xFFF8E7B9),
-  //                   padding: const EdgeInsets.symmetric(
-  //                     horizontal: 28,
-  //                     vertical: 14,
-  //                   ),
-  //                   shape: RoundedRectangleBorder(
-  //                     borderRadius: BorderRadius.circular(14),
-  //                     side: const BorderSide(
-  //                       color: Color(0xFF9E8A4A),
-  //                       width: 1.5,
-  //                     ),
-  //                   ),
-  //                 ),
-  //                 child: Text(
-  //                   'Voltar',
-  //                   style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       );
-  //     },
-  //   );
-
-  //   // Após fechar o popup, volta para a tela anterior
-  //   if (mounted) Navigator.of(context).pop();
-  // }
-
-
-  // POPUP: conclusão (chave obtida)
-  Future<void> _mostrarPopupConclusao() async {
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1208),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
-                  blurRadius: 25,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset(
-                  'assets/images/icons_bar/moeda_ouro.png',
-                  height: 120,
-                  fit: BoxFit.contain,
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Chave do Bar Pirata Obtida',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cinzel(
-                    color: const Color(0xFFF8E7B9),
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  'Muito bem, $nomeJogador.\n\n'
-                  'Você concluiu a jornada pelo Bar Pirata e encontrou a Moeda de Ouro.\n\n'
-                  'A chave deste mundo agora pertence a você.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cinzel(
-                    color: const Color(0xFFF8E7B9),
-                    fontSize: 15,
-                    height: 1.6,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                ElevatedButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop();
-                    await _mostrarPopupEscolhaFinal();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6B3F1D),
-                    foregroundColor: const Color(0xFFF8E7B9),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 28,
-                      vertical: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      side: const BorderSide(
-                        color: Color(0xFF9E8A4A),
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                  child: Text(
-                    'Abrir portal 🌀',
-                    style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+  @override
+  void initState() {
+    super.initState();
+    _musicPlayer = AudioPlayer();
+    _iniciarMusica();
+    carregarNomeJogador();
   }
 
-  // POPUP: escolha final (salvar e sair / continuar)
-  Future<void> _mostrarPopupEscolhaFinal() async {
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1208),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
-                  blurRadius: 25,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'O Portal Está Aberto',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cinzel(
-                    color: const Color(0xFFF8E7B9),
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Sua jornada no Bar Pirata foi registrada.\n\n'
-                  'Deseja encerrar sua aventura agora ou continuar explorando os mundos?',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cinzel(
-                    color: const Color(0xFFF8E7B9),
-                    fontSize: 15,
-                    height: 1.6,
-                  ),
-                ),
-                const SizedBox(height: 28),
-
-                // Botão: salvar e sair
-                Center(
-                  child: SizedBox(
-                    width: 260,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await _salvarProgressoBarPirata();
-                        Navigator.of(context).pop();
-                        Navigator.of(this.context).pop();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6B3F1D),
-                        foregroundColor: const Color(0xFFF8E7B9),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: const BorderSide(
-                            color: Color(0xFF9E8A4A),
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                      child: Text(
-                        '💾 Salvar e sair',
-                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // Botão: salvar e continuar para o mundo final
-                Center(
-                  child: SizedBox(
-                    width: 260,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await _salvarProgressoBarPirata();
-                        Navigator.of(context).pop();
-                        Navigator.push(
-                          this.context,
-                          MaterialPageRoute(
-                            builder: (_) => const MundoFinalScreen(),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6B3F1D),
-                        foregroundColor: const Color(0xFFF8E7B9),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: const BorderSide(
-                            color: Color(0xFF9E8A4A),
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                      child: Text(
-                        '⚔️ Salvar e continuar',
-                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+  @override
+  void dispose() {
+    timerTexto?.cancel();
+    _pararMusica();
+    _musicPlayer.dispose();
+    super.dispose();
   }
 
-  // FIRESTORE  salva progresso do Bar Pirata
-  Future<void> _salvarProgressoBarPirata() async {
-    if (_personagemId == null) return;
-
+  Future<void> _iniciarMusica() async {
     try {
-      await FirebaseFirestore.instance
-          .collection('personagens')
-          .doc(_personagemId)
-          .update({
-            'bar_pirata': [true, Timestamp.now(), '[22.83347° S, 47.04992° W]'],
-          });
+      await _musicPlayer.setVolume(0.5);
+      await _musicPlayer.play(AssetSource('audio/music/bar_pirata.mp3'));
+      await _musicPlayer.setReleaseMode(ReleaseMode.loop);
     } catch (e) {
-      debugPrint('Erro ao salvar progresso: $e');
+      debugPrint('Erro ao iniciar música: $e');
     }
   }
 
-  // 1. carrega o personagem salvo
+  Future<void> _pararMusica() async {
+    try {
+      await _musicPlayer.stop();
+    } catch (e) {
+      debugPrint('Erro ao parar música: $e');
+    }
+  }
+
+  Future<void> _toggleSom() async {
+    if (_somAtivado) {
+      await _musicPlayer.pause();
+      setState(() => _somAtivado = false);
+    } else {
+      await _musicPlayer.resume();
+      setState(() => _somAtivado = true);
+    }
+  }
+
+  // ─── Popup: mundo bloqueado ───────────────────────────────────────────────
+  Future<void> _mostrarPopupBloqueado() async {
+    final size = MediaQuery.of(context).size;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: size.width * 0.06,
+            vertical: size.height * 0.06,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 420,
+              maxHeight: size.height * 0.80,
+            ),
+            child: Container(
+              padding: EdgeInsets.all(size.width * 0.06),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1208),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                    blurRadius: 25,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.lock,
+                      size: (size.width * 0.16).clamp(48.0, 70.0),
+                      color: const Color(0xFFF8E7B9),
+                    ),
+                    SizedBox(height: size.height * 0.025),
+                    Text(
+                      'Portal Bloqueado',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cinzel(
+                        color: const Color(0xFFF8E7B9),
+                        fontSize: (size.width * 0.055).clamp(18.0, 26.0),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: size.height * 0.022),
+                    Text(
+                      'Você ainda não possui a chave necessária para acessar o Bar Pirata.\n\nConclua primeiro o mundo "Fazenda Vale Dourado" e obtenha sua chave antes de prosseguir.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cinzel(
+                        color: const Color(0xFFF8E7B9),
+                        fontSize: (size.width * 0.036).clamp(13.0, 16.0),
+                        height: 1.6,
+                      ),
+                    ),
+                    SizedBox(height: size.height * 0.032),
+                    ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6B3F1D),
+                        foregroundColor: const Color(0xFFF8E7B9),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: size.width * 0.07,
+                          vertical: size.height * 0.016,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: const BorderSide(
+                            color: Color(0xFF9E8A4A),
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        'Voltar',
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  // ─── Popup: conclusão (chave obtida) ─────────────────────────────────────
+  Future<void> _mostrarPopupConclusao() async {
+    final size = MediaQuery.of(context).size;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: size.width * 0.06,
+            vertical: size.height * 0.06,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 420,
+              maxHeight: size.height * 0.85,
+            ),
+            child: Container(
+              padding: EdgeInsets.all(size.width * 0.06),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1208),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                    blurRadius: 25,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/images/icons_bar/moeda_ouro.png',
+                      height: (size.height * 0.18).clamp(100.0, 150.0),
+                      fit: BoxFit.contain,
+                    ),
+                    SizedBox(height: size.height * 0.025),
+                    Text(
+                      'Chave do Bar Pirata Obtida',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cinzel(
+                        color: const Color(0xFFF8E7B9),
+                        fontSize: (size.width * 0.055).clamp(18.0, 26.0),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: size.height * 0.022),
+                    Text(
+                      'Muito bem, $nomeJogador.\n\nVocê concluiu a jornada pelo Bar Pirata e encontrou a Moeda de Ouro.\n\nA chave deste mundo agora pertence a você.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cinzel(
+                        color: const Color(0xFFF8E7B9),
+                        fontSize: (size.width * 0.036).clamp(13.0, 16.0),
+                        height: 1.6,
+                      ),
+                    ),
+                    SizedBox(height: size.height * 0.032),
+                    ElevatedButton(
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        await _mostrarPopupEscolhaFinal();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6B3F1D),
+                        foregroundColor: const Color(0xFFF8E7B9),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: size.width * 0.07,
+                          vertical: size.height * 0.016,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: const BorderSide(
+                            color: Color(0xFF9E8A4A),
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        'Abrir portal 🌀',
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _mostrarPopupEscolhaFinal() async {
+    final size = MediaQuery.of(context).size;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: size.width * 0.06,
+            vertical: size.height * 0.06,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 420,
+              maxHeight: size.height * 0.85,
+            ),
+            child: Container(
+              padding: EdgeInsets.all(size.width * 0.06),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1208),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                    blurRadius: 25,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'O Portal Está Aberto',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cinzel(
+                        color: const Color(0xFFF8E7B9),
+                        fontSize: (size.width * 0.055).clamp(18.0, 26.0),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: size.height * 0.025),
+                    Text(
+                      'Sua jornada no Bar Pirata foi registrada.\n\nDeseja encerrar sua aventura agora ou continuar explorando os mundos?',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cinzel(
+                        color: const Color(0xFFF8E7B9),
+                        fontSize: (size.width * 0.036).clamp(13.0, 16.0),
+                        height: 1.6,
+                      ),
+                    ),
+                    SizedBox(height: size.height * 0.032),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          await _salvarProgressoBarPirata();
+                          Navigator.of(context).pop();
+                          Navigator.of(this.context).pop();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6B3F1D),
+                          foregroundColor: const Color(0xFFF8E7B9),
+                          padding: EdgeInsets.symmetric(
+                            vertical: size.height * 0.016,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            side: const BorderSide(
+                              color: Color(0xFF9E8A4A),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          '💾 Salvar e sair',
+                          style: GoogleFonts.cinzel(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: size.height * 0.015),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          await _salvarProgressoBarPirata();
+                          Navigator.of(context).pop();
+                          Navigator.push(
+                            this.context,
+                            MaterialPageRoute(
+                              builder: (_) => const MundoFinalScreen(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6B3F1D),
+                          foregroundColor: const Color(0xFFF8E7B9),
+                          padding: EdgeInsets.symmetric(
+                            vertical: size.height * 0.016,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            side: const BorderSide(
+                              color: Color(0xFF9E8A4A),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          '⚔️ Salvar e continuar',
+                          style: GoogleFonts.cinzel(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ─── Carregar nome + verificar bloqueio ───────────────────────────────────
   Future<void> carregarNomeJogador() async {
     try {
-      // 1. Tenta pegar o id salvo no SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final personagemId = prefs.getString('personagemAtualId');
 
@@ -367,7 +435,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
         }
       }
 
-      // 2. Fallback: busca o último personagem criado
       if (docId == null) {
         final snapshot = await FirebaseFirestore.instance
             .collection('personagens')
@@ -393,7 +460,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
         setState(() => nomeJogador = nome!);
       }
 
-      // 3. Verifica se concluiu a Fazenda Vale Dourado
       final doc = await FirebaseFirestore.instance
           .collection('personagens')
           .doc(docId)
@@ -401,20 +467,26 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
 
       if (!doc.exists) return;
 
-      // final data = doc.data()!;
-      // final fazenda = data['fazenda_vale_dourado'];
-      // bool concluiuAnterior = false;
+      final data = doc.data()!;
+      final fazenda = data['fazenda_vale_dourado'];
+      bool concluiuAnterior = false;
 
-      // if (fazenda is List && fazenda.isNotEmpty) {
-      //   concluiuAnterior = fazenda[0] == true;
-      // }
+      if (fazenda is List && fazenda.isNotEmpty) {
+        concluiuAnterior = fazenda[0] == true;
+      }
 
-      // if (!concluiuAnterior) {
-      //   if (mounted) await _mostrarPopupBloqueado();
-      //   return;
-      // }
+      if (!concluiuAnterior) {
+        if (mounted) await _mostrarPopupBloqueado();
+        return;
+      }
 
-      // 4. Tudo certo — inicia a cena normalmente
+      // Inicia a cena com animação igual ao MundoMaria
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (!mounted) return;
+      setState(() {
+        _mostrarNpc = true;
+        _mostrarDialogo = true;
+      });
       mostrarTexto(falaAtual);
     } catch (e) {
       debugPrint('[MundoLuis] Erro: $e');
@@ -426,36 +498,21 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    carregarNomeJogador();
-  }
-
-  @override
-  void dispose() {
-    timerTexto?.cancel();
-    super.dispose();
-  }
-
   void mostrarTexto(String texto) {
     timerTexto?.cancel();
-    textoVisivel = '';
-    textoCompleto = false;
+    setState(() {
+      textoVisivel = '';
+      textoCompleto = false;
+    });
 
     int index = 0;
-
-    timerTexto = Timer.periodic(const Duration(milliseconds: 35), (timer) {
+    timerTexto = Timer.periodic(const Duration(milliseconds: 30), (timer) {
       if (index < texto.length) {
-        setState(() {
-          textoVisivel += texto[index];
-        });
+        setState(() => textoVisivel += texto[index]);
         index++;
       } else {
         timer.cancel();
-        setState(() {
-          textoCompleto = true;
-        });
+        setState(() => textoCompleto = true);
       }
     });
   }
@@ -580,11 +637,8 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
           'Missão concluída!';
       novasOpcoes = [];
 
-      // ── Dispara o popup de conclusão após o texto terminar ──
-      // Aguarda o texto ser exibido antes de mostrar o popup
       await Future.delayed(const Duration(milliseconds: 100));
       if (mounted) {
-        // Pequeno delay para garantir que o setState abaixo já rodou
         Future.delayed(const Duration(milliseconds: 1800), () async {
           if (mounted) await _mostrarPopupConclusao();
         });
@@ -613,232 +667,312 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
       }
 
       if (novasOpcoes != null) {
-        opcoesAtuais = novasOpcoes!;
+        opcoesAtuais = novasOpcoes;
       }
     });
 
     if (novaFala != null) {
-      atualizarFala(novaFala!);
+      atualizarFala(novaFala);
     }
   }
 
-  Widget _buildBarraProgresso() {
-    return Positioned(
-      top: 50,
-      right: 16,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.75),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFF8E7B9), width: 1.5),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              'Itens encontrados',
-              style: GoogleFonts.cinzel(
-                fontSize: 11,
-                color: Colors.white70,
-                letterSpacing: 1,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '$itensEncontrados',
-                  style: GoogleFonts.cinzel(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFFF8E7B9),
-                  ),
-                ),
-                Text(
-                  ' / $itensTotais',
-                  style: GoogleFonts.cinzel(
-                    fontSize: 16,
-                    color: Colors.white54,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            SizedBox(
-              width: 100,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: itensEncontrados / itensTotais,
-                  backgroundColor: Colors.white24,
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                    Color(0xFFF8E7B9),
-                  ),
-                  minHeight: 6,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  Future<void> _salvarProgressoBarPirata() async {
+    if (_personagemId == null) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('personagens')
+          .doc(_personagemId)
+          .update({
+            'bar_pirata': [true, Timestamp.now(), '[22.83347° S, 47.04992° W]'],
+          });
+    } catch (e) {
+      debugPrint('Erro ao salvar progresso: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    // Mesmo tamanho de NPC que o MundoMaria
+    final npcSize = (size.width * 0.50).clamp(140.0, 240.0);
+
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Bar Pirata',
+          style: GoogleFonts.cinzel(
+            color: const Color(0xFFF8E7B9),
+            fontWeight: FontWeight.bold,
+            fontSize: (size.width * 0.045).clamp(15.0, 20.0),
+          ),
+        ),
+        backgroundColor: const Color(0xFF6B3F1D),
+        foregroundColor: const Color(0xFFF8E7B9),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            _pararMusica();
+            Navigator.pop(context);
+          },
+        ),
+        actions: [
+          IconButton(
+            onPressed: _toggleSom,
+            icon: Icon(
+              _somAtivado ? Icons.volume_up : Icons.volume_off,
+              color: const Color(0xFFF8E7B9),
+            ),
+          ),
+        ],
+      ),
       body: Stack(
         children: [
+          // Background
           SizedBox.expand(
             child: Image.asset(
               'assets/images/bar_pirata.png',
               fit: BoxFit.cover,
+              alignment: Alignment.center,
+              errorBuilder: (_, __, ___) =>
+                  Container(color: const Color(0xFF0D0A1A)),
             ),
           ),
 
-          Container(color: Colors.black.withValues(alpha: 0.6)),
+          // Overlay escuro — mesmo alpha do MundoMaria
+          Container(color: Colors.black.withValues(alpha: 0.50)),
 
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 10, bottom: 20),
-              child: Image.asset(
-                'assets/images/personagem_luis.png',
-                height: 320,
-                fit: BoxFit.contain,
+          // ── NPC Luis — posicionamento idêntico ao MundoMaria ────────────
+          Positioned(
+            bottom: size.height * 0.24,
+            left: size.width * 0.03,
+            child: AnimatedSlide(
+              duration: const Duration(milliseconds: 700),
+              curve: Curves.easeOut,
+              offset: _mostrarNpc ? Offset.zero : const Offset(-0.3, 0),
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 700),
+                opacity: _mostrarNpc ? 1 : 0,
+                child: Image.asset(
+                  'assets/images/personagem_luis.png',
+                  width: npcSize,
+                  height: npcSize,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => Container(
+                    width: npcSize,
+                    height: npcSize,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF6B3F1D),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.person,
+                      size: npcSize * 0.4,
+                      color: const Color(0xFFF8E7B9),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
 
+          // ── Barra de progresso (canto superior direito, compacta) ────────
           Positioned(
-            top: 70,
-            left: 24,
-            right: 130,
-            child: Column(
-              children: [
-                Text(
-                  'Bar Pirata',
-                  style: GoogleFonts.cinzel(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFFF8E7B9),
-                    letterSpacing: 2,
-                    shadows: const [
-                      Shadow(
-                        color: Colors.black,
-                        blurRadius: 10,
-                        offset: Offset(2, 2),
+            top: size.height * 0.01,
+            right: size.width * 0.04,
+            child: SafeArea(
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: size.width * 0.03,
+                  vertical: size.height * 0.008,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.75),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: const Color(0xFF9E8A4A),
+                    width: 1.5,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Itens encontrados',
+                      style: GoogleFonts.cinzel(
+                        fontSize: (size.width * 0.025).clamp(10.0, 13.0),
+                        color: Colors.white70,
+                        letterSpacing: 1,
                       ),
-                    ],
-                  ),
-                  textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: size.height * 0.004),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '$itensEncontrados',
+                          style: GoogleFonts.cinzel(
+                            fontSize: (size.width * 0.045).clamp(16.0, 22.0),
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFFF8E7B9),
+                          ),
+                        ),
+                        Text(
+                          ' / $itensTotais',
+                          style: GoogleFonts.cinzel(
+                            fontSize: (size.width * 0.033).clamp(12.0, 15.0),
+                            color: Colors.white54,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: size.height * 0.004),
+                    SizedBox(
+                      width: size.width * 0.22,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: itensEncontrados / itensTotais,
+                          backgroundColor: Colors.white24,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Color(0xFFF8E7B9),
+                          ),
+                          minHeight: 5,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  'A moeda de ouro perdida',
-                  style: GoogleFonts.cinzel(
-                    fontSize: 20,
-                    color: Colors.white70,
-                    letterSpacing: 1.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+              ),
             ),
           ),
 
-          _buildBarraProgresso(),
-
+          // ── Imagem do item encontrado (centralizada) ─────────────────────
           if (imagemItemEncontrado != null)
             Center(
               child: Container(
-                padding: const EdgeInsets.all(18),
+                padding: EdgeInsets.all(size.width * 0.045),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.80),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFF8E7B9), width: 2),
+                  border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
                 ),
                 child: Image.asset(
                   imagemItemEncontrado!,
-                  height: 120,
+                  height: (size.height * 0.14).clamp(80.0, 130.0),
                   fit: BoxFit.contain,
                 ),
               ),
             ),
 
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              width: double.infinity,
-              margin: const EdgeInsets.all(20),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.78),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF9E8A4A).withValues(alpha: 0.2),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
+          // ── Caixa de diálogo — estrutura idêntica ao MundoMaria ──────────
+          SafeArea(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: size.width * 0.04),
+              child: Column(
+                children: [
+                  const Spacer(),
+                  _buildCaixaDialogo(size),
+                  SizedBox(height: size.height * 0.03),
                 ],
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6B3F1D).withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: const Color(0xFFF8E7B9).withValues(alpha: 0.3),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Caixa de diálogo (espelho do MundoMaria) ─────────────────────────────
+  Widget _buildCaixaDialogo(Size size) {
+    return AnimatedSlide(
+      duration: const Duration(milliseconds: 700),
+      curve: Curves.easeOut,
+      offset: _mostrarDialogo ? Offset.zero : const Offset(0, 0.3),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 700),
+        opacity: _mostrarDialogo ? 1 : 0,
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(size.width * 0.045),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.85),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF9E8A4A).withValues(alpha: 0.2),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildBadgeFalante(size),
+              SizedBox(height: size.height * 0.01),
+              Text(
+                textoVisivel,
+                style: GoogleFonts.cinzel(
+                  fontSize: (size.width * 0.037).clamp(13.0, 16.0),
+                  height: 1.65,
+                  color: const Color(0xFFF8E7B9),
+                ),
+              ),
+              SizedBox(height: size.height * 0.018),
+
+              // Botão "Pular" enquanto o texto ainda está sendo escrito
+              if (!textoCompleto)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton(
+                    onPressed: acelerarTexto,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF9E8A4A),
+                      foregroundColor: const Color(0xFFF8E7B9),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: size.width * 0.06,
+                        vertical: size.height * 0.014,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(
+                          color: Color(0xFF9E8A4A),
+                          width: 1.5,
+                        ),
                       ),
                     ),
                     child: Text(
-                      'Luis Gancho-fino',
+                      'Continuar →',
                       style: GoogleFonts.cinzel(
-                        fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFFF8E7B9).withValues(alpha: 0.65),
-                        letterSpacing: 0.5,
+                        fontSize: (size.width * 0.035).clamp(12.0, 15.0),
                       ),
                     ),
                   ),
+                ),
 
-                  const SizedBox(height: 10),
-
-                  Text(
-                    textoVisivel,
-                    style: GoogleFonts.cinzel(
-                      fontSize: 15,
-                      height: 1.65,
-                      color: const Color(0xFFF8E7B9),
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  if (!textoCompleto)
-                    Align(
-                      alignment: Alignment.centerRight,
+              // Opções após texto completo
+              if (textoCompleto) ...[
+                ...opcoesAtuais.map((opcao) {
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: size.height * 0.012),
+                    child: SizedBox(
+                      width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: acelerarTexto,
+                        onPressed: () => escolherOpcao(opcao),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF6B3F1D),
                           foregroundColor: const Color(0xFFF8E7B9),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: size.width * 0.06,
+                            vertical: size.height * 0.014,
                           ),
+                          elevation: 4,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                             side: const BorderSide(
@@ -848,54 +982,44 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
                           ),
                         ),
                         child: Text(
-                          'Continuar →',
+                          opcao,
+                          textAlign: TextAlign.center,
                           style: GoogleFonts.cinzel(
+                            fontSize: (size.width * 0.033).clamp(12.0, 14.0),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                     ),
-
-                  if (textoCompleto) ...[
-                    const SizedBox(height: 8),
-                    ...opcoesAtuais.map((opcao) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () => escolherOpcao(opcao),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF6B3F1D),
-                              foregroundColor: const Color(0xFFF8E7B9),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              elevation: 4,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: const BorderSide(
-                                  color: Color(0xFF9E8A4A),
-                                  width: 1.5,
-                                ),
-                              ),
-                            ),
-                            child: Text(
-                              opcao,
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.cinzel(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
-                ],
-              ),
-            ),
+                  );
+                }),
+              ],
+            ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  // ─── Badge do falante (espelho do MundoMaria) ─────────────────────────────
+  Widget _buildBadgeFalante(Size size) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF6B3F1D).withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFF8E7B9).withValues(alpha: 0.3),
+        ),
+      ),
+      child: Text(
+        'Luis Gancho-fino',
+        style: GoogleFonts.cinzel(
+          fontSize: (size.width * 0.025).clamp(10.0, 13.0),
+          fontWeight: FontWeight.bold,
+          color: const Color(0xFFF8E7B9).withValues(alpha: 0.65),
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }

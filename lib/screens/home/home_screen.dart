@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,12 +9,13 @@ import 'package:rpg_game/features/mundo_rafael/screens/mundo_rafael_screen.dart'
 import 'package:rpg_game/features/mundo_luis/screens/mundo_luis.dart';
 import 'package:rpg_game/features/mundo_gianluca/screens/mundo_gian_screen.dart';
 import '../game/../game/personagem/criar_personagem_screen.dart';
+import 'package:rpg_game/features/mundo_final/screens/mundo_final_screen.dart';
+import '../creditos/creditos_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-// Adicione esses imports no topo do arquivo home_screen.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:rpg_game/services/personagem_service.dart'; // ajuste o path
+import 'package:rpg_game/services/personagem_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,6 +36,113 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => estaMutado = true);
     } else {
       tocarMusica();
+    }
+  }
+
+  Future<void> irParaContinuar() async {
+    const ordemMundos = [
+      'estacionamento_caotico',
+      'terrasen',
+      'conservatorio_diminuto',
+      'fazenda_vale_dourado',
+      'bar_pirata',
+    ];
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Center(
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A0E06),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFF8E7B9), width: 1.5),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(color: Color(0xFFF8E7B9)),
+              const SizedBox(height: 16),
+              Text(
+                'Carregando jornada...',
+                style: GoogleFonts.cinzel(
+                  color: const Color(0xFFF8E7B9),
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final personagemId = FirebaseAuth.instance.currentUser?.uid;
+
+      if (personagemId == null) {
+        Navigator.pop(context);
+        _mostrarSnackBar('Nenhum jogador logado!');
+        return;
+      }
+
+      final doc = await FirebaseFirestore.instance
+          .collection('personagens')
+          .doc(personagemId)
+          .get();
+
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      if (!doc.exists) {
+        _mostrarSnackBar('Nenhum save encontrado. Inicie uma nova jornada!');
+        return;
+      }
+
+      final data = doc.data() ?? {};
+      String mundoDestino = ordemMundos.first;
+      bool todosConcluidos = true;
+
+      for (final mundo in ordemMundos) {
+        final campo = data[mundo];
+        final concluido = (campo is List && campo.isNotEmpty)
+            ? campo[0] == true
+            : false;
+        if (!concluido) {
+          mundoDestino = mundo;
+          todosConcluidos = false;
+          break;
+        }
+      }
+
+      await player.stop();
+      if (!mounted) return;
+
+      if (todosConcluidos) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MundoFinalScreen()),
+        );
+        return;
+      }
+
+      final rotas = <String, Widget Function()>{
+        'estacionamento_caotico': () => const MundoRafaelScreen(),
+        'terrasen': () => const MundoAnaScreen(),
+        'conservatorio_diminuto': () => const MundoGianlucaScreen(),
+        'fazenda_vale_dourado': () => const MundoMariaScreen(),
+        'bar_pirata': () => const MundoLuisScreen(),
+      };
+
+      final builder = rotas[mundoDestino];
+      if (builder != null) {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => builder()));
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        _mostrarSnackBar('Erro ao carregar jornada: $e');
+      }
     }
   }
 
@@ -65,7 +174,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ← novo
   Future<void> irParaMundoAna() async {
     await player.stop();
     if (!mounted) return;
@@ -80,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const MundoGianScreen()),
+      MaterialPageRoute(builder: (_) => const MundoGianlucaScreen()),
     );
   }
 
@@ -111,9 +219,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ──────────────────────────────────────────────
-  // GEOLOCALIZAÇÃO
-  // ──────────────────────────────────────────────
+  Future<void> irParaCreditos() async {
+    await player.stop();
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CreditosScreen()),
+    );
+  }
 
   Future<Position?> _solicitarLocalizacao() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -158,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (_) => _MapaDialog(
         latitude: position.latitude,
         longitude: position.longitude,
-        personagemId: 'Z4zP83zZeHKjXMv7ALoM',
+        personagemId: FirebaseAuth.instance.currentUser?.uid ?? '',
       ),
     );
   }
@@ -183,6 +296,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final menuWidth = size.width * 0.80 > 300 ? 300.0 : size.width * 0.80;
+    final titleFontSize = (size.width * 0.09).clamp(24.0, 44.0);
+
     return Scaffold(
       body: Stack(
         children: [
@@ -228,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                // ── BOTÃO DO MAPA (topo esquerdo) ──
+                // Botão do mapa (topo esquerdo)
                 Positioned(
                   top: 16,
                   left: 16,
@@ -245,8 +362,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 Center(
                   child: SingleChildScrollView(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 74,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: size.width * 0.08,
                         vertical: 24,
                       ),
                       child: Column(
@@ -261,10 +378,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               'MagIAlurA',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.cinzelDecorative(
-                                fontSize: 45,
+                                fontSize: titleFontSize,
                                 fontWeight: FontWeight.bold,
                                 color: const Color(0xFFF8E7B9),
-                                letterSpacing: 20,
+                                letterSpacing: 3,
                                 shadows: [
                                   for (int i = 1; i <= 10; i++)
                                     Shadow(
@@ -289,10 +406,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 115),
+                          const SizedBox(height: 50),
 
                           Container(
-                            width: 300,
+                            width: menuWidth,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 10,
                               vertical: 15,
@@ -321,38 +438,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const SizedBox(height: 16),
                                 _rpgMenuButton(
                                   text: 'Continuar',
-                                  onPressed: () {},
+                                  onPressed: irParaContinuar,
                                 ),
                                 const SizedBox(height: 16),
                                 _rpgMenuButton(
-                                  text: 'Fazenda vale dourado',
-                                  onPressed: irParaMundoMaria,
-                                ),
-                                const SizedBox(height: 16),
-                                _rpgMenuButton(
-                                  text: 'Terrasen',
-                                  onPressed: irParaMundoAna,
-                                ),
-
-                                const SizedBox(height: 16),
-                                _rpgMenuButton(
-                                  text: 'Mundo Gianluca',
-                                  onPressed: irParaMundoGianluca,
-                                ),
-                                const SizedBox(height: 16),
-                                _rpgMenuButton(
-                                  text: 'Bar pirata',
-                                  onPressed: irParaMundoLuis,
-                                ),
-                                const SizedBox(height: 16),
-                                _rpgMenuButton(
-                                  text: 'Estacionamento',
-                                  onPressed: irParaMundoRafa,
-                                ),
-                                const SizedBox(height: 16),
-                                _rpgMenuButton(
-                                  text: 'Configurações',
-                                  onPressed: () {},
+                                  text: 'Créditos',
+                                  onPressed: irParaCreditos,
                                 ),
                               ],
                             ),
@@ -370,7 +461,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ── Widget helper: ícone RPG (mudo / mapa) ──
   Widget _rpgIconButton({
     required IconData icon,
     required VoidCallback onPressed,
@@ -435,13 +525,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// ══════════════════════════════════════════════════════════
-// DIÁLOGO DO MAPA
-// ══════════════════════════════════════════════════════════
-// ══════════════════════════════════════════════════════════
-// MODELO DOS AMBIENTES (gerado dinamicamente do Firebase)
-// ══════════════════════════════════════════════════════════
-
 class _Ambiente {
   final String nome;
   final String nomeLegivel;
@@ -456,14 +539,10 @@ class _Ambiente {
   });
 }
 
-// ══════════════════════════════════════════════════════════
-// DIÁLOGO DO MAPA — dados do Firebase
-// ══════════════════════════════════════════════════════════
-
 class _MapaDialog extends StatefulWidget {
   final double latitude;
   final double longitude;
-  final String personagemId; // ID do documento do personagem logado
+  final String personagemId;
 
   const _MapaDialog({
     required this.latitude,
@@ -476,7 +555,6 @@ class _MapaDialog extends StatefulWidget {
 }
 
 class _MapaDialogState extends State<_MapaDialog> {
-  // Mapeamento: chave Firestore → nome legível
   static const Map<String, String> _nomesLegiveis = {
     'bar_pirata': 'Bar Pirata',
     'conservatorio_diminuto': 'Conservatório Diminuto',
@@ -552,7 +630,6 @@ class _MapaDialogState extends State<_MapaDialog> {
     }
   }
 
-  /// Converte string "[22.83365° S, 47.05197° W]" → LatLng
   LatLng? _parsearGeoString(String raw) {
     try {
       final limpo = raw.replaceAll(RegExp(r'[°\[\]]'), '').trim();
@@ -576,214 +653,230 @@ class _MapaDialogState extends State<_MapaDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
     final ponto = LatLng(widget.latitude, widget.longitude);
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(20),
-      child: Container(
-        height: 500,
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A0E06),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: const Color.fromARGB(255, 158, 138, 74),
-            width: 2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.7),
-              blurRadius: 24,
-              offset: const Offset(0, 12),
-            ),
-          ],
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: size.width * 0.05,
+        vertical: size.height * 0.05,
+      ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: size.height * 0.80,
+          maxWidth: 640,
         ),
-        child: Column(
-          children: [
-            // Cabeçalho
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.my_location,
-                    color: Color(0xFFF8E7B9),
-                    size: 22,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Mapa dos Mundos',
-                      style: GoogleFonts.cinzelDecorative(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFFF8E7B9),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A0E06),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: const Color.fromARGB(255, 158, 138, 74),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.7),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // Cabeçalho
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.my_location,
+                      color: Color(0xFFF8E7B9),
+                      size: 22,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Mapa dos Mundos',
+                        style: GoogleFonts.cinzelDecorative(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFFF8E7B9),
+                        ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, color: Color(0xFFF8E7B9)),
-                  ),
-                ],
-              ),
-            ),
-
-            // Legenda
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Row(
-                children: [
-                  _legendaItem(
-                    cor: const Color(0xFF4CAF50),
-                    icone: Icons.place,
-                    texto: 'Desbloqueado',
-                  ),
-                  const SizedBox(width: 16),
-                  _legendaItem(
-                    cor: const Color(0xFF9E9E9E),
-                    icone: Icons.lock,
-                    texto: 'Bloqueado',
-                  ),
-                  const SizedBox(width: 16),
-                  _legendaItem(
-                    cor: const Color(0xFF2196F3),
-                    icone: Icons.my_location,
-                    texto: 'Você',
-                  ),
-                ],
-              ),
-            ),
-
-            // Mapa ou estado de carregamento/erro
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(18),
-                  bottomRight: Radius.circular(18),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close, color: Color(0xFFF8E7B9)),
+                    ),
+                  ],
                 ),
-                child: _carregando
-                    ? _telaCarregando()
-                    : _erro != null
-                    ? _telaErro()
-                    : FlutterMap(
-                        options: MapOptions(
-                          initialCenter: ponto,
-                          initialZoom: 16,
-                        ),
-                        children: [
-                          TileLayer(
-                            urlTemplate:
-                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            userAgentPackageName: 'com.exemplo.magialura',
-                          ),
+              ),
 
-                          // Círculos de 10m
-                          CircleLayer(
-                            circles: _ambientes
-                                .map(
-                                  (a) => CircleMarker(
+              // Legenda
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
+                child: Row(
+                  children: [
+                    _legendaItem(
+                      cor: const Color(0xFF4CAF50),
+                      icone: Icons.place,
+                      texto: 'Desbloqueado',
+                    ),
+                    const SizedBox(width: 16),
+                    _legendaItem(
+                      cor: const Color(0xFF9E9E9E),
+                      icone: Icons.lock,
+                      texto: 'Bloqueado',
+                    ),
+                    const SizedBox(width: 16),
+                    _legendaItem(
+                      cor: const Color(0xFF2196F3),
+                      icone: Icons.my_location,
+                      texto: 'Você',
+                    ),
+                  ],
+                ),
+              ),
+
+              // Mapa ou estado de carregamento/erro
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(18),
+                    bottomRight: Radius.circular(18),
+                  ),
+                  child: _carregando
+                      ? _telaCarregando()
+                      : _erro != null
+                      ? _telaErro()
+                      : FlutterMap(
+                          options: MapOptions(
+                            initialCenter: ponto,
+                            initialZoom: 16,
+                          ),
+                          children: [
+                            TileLayer(
+                              urlTemplate:
+                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              userAgentPackageName: 'com.exemplo.magialura',
+                            ),
+
+                            // Círculos de 10m
+                            CircleLayer(
+                              circles: _ambientes
+                                  .map(
+                                    (a) => CircleMarker(
+                                      point: a.posicao,
+                                      radius: 10,
+                                      useRadiusInMeter: true,
+                                      color: a.concluido
+                                          ? const Color(
+                                              0xFF4CAF50,
+                                            ).withOpacity(0.20)
+                                          : const Color(
+                                              0xFF9E9E9E,
+                                            ).withOpacity(0.20),
+                                      borderColor: a.concluido
+                                          ? const Color(0xFF4CAF50)
+                                          : const Color(0xFF9E9E9E),
+                                      borderStrokeWidth: 2,
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+
+                            // Marcadores
+                            MarkerLayer(
+                              markers: [
+                                // Jogador
+                                Marker(
+                                  point: ponto,
+                                  width: 48,
+                                  height: 48,
+                                  child: const Icon(
+                                    Icons.my_location,
+                                    color: Color(0xFF2196F3),
+                                    size: 36,
+                                  ),
+                                ),
+
+                                // Ambientes
+                                ..._ambientes.map(
+                                  (a) => Marker(
                                     point: a.posicao,
-                                    radius: 10,
-                                    useRadiusInMeter: true,
-                                    color: a.concluido
-                                        ? const Color(
-                                            0xFF4CAF50,
-                                          ).withOpacity(0.20)
-                                        : const Color(
-                                            0xFF9E9E9E,
-                                          ).withOpacity(0.20),
-                                    borderColor: a.concluido
-                                        ? const Color(0xFF4CAF50)
-                                        : const Color(0xFF9E9E9E),
-                                    borderStrokeWidth: 2,
-                                  ),
-                                )
-                                .toList(),
-                          ),
-
-                          // Marcadores
-                          MarkerLayer(
-                            markers: [
-                              // Jogador
-                              Marker(
-                                point: ponto,
-                                width: 48,
-                                height: 48,
-                                child: const Icon(
-                                  Icons.my_location,
-                                  color: Color(0xFF2196F3),
-                                  size: 36,
-                                ),
-                              ),
-
-                              // Ambientes
-                              ..._ambientes.map(
-                                (a) => Marker(
-                                  point: a.posicao,
-                                  width: 80,
-                                  height: 70,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 4,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.65),
-                                          borderRadius: BorderRadius.circular(
-                                            4,
+                                    width: 80,
+                                    height: 70,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withOpacity(
+                                              0.65,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            a.nomeLegivel,
+                                            style: GoogleFonts.cinzel(
+                                              fontSize: 7,
+                                              color: a.concluido
+                                                  ? const Color(0xFF4CAF50)
+                                                  : const Color(0xFF9E9E9E),
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
-                                        child: Text(
-                                          a.nomeLegivel,
-                                          style: GoogleFonts.cinzel(
-                                            fontSize: 7,
-                                            color: a.concluido
-                                                ? const Color(0xFF4CAF50)
-                                                : const Color(0xFF9E9E9E),
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
+                                        const SizedBox(height: 2),
+                                        Icon(
+                                          a.concluido
+                                              ? Icons.place
+                                              : Icons.lock,
+                                          color: a.concluido
+                                              ? const Color(0xFF4CAF50)
+                                              : const Color(0xFF9E9E9E),
+                                          size: 28,
                                         ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Icon(
-                                        a.concluido ? Icons.place : Icons.lock,
-                                        color: a.concluido
-                                            ? const Color(0xFF4CAF50)
-                                            : const Color(0xFF9E9E9E),
-                                        size: 28,
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-              ),
-            ),
-
-            // Coordenadas
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Text(
-                '${widget.latitude.toStringAsFixed(5)}, '
-                '${widget.longitude.toStringAsFixed(5)}',
-                style: GoogleFonts.cinzel(
-                  fontSize: 12,
-                  color: const Color(0xFFF8E7B9).withOpacity(0.6),
-                  letterSpacing: 1,
+                              ],
+                            ),
+                          ],
+                        ),
                 ),
               ),
-            ),
-          ],
+
+              // Coordenadas
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  '${widget.latitude.toStringAsFixed(5)}, '
+                  '${widget.longitude.toStringAsFixed(5)}',
+                  style: GoogleFonts.cinzel(
+                    fontSize: 12,
+                    color: const Color(0xFFF8E7B9).withOpacity(0.6),
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
