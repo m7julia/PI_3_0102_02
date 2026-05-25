@@ -39,9 +39,10 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/
     - assets/images/
     - assets/audio/music/
     - assets/audio/
     - assets/images/icons/
     - assets/images/icons_bar/
-   
+    - assets/audio/piano/

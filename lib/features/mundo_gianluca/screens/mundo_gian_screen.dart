@@ -3,14 +3,30 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rpg_game/features/mundo_maria/screens/mundo_maria.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:rpg_game/screens/home/home_screen.dart';
 
 // ================= ENUMS E CLASSES AUXILIARES =================
 enum _Etapa {
-  carregando, bloqueado, chegada1, chegada2, dialogo1, dialogo2, dialogo3, 
-  espera, positivo, dialogo5, desafio1, reuniao1, reuniao2, finalHist
+  carregando,
+bloqueado,
+chegada1,
+chegada2,
+dialogo1,
+dialogo2,
+dialogo3,
+espera,
+positivo,
+dialogo5,
+
+introPiano,
+demonstrandoPiano,
+tocandoPiano,
+
+reuniao1,
+reuniao2,
+finalHist
 }
 
 // A CLASSE _OpcaoBtn AGORA ESTÁ NO LUGAR CERTO (FORA DO ESTADO)
@@ -39,11 +55,45 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
   bool _mostrarNpc = false;
   bool _mostrarDialogo = false;
   bool _somAtivado = true;
-  bool _audioLiberado = false;
+  bool _audioLiberado = true;
   bool _tocandoSomLetra = false;
 
-  late AudioPlayer _audioPlayer;
+late AudioPlayer _typePlayer;
+late AudioPlayer _efeitosPlayer;
+late AudioPlayer _musicaPlayer;
   int _fragmentos = 0;
+  final List<String> _sequenciaCorreta = [
+  'do',
+  're',
+  'mi',
+  'fa',
+  'fa',
+  'fa',
+  'do',
+  're',
+  'do',
+  're',
+  're',
+  're',
+  'do',
+  'sol',
+  'fa',
+  'mi',
+  'mi',
+  'mi',
+  'do',
+  're',
+  'mi',
+  'fa',
+  'fa',
+  'fa',
+];
+
+List<String> _entradaJogador = [];
+
+bool _podeTocar = false;
+
+String? _notaAtualDemo;
 
   Timer? _timerTexto;
 
@@ -65,8 +115,10 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
       case _Etapa.dialogo3: return 'E me transformou em um cachorro! Para recuperar minha forma humana, preciso ensinar a harmonia natural para alguém. "AU"ceita ser meu aluno?';
       case _Etapa.espera: return 'Bom, nesse caso vamos esperar... Estarei aqui praticando minhas escalas. Me avise se mudar de ideia.';
       case _Etapa.positivo: return 'AU-migo! Fico feliz que decidiu me "AU"xiliar, vamos nessa!';
-      case _Etapa.dialogo5: return 'A primeira lição é sentir o ritmo do coração de Terrasen...';
-      case _Etapa.desafio1: return 'Qual destas notas deve iniciar a nossa sinfonia de restauração?';
+      case _Etapa.dialogo5: return 'A primeira lição é ouvir o coração da música. Observe atentamente a melodia que irei tocar.';
+      case _Etapa.introPiano: return 'Repita corretamente a melodia usando o piano. Se errar uma única nota, será necessário começar novamente.';
+      case _Etapa.demonstrandoPiano: return 'Observe a sequência musical...';
+      case _Etapa.tocandoPiano: return 'Agora é sua vez. Toque a melodia correta.'; 
       case _Etapa.reuniao1: return 'Incrível! Os fragmentos musicais ressoam perfeitamente. A partitura está completa.';
       case _Etapa.reuniao2: return 'Coragem. Sabedoria. Coração. Três notas, um único acorde. 🎵';
       case _Etapa.finalHist: return 'O feitiço foi quebrado! Te agradeço por tudo, ótima sorte nessa sua jornada $_nomeJogador.';
@@ -85,7 +137,9 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
     _dialogoAnimCtrl = AnimationController(duration: const Duration(milliseconds: 700), vsync: this,
     );
 
-    _audioPlayer = AudioPlayer();
+    _typePlayer = AudioPlayer();
+    _efeitosPlayer = AudioPlayer();
+    _musicaPlayer = AudioPlayer();
 
     _checarAcessoEIniciar();
   }
@@ -95,28 +149,46 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
     _timerTexto?.cancel();
     _npcAnimCtrl.dispose();
     _dialogoAnimCtrl.dispose();
-    _audioPlayer.dispose();
+    _typePlayer.dispose();
+    _efeitosPlayer.dispose();
+    _musicaPlayer.stop();
+    _musicaPlayer.dispose();
     super.dispose();
   }
 
   // ================= LÓGICA DE FIREBASE =================
   Future<void> _checarAcessoEIniciar() async {
+
   try {
 
-    final prefs = await SharedPreferences.getInstance();
+    await Future.delayed(
+      const Duration(milliseconds: 500),
+    );
 
-      _personagemId = FirebaseAuth.instance.currentUser?.uid;
-    
-    if (_personagemId == null) {
+    User? user = FirebaseAuth.instance.currentUser;
 
-      debugPrint('[Gianluca] Personagem não encontrado');
+    if (user == null) {
+      await Future.delayed(const Duration(seconds: 1));
+      user = FirebaseAuth.instance.currentUser;
+    }
+    if (user == null) {
 
-      if (mounted && Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
+      debugPrint('[Gianluca] Usuário ainda não autenticado');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Erro de autenticação. Entre novamente.',
+          ),
+        ),
+      );
 
       return;
     }
+
+    _personagemId = user.uid;
 
     final doc = await FirebaseFirestore.instance
         .collection('personagens')
@@ -126,7 +198,6 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
     if (!doc.exists) {
 
       debugPrint('[Gianluca] Documento inexistente');
-
       return;
     }
 
@@ -142,7 +213,8 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
     if (progressoAnterior is List &&
         progressoAnterior.isNotEmpty) {
 
-      podeEntrar = progressoAnterior[0] == true;
+      podeEntrar =
+          progressoAnterior[0] == true;
     }
 
     if (!podeEntrar) {
@@ -233,7 +305,7 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
   });
 
   _dialogoAnimCtrl.forward();
-
+  await _tocarFurElise();
   _exibirTexto(_textoAtual);
 }
 
@@ -270,88 +342,71 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
         i++;
 
       } else {
+          t.cancel();
 
-        t.cancel();
+          _typePlayer.stop();
 
-        setState(() {
-          _textoTerminou = true;
-        });
-      }
+          setState(() {
+            _textoTerminou = true;
+          });
+        }
     },
   );
 }
 
 Future<void> _tocarSomLetra() async {
-
-  if (!_somAtivado ||
-      !_audioLiberado ||
-      _tocandoSomLetra) return;
+  if (!_somAtivado || !_audioLiberado || _tocandoSomLetra) return;
 
   try {
-
     _tocandoSomLetra = true;
 
-    await _audioPlayer.stop();
+    await _typePlayer.stop();
+    await _typePlayer.setVolume(0.25);
 
-    await _audioPlayer.play(
+    await _typePlayer.play(
       AssetSource('audio/typewriter_click.mp3'),
     );
 
+    await Future.delayed(
+      const Duration(milliseconds: 55),
+    );
   } catch (e) {
-
     debugPrint('Erro som letra: $e');
-
   } finally {
-
     _tocandoSomLetra = false;
   }
 }
 
 Future<void> _toggleSom() async {
+  setState(() {
+    _somAtivado = !_somAtivado;
+    _audioLiberado = true;
+  });
 
   if (!_somAtivado) {
+    await _typePlayer.stop();
+    await _efeitosPlayer.stop();
+    await _musicaPlayer.pause();
+    return;
+  }
 
-    try {
+  try {
+    await _typePlayer.setVolume(0.25);
 
-      await _audioPlayer.setVolume(0.01);
-
-      await _audioPlayer.play(
-        AssetSource('audio/typewriter_click.mp3'),
-      );
-
-      await Future.delayed(
-        const Duration(milliseconds: 80),
-      );
-
-      await _audioPlayer.stop();
-
-      await _audioPlayer.setVolume(1.0);
-
-      setState(() {
-
-        _somAtivado = true;
-        _audioLiberado = true;
-      });
-
-    } catch (e) {
-
-      debugPrint('Erro som: $e');
+    if (_etapa == _Etapa.demonstrandoPiano ||
+        _etapa == _Etapa.tocandoPiano) {
+      await _musicaPlayer.resume();
     }
-
-  } else {
-
-    setState(() {
-
-      _somAtivado = false;
-    });
+  } catch (e) {
+    debugPrint('Erro ao ativar som: $e');
   }
 }
 
-  void _pularTexto() {
-
+void _pularTexto() {
   if (_textoTerminou) return;
 
   _timerTexto?.cancel();
+  _typePlayer.stop();
 
   setState(() {
     _textoExibido = _textoAtual;
@@ -386,7 +441,7 @@ Future<void> _toggleSom() async {
       break;
 
     case _Etapa.dialogo5:
-      await _mudarEtapa(_Etapa.desafio1);
+      await _mudarEtapa(_Etapa.introPiano);
       break;
 
     case _Etapa.reuniao1:
@@ -398,7 +453,7 @@ Future<void> _toggleSom() async {
       break;
 
     case _Etapa.finalHist:
-      await _mostrarPopupEscolhaFinal();
+      await _mostrarPopupConclusao();
       break;
 
     default:
@@ -417,6 +472,185 @@ Future<void> _toggleSom() async {
   _exibirTexto(_textoAtual);
 }
 
+Future<void> _iniciarMiniGamePiano() async {
+
+  _entradaJogador.clear();
+
+  setState(() {
+    _etapa = _Etapa.demonstrandoPiano;
+    _podeTocar = false;
+  });
+
+  for (final nota in _sequenciaCorreta) {
+    
+    if (!mounted) return;
+
+    setState(() {
+      _notaAtualDemo = nota;
+    });
+
+    await _tocarNota(nota);
+
+    await Future.delayed(
+      const Duration(milliseconds: 700),
+    );
+  }
+
+  setState(() {
+    _notaAtualDemo = null;
+    _podeTocar = true;
+    _etapa = _Etapa.tocandoPiano;
+  });
+
+  _exibirTexto(_textoAtual);
+}
+
+  final Map<String, String> _sonsNotas = {
+    'do': 'C_note.mp3',
+    're': 'D_note.mp3',
+    'mi': 'E_note.mp3',
+    'fa': 'F_note.mp3',
+    'sol': 'G_note.mp3',
+    'la': 'A_note.mp3',
+    'si': 'B_note.mp3',
+  };
+
+Future<void> _tocarNota(String nota) async {
+  try {
+    final arquivo = _sonsNotas[nota];
+
+    if (arquivo == null) {
+      debugPrint('Nota não encontrada: $nota');
+      return;
+    }
+
+    await _efeitosPlayer.stop();
+
+    await _efeitosPlayer.play(
+      AssetSource('audio/piano/$arquivo'),
+    );
+  } catch (e) {
+    debugPrint('Erro tocando nota: $e');
+  }
+}
+
+Future<void> _tocarErro() async {
+  try {
+    await _efeitosPlayer.stop();
+
+    await _efeitosPlayer.play(
+      AssetSource('audio/piano/Fail_trumpet.mp3'),
+    );
+  } catch (e) {
+    debugPrint('Erro tocando erro: $e');
+  }
+}
+
+Future<void> _tocarFurElise() async {
+  try {
+    debugPrint('Tentando tocar Fur Elise...');
+
+    await _musicaPlayer.stop();
+    await _musicaPlayer.setReleaseMode(ReleaseMode.loop);
+    await _musicaPlayer.setVolume(1.0);
+
+    await _musicaPlayer.play(
+      AssetSource('audio/fur_elise.mp3'),
+    );
+
+    debugPrint('Fur Elise tocando!');
+  } catch (e) {
+    debugPrint('Erro tocando Fur Elise: $e');
+  }
+}
+
+Future<void> _pressionarNota(String nota) async {
+
+  if (!_podeTocar) return;
+
+  await _tocarNota(nota);
+
+  _entradaJogador.add(nota);
+
+  final index = _entradaJogador.length - 1;
+
+  if (_entradaJogador[index] != _sequenciaCorreta[index]) {
+
+    await _tocarErro();
+
+    _entradaJogador.clear();
+
+    await _mostrarPopupErroPiano();
+
+    return;
+  }
+
+  if (_entradaJogador.length ==
+      _sequenciaCorreta.length) {
+
+    _podeTocar = false;
+
+    setState(() {
+      _fragmentos++;
+    });
+
+    await Future.delayed(
+      const Duration(milliseconds: 500),
+    );
+
+    await _mudarEtapa(_Etapa.reuniao1);
+  }
+}
+
+
+Future<void> _mostrarPopupErroPiano() async {
+
+  await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) {
+
+      return AlertDialog(
+        backgroundColor: const Color(0xFF1E1208),
+
+        title: Text(
+          'Melodia incorreta 🎺',
+          style: GoogleFonts.cinzel(
+            color: const Color(0xFFF8E7B9),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+
+        content: Text(
+          'Você errou a sequência musical.\n\nTente novamente.',
+          style: GoogleFonts.cinzel(
+            color: const Color(0xFFF8E7B9),
+          ),
+        ),
+
+        actions: [
+
+          TextButton(
+            onPressed: () {
+
+              Navigator.pop(context);
+
+              _iniciarMiniGamePiano();
+            },
+
+            child: Text(
+              'Tentar novamente',
+              style: GoogleFonts.cinzel(
+                color: const Color(0xFFF8E7B9),
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
   // ================= WIDGETS (BUILD) =================
   @override
   Widget build(BuildContext context) {
@@ -426,14 +660,25 @@ Future<void> _toggleSom() async {
         backgroundColor: const Color(0xFF6B3F1D),
         foregroundColor: const Color(0xFFF8E7B9),
         elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const HomeScreen(),
+              ),
+              (route) => false,
+            );
+          },
+        ),
         actions: [
           if (_fragmentos > 0)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
               child: Chip(
                 backgroundColor: const Color(0xFF9E8A4A).withValues(alpha:0.3),
-                label: Text('💎 $_fragmentos/3', style: GoogleFonts.cinzel(color: const Color(0xFFF8E7B9), fontSize: 12, fontWeight: FontWeight.bold)),
+                label: Text('💎 $_fragmentos/1', style: GoogleFonts.cinzel(color: const Color(0xFFF8E7B9), fontSize: 12, fontWeight: FontWeight.bold)),
                 side: const BorderSide(color: Color(0xFF9E8A4A)),
               ),
             ),
@@ -451,15 +696,23 @@ Future<void> _toggleSom() async {
           if (_etapa == _Etapa.carregando) const Center(child: CircularProgressIndicator(color: Color(0xFFF8E7B9))),
           
           if (_etapa != _Etapa.carregando && _etapa != _Etapa.bloqueado) ...[
+
             _buildNpc(),
+
+            if (_etapa == _Etapa.demonstrandoPiano ||
+                _etapa == _Etapa.tocandoPiano)
+              _buildPiano(),
+
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(children: [
-                  const Spacer(),
-                  _buildCaixaDialogo(),
-                  const SizedBox(height: 28),
-                ]),
+                child: Column(
+                  children: [
+                    const Spacer(),
+                    _buildCaixaDialogo(),
+                    const SizedBox(height: 28),
+                  ],
+                ),
               ),
             ),
           ],
@@ -545,7 +798,9 @@ Widget _buildNpc() {
                   ),
                 ),
 
-              if (_textoTerminou) _buildAcoes(),
+              if (_textoTerminou &&
+                _etapa != _Etapa.demonstrandoPiano)
+              _buildAcoes(),
             ],
           ),
         ),
@@ -554,39 +809,66 @@ Widget _buildNpc() {
   }
 
   Widget _buildAcoes() {
-    switch (_etapa) {
-      case _Etapa.dialogo3:
-      case _Etapa.espera:
-        return _buildEscolhas([
-          _OpcaoBtn(label: '1. Aceitar ser o aluno 🎵', onTap: () => _mudarEtapa(_Etapa.positivo)),
-          _OpcaoBtn(label: '2. Recusar por enquanto', onTap: () => _mudarEtapa(_Etapa.espera), secundario: true),
-        ]);
-      case _Etapa.desafio1:
-        return _buildEscolhas([
-          _OpcaoBtn(label: '🎹 Dó Maior', onTap: () {
-            setState(() => _fragmentos++);
-            _mudarEtapa(_Etapa.reuniao1);
-          }),
-          _OpcaoBtn(label: '🎸 Sol Menor', onTap: () {
-            _mudarEtapa(_Etapa.reuniao1); 
-          }, secundario: true),
-        ]);
-      default:
-        return Align(
-          alignment: Alignment.centerRight,
-          child: ElevatedButton(
-            onPressed: _avancarSimples,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6B3F1D),
-              foregroundColor: const Color(0xFFF8E7B9),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Color(0xFF9E8A4A), width: 1.5)),
+  switch (_etapa) {
+    case _Etapa.chegada2:
+      return _buildEscolhas([
+        _OpcaoBtn(
+          label: 'Sou $_nomeJogador. Estou procurando o caminho para o próximo mundo.',
+          onTap: () => _mudarEtapa(_Etapa.dialogo1),
+        ),
+      ]);
+
+    case _Etapa.dialogo3:
+    case _Etapa.espera:
+      return _buildEscolhas([
+        _OpcaoBtn(
+          label: 'Eu aceito ser seu aluno e aprender a harmonia natural.',
+          onTap: () => _mudarEtapa(_Etapa.positivo),
+        ),
+        _OpcaoBtn(
+          label: 'Ainda não estou pronto para aceitar esse desafio.',
+          onTap: () => _mudarEtapa(_Etapa.espera),
+          secundario: true,
+        ),
+      ]);
+
+    case _Etapa.introPiano:
+      return _buildEscolhas([
+        _OpcaoBtn(
+          label: 'Estou pronto. Vou ouvir com atenção e repetir a melodia.',
+          onTap: () async {
+            await _musicaPlayer.stop();
+            await _iniciarMiniGamePiano();
+          },
+        ),
+      ]);
+
+    case _Etapa.demonstrandoPiano:
+    case _Etapa.tocandoPiano:
+      return const SizedBox.shrink();
+
+    default:
+      return Align(
+        alignment: Alignment.centerRight,
+        child: ElevatedButton(
+          onPressed: _avancarSimples,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF6B3F1D),
+            foregroundColor: const Color(0xFFF8E7B9),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: Color(0xFF9E8A4A), width: 1.5),
             ),
-            child: Text(_etapa == _Etapa.finalHist ? 'Finalizar História' : 'Continuar →', style: GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
           ),
-        );
-    }
+          child: Text(
+            _etapa == _Etapa.finalHist ? 'Finalizar História' : 'Continuar →',
+            style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+          ),
+        ),
+      );
   }
+}
 
   Widget _buildEscolhas(List<_OpcaoBtn> opcoes) {
     return Column(
@@ -608,6 +890,97 @@ Widget _buildNpc() {
     );
   }
 
+  Widget _buildPiano() {
+
+  final notas = [
+    'do',
+    're',
+    'mi',
+    'fa',
+    'sol',
+    'la',
+    'si',
+  ];
+
+  return Padding(
+    padding: const EdgeInsets.only(
+      bottom: 260,
+      left: 10,
+      right: 10,
+    ),
+    child: SizedBox(
+      height: 220,
+      child: Row(
+        children: notas.map((nota) {
+
+          final destaque = _notaAtualDemo == nota;
+
+          return Expanded(
+            child: GestureDetector(
+
+              onTap: _podeTocar
+                  ? () => _pressionarNota(nota)
+                  : null,
+
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 2,
+                ),
+
+                decoration: BoxDecoration(
+
+                  color: destaque
+                      ? Colors.amber
+                      : Colors.white,
+
+                  borderRadius: BorderRadius.circular(6),
+
+                  border: Border.all(
+                    color: Colors.black,
+                    width: 2,
+                  ),
+
+                  boxShadow: destaque
+                      ? [
+                          BoxShadow(
+                            color: Colors.amber.withValues(alpha: 0.7),
+                            blurRadius: 12,
+                            spreadRadius: 2,
+                          ),
+                        ]
+                      : [],
+                ),
+
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      bottom: 12,
+                    ),
+
+                    child: Text(
+                      nota.toUpperCase(),
+
+                      style: GoogleFonts.cinzel(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    ),
+  );
+}
+
   Widget _buildBadgeFalante() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -616,7 +989,7 @@ Widget _buildNpc() {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFFF8E7B9).withValues(alpha:0.3)),
       ),
-      child: Text('Gianluca', style: GoogleFonts.cinzel(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFFF8E7B9).withValues(alpha:0.65), letterSpacing: 0.5)),
+      child: Text('Ludwig san Beernardo', style: GoogleFonts.cinzel(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFFF8E7B9).withValues(alpha:0.65), letterSpacing: 0.5)),
     );
   }
 
@@ -683,7 +1056,13 @@ Widget _buildNpc() {
               ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  Navigator.of(this.context).pop();
+                  Navigator.pushAndRemoveUntil(
+                    this.context,
+                    MaterialPageRoute(
+                      builder: (_) => const HomeScreen(),
+                    ),
+                    (route) => false,
+                  );                  
                 },
 
                 style: ElevatedButton.styleFrom(
@@ -716,6 +1095,101 @@ Widget _buildNpc() {
     },
   );
 }
+
+Future<void> _mostrarPopupConclusao() async {
+  await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1208),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: const Color(0xFF9E8A4A),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                blurRadius: 25,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/images/chave_jogo_gian.png',
+                height: 150,
+                fit: BoxFit.contain,
+              ),
+
+              const SizedBox(height: 20),
+
+              Text(
+                'Chave do Conservatório Obtida',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.cinzel(
+                  color: const Color(0xFFF8E7B9),
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              Text(
+                'Muito bem, $_nomeJogador.\n\nVocê restaurou a harmonia do Conservatório e conquistou a chave musical deste mundo.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.cinzel(
+                  color: const Color(0xFFF8E7B9),
+                  fontSize: 15,
+                  height: 1.6,
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  await _mostrarPopupEscolhaFinal();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6B3F1D),
+                  foregroundColor: const Color(0xFFF8E7B9),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: const BorderSide(
+                      color: Color(0xFF9E8A4A),
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+                child: Text(
+                  'Abrir portal 🌀',
+                  style: GoogleFonts.cinzel(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
   Future<void> _mostrarPopupEscolhaFinal() async {
 
   await showDialog(
@@ -785,8 +1259,13 @@ Widget _buildNpc() {
                     if (mounted) {
 
                       Navigator.of(context).pop();
-
-                      Navigator.of(this.context).pop();
+                      Navigator.pushAndRemoveUntil(
+                        this.context,
+                        MaterialPageRoute(
+                          builder: (_) => const HomeScreen(),
+                        ),
+                        (route) => false,
+                      );
                     }
                   },
 
@@ -818,12 +1297,16 @@ Widget _buildNpc() {
 
                     if (mounted) {
 
-                      Navigator.of(context).pop();
+                    Navigator.of(context).pop();
 
-                      Navigator.push(
+                      await Future.delayed(
+                        const Duration(milliseconds: 100),
+                      );
+
+                      Navigator.pushReplacement(
                         this.context,
                         MaterialPageRoute(
-                          builder: (_) => MundoMariaScreen(),
+                          builder: (_) => const MundoMariaScreen(),
                         ),
                       );
                     }
