@@ -5,6 +5,8 @@ import 'package:rpg_game/features/mundo_luis/screens/mundo_luis.dart';
 import 'package:rpg_game/screens/home/home_screen.dart';
 import 'package:rpg_game/services/nivel_service.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:rpg_game/models/location_gate_widget.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Ligue3Game extends StatefulWidget {
   const Ligue3Game({super.key});
@@ -94,7 +96,6 @@ class _Ligue3GameState extends State<Ligue3Game> {
 
   // Controla se o save no Firestore já foi disparado
   bool _salvoNoFirestore = false;
-
 
   Future<void> _precarregarImagens() async {
     for (var cultivo in cultivos) {
@@ -387,11 +388,19 @@ class _Ligue3GameState extends State<Ligue3Game> {
                       onPressed: () async {
                         await NivelService.completarNivelMaju();
                         if (mounted) {
-                          Navigator.of(context).pop(); // Fecha o dialog
-                          Navigator.push(
+                          Navigator.of(context).pop();
+                          Navigator.pushReplacement(
                             this.context,
                             MaterialPageRoute(
-                              builder: (_) => const MundoLuisScreen(),
+                              builder: (_) => LocationGateWidget(
+                                key: UniqueKey(),
+                                localizacaoFase: const GeoPoint(
+                                  -22.83347,
+                                  -47.04992,
+                                ),
+                                nomeFase: 'Bar Pirata',
+                                child: const MundoLuisScreen(),
+                              ),
                             ),
                           );
                         }
