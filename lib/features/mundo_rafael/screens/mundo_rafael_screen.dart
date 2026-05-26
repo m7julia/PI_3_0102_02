@@ -167,16 +167,24 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
         return;
       }
       if (_movimentos >= totalMovimentos) {
-        _salvarProgressoEstacionamento();
-        setState(
-          () => _etapa = _temChave
-              ? _Etapa.vitoriaComChave
-              : _Etapa.vitoriaSemChave,
-        );
+        _finalizarVitoria();
         return;
       }
       setState(() => _etapa = _Etapa.rolarDado);
     }
+  }
+
+  Future<void> _finalizarVitoria() async {
+    if (_temChave) {
+      _salvarProgressoEstacionamento();
+      setState(() => _etapa = _Etapa.vitoriaComChave);
+      return;
+    }
+    setState(() => _temChave = true);
+    await _mostrarPopupChave(doMotorista: false);
+    if (!mounted) return;
+    _salvarProgressoEstacionamento();
+    setState(() => _etapa = _Etapa.vitoriaSemChave);
   }
 
   // Escolhas interacao com o NPC
@@ -190,7 +198,7 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
     await _mostrarPopupChave();
   }
 
-  Future<void> _mostrarPopupChave() async {
+  Future<void> _mostrarPopupChave({bool doMotorista = true}) async {
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -239,11 +247,14 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                const Text(
-                  'O motorista te entrega a chave do estacionamento.\n\n'
-                  'Ela pode te salvar de uma falha no caminho.',
+                Text(
+                  doMotorista
+                      ? 'O motorista te entrega a chave do estacionamento.\n\n'
+                            'Ela pode te salvar de uma falha no caminho.'
+                      : 'Ao forçar a passagem pelo portão, você encontra a chave caída entre os carros.\n\n'
+                            'O caminho à frente é seu.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 14,
                     height: 1.6,
@@ -300,11 +311,7 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
       return;
     }
     if (_movimentos >= totalMovimentos) {
-      setState(
-        () => _etapa = _temChave
-            ? _Etapa.vitoriaComChave
-            : _Etapa.vitoriaSemChave,
-      );
+      _finalizarVitoria();
       return;
     }
     setState(() => _etapa = _Etapa.rolarDado);
@@ -645,7 +652,6 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
 
       case _Etapa.vitoriaComChave:
       case _Etapa.vitoriaSemChave:
-      case _Etapa.derrota:
         return Row(
           children: [
             Expanded(
@@ -670,6 +676,13 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
               ),
             ),
           ],
+        );
+
+      case _Etapa.derrota:
+        return _botaoPrimario(
+          label: 'Jogar novamente',
+          icone: Icons.refresh,
+          onTap: reiniciar,
         );
     }
   }
