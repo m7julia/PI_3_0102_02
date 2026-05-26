@@ -15,7 +15,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:rpg_game/services/personagem_service.dart';
+import 'package:rpg_game/models/location_gate_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -125,6 +125,21 @@ class _HomeScreenState extends State<HomeScreen> {
         );
         return;
       }
+      final geoPoints = <String, GeoPoint>{
+        'estacionamento_caotico': const GeoPoint(-22.8344, -47.05177),
+        'terrasen': const GeoPoint(-22.83365, -47.05197),
+        'conservatorio_diminuto': const GeoPoint(-22.83239, -47.05127),
+        'fazenda_vale_dourado': const GeoPoint(-22.83319, -47.05261),
+        'bar_pirata': const GeoPoint(-22.83347, -47.04992),
+      };
+
+      final nomes = <String, String>{
+        'estacionamento_caotico': 'Estacionamento Caótico',
+        'terrasen': 'Terrasen',
+        'conservatorio_diminuto': 'Conservatório Diminuto',
+        'fazenda_vale_dourado': 'Fazenda Vale Dourado',
+        'bar_pirata': 'Bar Pirata',
+      };
 
       final rotas = <String, Widget Function()>{
         'estacionamento_caotico': () => const MundoRafaelScreen(),
@@ -135,8 +150,23 @@ class _HomeScreenState extends State<HomeScreen> {
       };
 
       final builder = rotas[mundoDestino];
-      if (builder != null) {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => builder()));
+      final geoPoint = geoPoints[mundoDestino];
+      final nome = nomes[mundoDestino];
+
+      if (builder != null && geoPoint != null && nome != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => LocationGateWidget(
+              key: UniqueKey(),
+              localizacaoFase: geoPoint,
+              nomeFase: nome,
+              child: builder(),
+            ),
+          ),
+        );
+      } else if (mounted) {
+        _mostrarSnackBar('Não foi possível abrir a fase selecionada.');
       }
     } catch (e) {
       if (mounted) {
@@ -229,37 +259,44 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<Position?> _solicitarLocalizacao() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      if (mounted) {
-        _mostrarSnackBar('O serviço de localização está desativado.');
-      }
-      return null;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
         if (mounted) {
-          _mostrarSnackBar('Permissão de localização negada.');
+          _mostrarSnackBar('O serviço de localização está desativado.');
         }
         return null;
       }
-    }
 
-    if (permission == LocationPermission.deniedForever) {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            _mostrarSnackBar('Permissão de localização negada.');
+          }
+          return null;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          _mostrarSnackBar(
+            'Permissão negada permanentemente. Ative nas configurações.',
+          );
+        }
+        return null;
+      }
+
+      return await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+    } catch (e) {
       if (mounted) {
-        _mostrarSnackBar(
-          'Permissão negada permanentemente. Ative nas configurações.',
-        );
+        _mostrarSnackBar('Erro ao obter localização: $e');
       }
       return null;
     }
-
-    return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
   }
 
   Future<void> _abrirMapa() async {
