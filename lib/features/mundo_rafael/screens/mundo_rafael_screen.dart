@@ -410,6 +410,10 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
         backgroundColor: Colors.black.withValues(alpha: 0.35),
         elevation: 0,
         foregroundColor: Colors.amber.shade200,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
           'Estacionamento',
           style: TextStyle(
