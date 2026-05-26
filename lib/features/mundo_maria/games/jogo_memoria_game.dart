@@ -8,6 +8,330 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:rpg_game/models/location_gate_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// OVERLAY CINEMATOGRÁFICO DA FERRADURA
+// ═══════════════════════════════════════════════════════════════════════════════
+class FerradoraRevealOverlay extends StatefulWidget {
+  final VoidCallback onContinuar;
+
+  const FerradoraRevealOverlay({super.key, required this.onContinuar});
+
+  @override
+  State<FerradoraRevealOverlay> createState() =>
+      _FerradoraRevealOverlayState();
+}
+
+class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
+    with TickerProviderStateMixin {
+  // 1. Fundo escurece
+  late AnimationController _bgController;
+  late Animation<double> _bgOpacity;
+
+  // 2. Ferradura cresce do centro
+  late AnimationController _ferrController;
+  late Animation<double> _ferrScale;
+  late Animation<double> _ferrOpacity;
+  late Animation<double> _ferrRotation;
+
+  // 3. Brilho pulsante após crescer
+  late AnimationController _glowController;
+  late Animation<double> _glowAnim;
+
+  // 4. Texto aparece
+  late AnimationController _textoController;
+  late Animation<double> _textoOpacity;
+  late Animation<Offset> _textoSlide;
+
+  // 5. Botão aparece
+  late AnimationController _btnController;
+  late Animation<double> _btnOpacity;
+  late Animation<double> _btnScale;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // ── 1. Fundo ──────────────────────────────────────────────────────────────
+    _bgController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600));
+    _bgOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(parent: _bgController, curve: Curves.easeIn));
+
+    // ── 2. Ferradura ──────────────────────────────────────────────────────────
+    _ferrController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1100));
+    _ferrScale = TweenSequence<double>([
+      TweenSequenceItem(
+          tween: Tween<double>(begin: 0.0, end: 1.15)
+              .chain(CurveTween(curve: Curves.easeOutCubic)),
+          weight: 70),
+      TweenSequenceItem(
+          tween: Tween<double>(begin: 1.15, end: 0.95)
+              .chain(CurveTween(curve: Curves.easeInOut)),
+          weight: 15),
+      TweenSequenceItem(
+          tween: Tween<double>(begin: 0.95, end: 1.0)
+              .chain(CurveTween(curve: Curves.easeOut)),
+          weight: 15),
+    ]).animate(_ferrController);
+    _ferrOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(
+            parent: _ferrController,
+            curve: const Interval(0.0, 0.3, curve: Curves.easeIn)));
+    _ferrRotation = Tween<double>(begin: -0.15, end: 0.0).animate(
+        CurvedAnimation(parent: _ferrController, curve: Curves.easeOutBack));
+
+    // ── 3. Brilho pulsante ────────────────────────────────────────────────────
+    _glowController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1600));
+    _glowAnim = Tween<double>(begin: 0.5, end: 1.0).animate(
+        CurvedAnimation(parent: _glowController, curve: Curves.easeInOut));
+
+    // ── 4. Texto ──────────────────────────────────────────────────────────────
+    _textoController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 700));
+    _textoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(parent: _textoController, curve: Curves.easeIn));
+    _textoSlide =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+            CurvedAnimation(parent: _textoController, curve: Curves.easeOut));
+
+    // ── 5. Botão ──────────────────────────────────────────────────────────────
+    _btnController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 500));
+    _btnOpacity = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(CurvedAnimation(parent: _btnController, curve: Curves.easeIn));
+    _btnScale = Tween<double>(begin: 0.7, end: 1.0).animate(
+        CurvedAnimation(parent: _btnController, curve: Curves.easeOutBack));
+
+    // ── Sequência orquestrada ─────────────────────────────────────────────────
+    _runSequence();
+  }
+
+  Future<void> _runSequence() async {
+    // Passo 1: fundo escurece
+    await _bgController.forward();
+    // Passo 2: ferradura cresce
+    await _ferrController.forward();
+    // Passo 3: brilho começa a pulsar (não awaita — roda em loop)
+    _glowController.repeat(reverse: true);
+    // Passo 4: texto sobe e aparece (pequena pausa dramática)
+    await Future.delayed(const Duration(milliseconds: 200));
+    await _textoController.forward();
+    // Passo 5: botão aparece
+    await Future.delayed(const Duration(milliseconds: 400));
+    await _btnController.forward();
+  }
+
+  @override
+  void dispose() {
+    _bgController.dispose();
+    _ferrController.dispose();
+    _glowController.dispose();
+    _textoController.dispose();
+    _btnController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([
+        _bgController,
+        _ferrController,
+        _glowController,
+        _textoController,
+        _btnController,
+      ]),
+      builder: (context, _) {
+        final double glow = 18 + (_glowAnim.value * 28);
+        final double glowAlpha = 0.45 + (_glowAnim.value * 0.45);
+
+        return Opacity(
+          opacity: _bgOpacity.value,
+          child: Container(
+            // Fundo com gradiente radial dourado
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.center,
+                radius: 1.2,
+                colors: [
+                  const Color(0xFF3D1F00).withValues(alpha: 0.97),
+                  const Color(0xFF0D0700).withValues(alpha: 0.99),
+                ],
+              ),
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Spacer(flex: 2),
+
+                  // ── Texto principal ─────────────────────────────────────────
+                  SlideTransition(
+                    position: _textoSlide,
+                    child: Opacity(
+                      opacity: _textoOpacity.value,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Ao armazenar toda a plantação',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.cinzel(
+                                fontSize: 15,
+                                color: const Color(0xFFF8E7B9)
+                                    .withValues(alpha: 0.85),
+                                letterSpacing: 0.8,
+                                height: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'você conquistou a chave do portal',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.cinzelDecorative(
+                                fontSize: 19,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.amberAccent,
+                                letterSpacing: 1.2,
+                                height: 1.4,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.amber.withValues(alpha: 0.8),
+                                    blurRadius: 18,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // ── Ferradura animada ───────────────────────────────────────
+                  Transform.rotate(
+                    angle: _ferrRotation.value,
+                    child: Transform.scale(
+                      scale: _ferrScale.value,
+                      child: Opacity(
+                        opacity: _ferrOpacity.value,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              // Brilho âmbar interno
+                              BoxShadow(
+                                color: Colors.amberAccent
+                                    .withValues(alpha: glowAlpha * 0.8),
+                                blurRadius: glow,
+                                spreadRadius: glow * 0.35,
+                              ),
+                              // Halo laranja externo
+                              BoxShadow(
+                                color: const Color(0xFFFF8C00)
+                                    .withValues(alpha: glowAlpha * 0.5),
+                                blurRadius: glow * 2.2,
+                                spreadRadius: glow * 0.15,
+                              ),
+                              // Reflexo branco central suave
+                              BoxShadow(
+                                color: Colors.white
+                                    .withValues(alpha: glowAlpha * 0.15),
+                                blurRadius: glow * 0.5,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Image.asset(
+                            'assets/images/icons/ferradura_icon.png',
+                            width: 200,
+                            height: 200,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Text(
+                              '🐴',
+                              style: TextStyle(fontSize: 160),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // ── Subtitle embaixo da ferradura ───────────────────────────
+                  Opacity(
+                    opacity: _textoOpacity.value,
+                    child: Text(
+                      '✦ A Ferradura ✦',
+                      style: GoogleFonts.cinzel(
+                        fontSize: 13,
+                        color:
+                            Colors.amberAccent.withValues(alpha: 0.75),
+                        letterSpacing: 3,
+                      ),
+                    ),
+                  ),
+
+                  const Spacer(flex: 2),
+
+                  // ── Botão continuar ─────────────────────────────────────────
+                  Transform.scale(
+                    scale: _btnScale.value,
+                    child: Opacity(
+                      opacity: _btnOpacity.value,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 40),
+                        child: ElevatedButton(
+                          onPressed: widget.onContinuar,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: const Color(0xFFF8E7B9),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 48, vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              side: const BorderSide(
+                                  color: Color(0xFF9E8A4A), width: 1.5),
+                            ),
+                            elevation: 0,
+                            shadowColor: Colors.transparent,
+                          ).copyWith(
+                            backgroundColor:
+                                WidgetStateProperty.all(
+                              const Color(0xFF6B3F1D).withValues(alpha: 0.85),
+                            ),
+                          ),
+                          child: Text(
+                            'Continuar a jornada  ➡️',
+                            style: GoogleFonts.cinzel(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// JOGO PRINCIPAL
+// ═══════════════════════════════════════════════════════════════════════════════
 class JogoMemoriaGame extends StatefulWidget {
   const JogoMemoriaGame({super.key});
 
@@ -42,8 +366,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
       _musicPlayer = AudioPlayer();
       await _musicPlayer.setVolume(0.5);
       await _musicPlayer.play(
-        AssetSource('audio/music/audio_fazenda_vale_dourado.mp3'),
-      );
+          AssetSource('audio/music/audio_fazenda_vale_dourado.mp3'));
       await _musicPlayer.setReleaseMode(ReleaseMode.loop);
     } catch (e) {
       debugPrint('Erro ao iniciar música no Memória: $e');
@@ -74,9 +397,10 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
 
   int pontuacao = 0;
   int paresEncontrados = 0;
-  bool faseConcluida = false;
 
-  // Controla se o save no Firestore já foi disparado (evita chamadas duplas)
+  // Controla se o overlay cinematográfico está visível
+  bool _mostrarReveal = false;
+
   bool _salvoNoFirestore = false;
 
   Future<void> _precarregarImagens() async {
@@ -96,7 +420,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
     bloqueado = false;
     pontuacao = 0;
     paresEncontrados = 0;
-    faseConcluida = false;
+    _mostrarReveal = false;
     _salvoNoFirestore = false;
   }
 
@@ -149,7 +473,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
   }
 
   void _revelarFerraduraEConcluir() {
-    Future.delayed(const Duration(milliseconds: 700), () {
+    Future.delayed(const Duration(milliseconds: 600), () {
       if (!mounted) return;
       final idx = cartas.indexOf(_ferraduraAsset);
       setState(() {
@@ -157,14 +481,13 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
         combinadas[idx] = true;
       });
 
-      Future.delayed(const Duration(milliseconds: 900), () {
+      // Pequena pausa para o jogador ver a ferradura na grade antes do reveal
+      Future.delayed(const Duration(milliseconds: 800), () {
         if (!mounted) return;
-        setState(() => faseConcluida = true);
+        setState(() => _mostrarReveal = true);
       });
     });
   }
-
-  // ─── Popup: Escolha final (sair ou continuar) ─────────────────────────────
 
   Future<void> _mostrarPopupEscolhaFinal() async {
     await showDialog(
@@ -213,23 +536,17 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.cloud_done,
-                      color: Colors.greenAccent,
-                      size: 14,
-                    ),
+                    const Icon(Icons.cloud_done,
+                        color: Colors.greenAccent, size: 14),
                     const SizedBox(width: 4),
                     Text(
                       'Progresso será salvo',
                       style: GoogleFonts.cinzel(
-                        fontSize: 11,
-                        color: Colors.greenAccent,
-                      ),
+                          fontSize: 11, color: Colors.greenAccent),
                     ),
                   ],
                 ),
                 const SizedBox(height: 28),
-                // Salvar e sair
                 Center(
                   child: SizedBox(
                     width: 260,
@@ -237,14 +554,12 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                       onPressed: () async {
                         await NivelService.completarNivelMaju();
                         if (mounted) {
-                          Navigator.of(context).pop(); // Fecha o dialog
+                          Navigator.of(context).pop();
                           Navigator.pushAndRemoveUntil(
                             this.context,
                             MaterialPageRoute(
-                              builder: (_) => const HomeScreen(),
-                            ),
-                            (route) =>
-                                false, // Remove todas as rotas anteriores
+                                builder: (_) => const HomeScreen()),
+                            (route) => false,
                           );
                         }
                       },
@@ -255,20 +570,16 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                           side: const BorderSide(
-                            color: Color(0xFF9E8A4A),
-                            width: 1.5,
-                          ),
+                              color: Color(0xFF9E8A4A), width: 1.5),
                         ),
                       ),
-                      child: Text(
-                        '💾 Salvar e sair',
-                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-                      ),
+                      child: Text('💾 Salvar e sair',
+                          style: GoogleFonts.cinzel(
+                              fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Salvar e continuar para o próximo mundo (Mundo do Luis)
                 Center(
                   child: SizedBox(
                     width: 260,
@@ -300,15 +611,12 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                           side: const BorderSide(
-                            color: Color(0xFF9E8A4A),
-                            width: 1.5,
-                          ),
+                              color: Color(0xFF9E8A4A), width: 1.5),
                         ),
                       ),
-                      child: Text(
-                        '⚔️ Salvar e continuar',
-                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-                      ),
+                      child: Text('⚔️ Salvar e continuar',
+                          style: GoogleFonts.cinzel(
+                              fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ),
@@ -338,9 +646,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
         title: Text(
           'Jogo da Memória',
           style: GoogleFonts.cinzel(
-            color: const Color(0xFFF8E7B9),
-            fontSize: 18,
-          ),
+              color: const Color(0xFFF8E7B9), fontSize: 18),
         ),
         backgroundColor: const Color(0xFF6B3F1D),
         foregroundColor: const Color(0xFFF8E7B9),
@@ -355,9 +661,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                 Text(
                   '$pontuacao',
                   style: GoogleFonts.cinzel(
-                    fontSize: 18,
-                    color: const Color(0xFFF8E7B9),
-                  ),
+                      fontSize: 18, color: const Color(0xFFF8E7B9)),
                 ),
               ],
             ),
@@ -366,6 +670,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
       ),
       body: Stack(
         children: [
+          // ── Fundo ────────────────────────────────────────────────────────────
           SizedBox.expand(
             child: Image.asset(
               'assets/images/fundo_fazenda.jpeg',
@@ -380,9 +685,8 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
               builder: (context, constraints) {
                 return SingleChildScrollView(
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
+                    constraints:
+                        BoxConstraints(minHeight: constraints.maxHeight),
                     child: IntrinsicHeight(
                       child: Column(
                         children: [
@@ -399,7 +703,17 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
               },
             ),
           ),
-          if (faseConcluida) _buildOverlayConclusao(),
+
+          // ── Overlay cinematográfico da ferradura ──────────────────────────────
+          if (_mostrarReveal)
+            Positioned.fill(
+              child: FerradoraRevealOverlay(
+                onContinuar: () {
+                  setState(() => _mostrarReveal = false);
+                  _mostrarPopupEscolhaFinal();
+                },
+              ),
+            ),
         ],
       ),
     );
@@ -509,11 +823,10 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                 child: Container(
                   width: 14,
                   height: 14,
-                  decoration: BoxDecoration(
-                    color: corCheck,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.check, size: 10, color: Colors.black),
+                  decoration:
+                      BoxDecoration(color: corCheck, shape: BoxShape.circle),
+                  child:
+                      const Icon(Icons.check, size: 10, color: Colors.black),
                 ),
               ),
           ],
@@ -522,10 +835,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
         Text(
           label,
           style: GoogleFonts.cinzel(
-            fontSize: 10,
-            color: corLabel,
-            fontWeight: FontWeight.bold,
-          ),
+              fontSize: 10, color: corLabel, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -536,8 +846,8 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         child: SizedBox(
-          width: 340, // Aumentado de 280 para 340
-          height: 340, // Aumentado de 280 para 340
+          width: 340,
+          height: 340,
           child: GridView.builder(
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

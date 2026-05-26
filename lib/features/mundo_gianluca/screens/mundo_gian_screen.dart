@@ -6,6 +6,8 @@ import 'package:rpg_game/features/mundo_maria/screens/mundo_maria.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rpg_game/screens/home/home_screen.dart';
+import 'package:rpg_game/models/location_gate_widget.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // ================= ENUMS E CLASSES AUXILIARES =================
 enum _Etapa {
@@ -1312,45 +1314,49 @@ Future<void> _mostrarPopupConclusao() async {
               const SizedBox(height: 12),
 
               SizedBox(
-                width: 260,
-
-                child: ElevatedButton(
-
-                  onPressed: () async {
-
-                    await _salvarProgressoConservatorio();
-
-                    if (mounted) {
-
-                    Navigator.of(context).pop();
-
-                      await Future.delayed(
-                        const Duration(milliseconds: 100),
-                      );
-
-                      Navigator.pushReplacement(
-                        this.context,
-                        MaterialPageRoute(
-                          builder: (_) => const MundoMariaScreen(),
-                        ),
-                      );
-                    }
-                  },
-
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6B3F1D),
-                    foregroundColor: const Color(0xFFF8E7B9),
-                  ),
-
-                  child: Text(
-                    '⚔️ Salvar e continuar',
-
-                    style: GoogleFonts.cinzel(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+  width: 260,
+  child: ElevatedButton(
+    onPressed: () async {
+      await _salvarProgressoConservatorio();
+      if (mounted) {
+        Navigator.of(context).pop();
+        await Future.delayed(
+          const Duration(milliseconds: 100),
+        );
+        Navigator.pushReplacement(
+          this.context,
+          MaterialPageRoute(
+            builder: (_) => LocationGateWidget(
+              key: UniqueKey(),
+              localizacaoFase: const GeoPoint(
+                -22.83319,
+                -47.05261,
               ),
+              nomeFase: 'Fazenda Vale Dourado',
+              child: const MundoMariaScreen(),
+            ),
+          ),
+        );
+      }
+    },
+    style: ElevatedButton.styleFrom(
+      backgroundColor: const Color(0xFF6B3F1D),
+      foregroundColor: const Color(0xFFF8E7B9),
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(
+            color: Color(0xFF9E8A4A), width: 1.5),
+      ),
+    ),
+    child: Text(
+      '⚔️ Salvar e continuar',
+      style: GoogleFonts.cinzel(
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+  ),
+),
             ],
           ),
         ),
