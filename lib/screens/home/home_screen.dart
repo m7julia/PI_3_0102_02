@@ -445,6 +445,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                   text: 'Créditos',
                                   onPressed: irParaCreditos,
                                 ),
+
+                                 const SizedBox(height: 16),
+                                _rpgMenuButton(
+                                  text: 'Maju',
+                                  onPressed: irParaMundoMaria,
+                                ),
                               ],
                             ),
                           ),
