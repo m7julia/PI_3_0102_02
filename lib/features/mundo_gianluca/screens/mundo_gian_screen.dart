@@ -60,6 +60,7 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
   bool _audioLiberado = true;
   bool _tocandoSomLetra = false;
   bool _bloquearAcoesPiano = false;
+  bool _furEliseAtivaNoContexto = false;
 
 late AudioPlayer _typePlayer;
 late AudioPlayer _efeitosPlayer;
@@ -381,28 +382,6 @@ Future<void> _tocarSomLetra() async {
 }
 
 Future<void> _toggleSom() async {
-  setState(() {
-    _somAtivado = !_somAtivado;
-    _audioLiberado = true;
-  });
-
-  if (!_somAtivado) {
-    await _typePlayer.stop();
-    await _efeitosPlayer.stop();
-    await _musicaPlayer.pause();
-    return;
-  }
-
-  try {
-    await _typePlayer.setVolume(0.25);
-
-    if (_etapa == _Etapa.demonstrandoPiano ||
-        _etapa == _Etapa.tocandoPiano) {
-      await _musicaPlayer.resume();
-    }
-  } catch (e) {
-    debugPrint('Erro ao ativar som: $e');
-  }Future<void> _toggleSom() async {
   final novoEstado = !_somAtivado;
 
   setState(() {
@@ -413,14 +392,18 @@ Future<void> _toggleSom() async {
   if (!novoEstado) {
     await _typePlayer.stop();
     await _efeitosPlayer.stop();
-    await _musicaPlayer.pause();
+
+    if (_furEliseAtivaNoContexto) {
+      await _musicaPlayer.pause();
+    }
+
     return;
   }
 
-  if (_etapa != _Etapa.demonstrandoPiano &&
+  if (_furEliseAtivaNoContexto &&
+      _etapa != _Etapa.demonstrandoPiano &&
       _etapa != _Etapa.tocandoPiano) {
-    await _tocarFurElise();
-    }
+    await _musicaPlayer.resume();
   }
 }
 
@@ -574,15 +557,17 @@ Future<void> _tocarErro() async {
 
 Future<void> _tocarFurElise() async {
   try {
+    _furEliseAtivaNoContexto = true;
 
     await _musicaPlayer.stop();
     await _musicaPlayer.setReleaseMode(ReleaseMode.loop);
     await _musicaPlayer.setVolume(1.0);
 
-    await _musicaPlayer.play(
-      AssetSource('audio/fur_elise.mp3'),
-    );
-
+    if (_somAtivado) {
+      await _musicaPlayer.play(
+        AssetSource('audio/fur_elise.mp3'),
+      );
+    }
   } catch (e) {
     debugPrint('Erro tocando Fur Elise: $e');
   }
@@ -864,6 +849,7 @@ Widget _buildNpc() {
         _OpcaoBtn(
           label: 'Estou pronto. Vou ouvir com atenção e repetir a melodia.',
           onTap: () async {
+            _furEliseAtivaNoContexto = false;
             await _musicaPlayer.stop();
             await _iniciarMiniGamePiano();
           },
