@@ -30,14 +30,20 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
   bool _mostrarDialogo = false;
 
   final List<String> falasIniciais = [
-    'Saudações, viajante...',
-    'Há muito tempo aguardávamos sua chegada.',
-    'Antes de começar sua jornada, diga-me: qual é o seu nome?',
+    'Ei! Você consegue me ouvir? Eu sou Rowan. Vou te ajudar no que puder.',
+    'Que bom. Achei que você fosse dormir para sempre. Você estava no seu laboratório, na frente do computador e cochilou.',
+    'Só que enquanto dormia, um portal se abriu e te puxou. Agora você está aqui. Entre mundos. E não, não é sonho.',
+    'Existem cinco mundos espalhados por este lugar. Cada um guarda uma chave e você precisa das cinco para abrir o portal de volta ao seu mundo.',
+    'Nenhum dos mundos vai ser fácil. Cada um tem seus próprios desafios, suas próprias regras, em que você vai precisar de coragem, raciocínio e talvez um pouco de sorte.',
+    'Mas antes de qualquer coisa, preciso saber seu nome. Todo herói precisa de um nome.',
   ];
 
   String get falaAtual {
-    if (etapa == 3) {
-      return 'Muito bem... então você será conhecido como $nomeJogador.\nSua jornada está prestes a começar.';
+    if (etapa == 8) {
+      return '$nomeJogador... Bom nome para alguém que atravessou um portal dormindo. Guarde bem esse nome. Os mundos vão aprender a temê-lo.';
+    }
+    if (etapa == 9) {
+      return 'Cinco mundos. Cinco chaves. Um caminho de volta para casa. A jornada começa agora, $nomeJogador.';
     }
     return falasIniciais[etapa];
   }
@@ -96,7 +102,7 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
   void avancarDialogo() {
     if (!textoCompleto) return;
 
-    if (etapa < 2) {
+    if (etapa < 7) {
       setState(() => etapa++);
       mostrarTexto(falaAtual);
     }
@@ -112,7 +118,7 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
 
     setState(() {
       nomeJogador = nome;
-      etapa = 3;
+      etapa = 8;
     });
 
     mostrarTexto(falaAtual);
@@ -157,16 +163,22 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
   }
 
   List<String> get opcoesAtuais {
-    if (etapa == 2) return ['Confirmar nome'];
-    if (etapa == 3) return ['Começar jornada'];
+    if (etapa == 7) return ['Confirmar nome'];
+    if (etapa == 8) return ['Continuar →'];
+    if (etapa == 9) return ['Começar jornada'];
     return ['Continuar'];
   }
 
   void escolherOpcao(String opcao) {
     if (!textoCompleto || _salvando) return;
 
-    if (opcao == 'Continuar') {
-      avancarDialogo();
+    if (opcao == 'Continuar' || opcao == 'Continuar →') {
+      if (etapa == 8) {
+        setState(() => etapa = 9);
+        mostrarTexto(falaAtual);
+      } else {
+        avancarDialogo();
+      }
     } else if (opcao == 'Confirmar nome') {
       confirmarNome();
     } else if (opcao == 'Começar jornada') {
@@ -187,7 +199,7 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
       // ── AppBar igual ao MundoAnaScreen ──────────────────────────────────
       appBar: AppBar(
         title: Text(
-          'Crie seu personagem',
+          'Nova Jornada',
           style: GoogleFonts.cinzel(
             color: const Color(0xFFF8E7B9),
             fontWeight: FontWeight.bold,
@@ -218,15 +230,15 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
           Align(
             alignment: Alignment.bottomLeft,
             child: Padding(
-              padding: const EdgeInsets.only(left: 10, bottom: 80),
+              padding: const EdgeInsets.only(left: 10, bottom: 60),
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 700),
                 opacity: _mostrarNpc ? 1.0 : 0.0,
                 child: Image.asset(
                   'assets/images/personagem_tela_inicial.png',
-                  height: 320,
+                  height: 360,
                   fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const SizedBox(height: 400),
+                  errorBuilder: (_, __, ___) => const SizedBox(height: 320),
                 ),
               ),
             ),
@@ -292,8 +304,8 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
                 ),
               ),
 
-              // Campo de nome (etapa 2)
-              if (etapa == 2 && textoCompleto) ...[
+              // Campo de nome (etapa 7)
+              if (etapa == 7 && textoCompleto) ...[
                 const SizedBox(height: 16),
                 TextField(
                   controller: nomeController,
