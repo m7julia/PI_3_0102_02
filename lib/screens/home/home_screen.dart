@@ -223,13 +223,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> irParaMundoRafa() async {
-    await player.stop();
-    if (!mounted) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const MundoRafaelScreen()),
-    );
-  }
+  await player.stop();
+  if (!mounted) return;
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => LocationGateWidget(
+        key: UniqueKey(),
+        localizacaoFase: const GeoPoint(-22.8344, -47.05177),
+        nomeFase: 'Estacionamento Caótico',
+        child: const MundoRafaelScreen(),
+      ),
+    ),
+  );
+}
 
   Future<void> irParaMundoLuis() async {
     await player.stop();
