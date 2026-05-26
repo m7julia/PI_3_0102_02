@@ -745,6 +745,14 @@ class _Ligue3GameState extends State<Ligue3Game> {
 
     if (lo == linhaDestino && co == colunaDestino) return;
 
+    // Só permite mover para célula adjacente (cima, baixo, esquerda, direita)
+    final diffLinha = (lo - linhaDestino).abs();
+    final diffColuna = (co - colunaDestino).abs();
+    final ehAdjacente = (diffLinha == 1 && diffColuna == 0) ||
+        (diffLinha == 0 && diffColuna == 1);
+
+    if (!ehAdjacente) return;
+
     setState(() {
       final tmp = matriz[lo][co];
       matriz[lo][co] = matriz[linhaDestino][colunaDestino];
