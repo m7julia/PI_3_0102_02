@@ -6,6 +6,318 @@ import 'package:rpg_game/screens/home/home_screen.dart';
 import 'package:rpg_game/services/nivel_service.dart';
 import 'package:audioplayers/audioplayers.dart';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// OVERLAY CINEMATOGRÁFICO DA FERRADURA
+// ═══════════════════════════════════════════════════════════════════════════════
+class FerradoraRevealOverlay extends StatefulWidget {
+  final VoidCallback onContinuar;
+
+  const FerradoraRevealOverlay({super.key, required this.onContinuar});
+
+  @override
+  State<FerradoraRevealOverlay> createState() =>
+      _FerradoraRevealOverlayState();
+}
+
+class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
+    with TickerProviderStateMixin {
+  // 1. Fundo escurece
+  late AnimationController _bgController;
+  late Animation<double> _bgOpacity;
+
+  // 2. Ferradura cresce do centro
+  late AnimationController _ferrController;
+  late Animation<double> _ferrScale;
+  late Animation<double> _ferrOpacity;
+  late Animation<double> _ferrRotation;
+
+  // 3. Brilho pulsante após crescer
+  late AnimationController _glowController;
+  late Animation<double> _glowAnim;
+
+  // 4. Texto aparece
+  late AnimationController _textoController;
+  late Animation<double> _textoOpacity;
+  late Animation<Offset> _textoSlide;
+
+  // 5. Botão aparece
+  late AnimationController _btnController;
+  late Animation<double> _btnOpacity;
+  late Animation<double> _btnScale;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // ── 1. Fundo ──────────────────────────────────────────────────────────────
+    _bgController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600));
+    _bgOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(parent: _bgController, curve: Curves.easeIn));
+
+    // ── 2. Ferradura ──────────────────────────────────────────────────────────
+    _ferrController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1100));
+    _ferrScale = TweenSequence<double>([
+      TweenSequenceItem(
+          tween: Tween<double>(begin: 0.0, end: 1.15)
+              .chain(CurveTween(curve: Curves.easeOutCubic)),
+          weight: 70),
+      TweenSequenceItem(
+          tween: Tween<double>(begin: 1.15, end: 0.95)
+              .chain(CurveTween(curve: Curves.easeInOut)),
+          weight: 15),
+      TweenSequenceItem(
+          tween: Tween<double>(begin: 0.95, end: 1.0)
+              .chain(CurveTween(curve: Curves.easeOut)),
+          weight: 15),
+    ]).animate(_ferrController);
+    _ferrOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(
+            parent: _ferrController,
+            curve: const Interval(0.0, 0.3, curve: Curves.easeIn)));
+    _ferrRotation = Tween<double>(begin: -0.15, end: 0.0).animate(
+        CurvedAnimation(parent: _ferrController, curve: Curves.easeOutBack));
+
+    // ── 3. Brilho pulsante ────────────────────────────────────────────────────
+    _glowController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1600));
+    _glowAnim = Tween<double>(begin: 0.5, end: 1.0).animate(
+        CurvedAnimation(parent: _glowController, curve: Curves.easeInOut));
+
+    // ── 4. Texto ──────────────────────────────────────────────────────────────
+    _textoController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 700));
+    _textoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(parent: _textoController, curve: Curves.easeIn));
+    _textoSlide =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+            CurvedAnimation(parent: _textoController, curve: Curves.easeOut));
+
+    // ── 5. Botão ──────────────────────────────────────────────────────────────
+    _btnController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 500));
+    _btnOpacity = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(CurvedAnimation(parent: _btnController, curve: Curves.easeIn));
+    _btnScale = Tween<double>(begin: 0.7, end: 1.0).animate(
+        CurvedAnimation(parent: _btnController, curve: Curves.easeOutBack));
+
+    _runSequence();
+  }
+
+  Future<void> _runSequence() async {
+    await _bgController.forward();
+    await _ferrController.forward();
+    _glowController.repeat(reverse: true);
+    await Future.delayed(const Duration(milliseconds: 200));
+    await _textoController.forward();
+    await Future.delayed(const Duration(milliseconds: 400));
+    await _btnController.forward();
+  }
+
+  @override
+  void dispose() {
+    _bgController.dispose();
+    _ferrController.dispose();
+    _glowController.dispose();
+    _textoController.dispose();
+    _btnController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([
+        _bgController,
+        _ferrController,
+        _glowController,
+        _textoController,
+        _btnController,
+      ]),
+      builder: (context, _) {
+        final double glow = 18 + (_glowAnim.value * 28);
+        final double glowAlpha = 0.45 + (_glowAnim.value * 0.45);
+
+        return Opacity(
+          opacity: _bgOpacity.value,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.center,
+                radius: 1.2,
+                colors: [
+                  const Color(0xFF3D1F00).withValues(alpha: 0.97),
+                  const Color(0xFF0D0700).withValues(alpha: 0.99),
+                ],
+              ),
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Spacer(flex: 2),
+
+                  // ── Texto principal ─────────────────────────────────────────
+                  SlideTransition(
+                    position: _textoSlide,
+                    child: Opacity(
+                      opacity: _textoOpacity.value,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Ao armazenar toda a plantação',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.cinzel(
+                                fontSize: 15,
+                                color: const Color(0xFFF8E7B9)
+                                    .withValues(alpha: 0.85),
+                                letterSpacing: 0.8,
+                                height: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'você conquistou a chave do portal',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.cinzelDecorative(
+                                fontSize: 19,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.amberAccent,
+                                letterSpacing: 1.2,
+                                height: 1.4,
+                                shadows: [
+                                  Shadow(
+                                    color:
+                                        Colors.amber.withValues(alpha: 0.8),
+                                    blurRadius: 18,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // ── Ferradura animada ───────────────────────────────────────
+                  Transform.rotate(
+                    angle: _ferrRotation.value,
+                    child: Transform.scale(
+                      scale: _ferrScale.value,
+                      child: Opacity(
+                        opacity: _ferrOpacity.value,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.amberAccent
+                                    .withValues(alpha: glowAlpha * 0.8),
+                                blurRadius: glow,
+                                spreadRadius: glow * 0.35,
+                              ),
+                              BoxShadow(
+                                color: const Color(0xFFFF8C00)
+                                    .withValues(alpha: glowAlpha * 0.5),
+                                blurRadius: glow * 2.2,
+                                spreadRadius: glow * 0.15,
+                              ),
+                              BoxShadow(
+                                color: Colors.white
+                                    .withValues(alpha: glowAlpha * 0.15),
+                                blurRadius: glow * 0.5,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Image.asset(
+                            'assets/images/icons/ferradura_icon.png',
+                            width: 200,
+                            height: 200,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => const Text(
+                              '🐴',
+                              style: TextStyle(fontSize: 160),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  Opacity(
+                    opacity: _textoOpacity.value,
+                    child: Text(
+                      '✦ A Ferradura ✦',
+                      style: GoogleFonts.cinzel(
+                        fontSize: 13,
+                        color: Colors.amberAccent.withValues(alpha: 0.75),
+                        letterSpacing: 3,
+                      ),
+                    ),
+                  ),
+
+                  const Spacer(flex: 2),
+
+                  // ── Botão continuar ─────────────────────────────────────────
+                  Transform.scale(
+                    scale: _btnScale.value,
+                    child: Opacity(
+                      opacity: _btnOpacity.value,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 40),
+                        child: ElevatedButton(
+                          onPressed: widget.onContinuar,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: const Color(0xFFF8E7B9),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 48, vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              side: const BorderSide(
+                                  color: Color(0xFF9E8A4A), width: 1.5),
+                            ),
+                            elevation: 0,
+                            shadowColor: Colors.transparent,
+                          ).copyWith(
+                            backgroundColor: WidgetStateProperty.all(
+                              const Color(0xFF6B3F1D).withValues(alpha: 0.85),
+                            ),
+                          ),
+                          child: Text(
+                            'Continuar a jornada  ➡️',
+                            style: GoogleFonts.cinzel(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// JOGO PRINCIPAL
+// ═══════════════════════════════════════════════════════════════════════════════
 class Ligue3Game extends StatefulWidget {
   const Ligue3Game({super.key});
 
@@ -92,9 +404,10 @@ class _Ligue3GameState extends State<Ligue3Game> {
   bool faseConcluida = false;
   List<int>? dragOrigem;
 
-  // Controla se o save no Firestore já foi disparado
-  bool _salvoNoFirestore = false;
+  // Controla o overlay cinematográfico
+  bool _mostrarReveal = false;
 
+  bool _salvoNoFirestore = false;
 
   Future<void> _precarregarImagens() async {
     for (var cultivo in cultivos) {
@@ -110,6 +423,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
     mensagem = '';
     mensagemErro = false;
     faseConcluida = false;
+    _mostrarReveal = false;
     _salvoNoFirestore = false;
   }
 
@@ -181,7 +495,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
 
   void _tocarCelula(int linha, int coluna) {
     final pos = [linha, coluna];
-    final jaSelected = selecionados.any((s) => s[0] == linha && s[1] == coluna);
+    final jaSelected =
+        selecionados.any((s) => s[0] == linha && s[1] == coluna);
 
     setState(() {
       if (jaSelected) {
@@ -205,7 +520,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
 
   void _tentarCombinar() {
     final asset = matriz[selecionados[0][0]][selecionados[0][1]];
-    final todosIguais = selecionados.every((s) => matriz[s[0]][s[1]] == asset);
+    final todosIguais =
+        selecionados.every((s) => matriz[s[0]][s[1]] == asset);
 
     if (!todosIguais) {
       selecionados = [];
@@ -238,7 +554,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
         if (matriz[r][c].isNotEmpty) coluna.add(matriz[r][c]);
       }
       while (coluna.length < gridSize) {
-        coluna.add(cultivos[rng.nextInt(cultivos.length)]['asset'] as String);
+        coluna
+            .add(cultivos[rng.nextInt(cultivos.length)]['asset'] as String);
       }
       for (int r = gridSize - 1; r >= 0; r--) {
         matriz[r][c] = coluna[gridSize - 1 - r];
@@ -290,11 +607,12 @@ class _Ligue3GameState extends State<Ligue3Game> {
     );
     if (completo && !faseConcluida) {
       faseConcluida = true;
-      _mostrarPopupEscolhaFinal();
+      // Pequena pausa antes de mostrar o overlay
+      Future.delayed(const Duration(milliseconds: 400), () {
+        if (mounted) setState(() => _mostrarReveal = true);
+      });
     }
   }
-
-  // ─── Popup: Escolha final (sair ou continuar) ─────────────────────────────
 
   Future<void> _mostrarPopupEscolhaFinal() async {
     await showDialog(
@@ -340,7 +658,6 @@ class _Ligue3GameState extends State<Ligue3Game> {
                   ),
                 ),
                 const SizedBox(height: 28),
-                // Salvar e sair
                 Center(
                   child: SizedBox(
                     width: 260,
@@ -348,14 +665,12 @@ class _Ligue3GameState extends State<Ligue3Game> {
                       onPressed: () async {
                         await NivelService.completarNivelMaju();
                         if (mounted) {
-                          Navigator.of(context).pop(); // Fecha o dialog
+                          Navigator.of(context).pop();
                           Navigator.pushAndRemoveUntil(
                             this.context,
                             MaterialPageRoute(
-                              builder: (_) => const HomeScreen(),
-                            ),
-                            (route) =>
-                                false, // Remove todas as rotas anteriores
+                                builder: (_) => const HomeScreen()),
+                            (route) => false,
                           );
                         }
                       },
@@ -366,20 +681,18 @@ class _Ligue3GameState extends State<Ligue3Game> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                           side: const BorderSide(
-                            color: Color(0xFF9E8A4A),
-                            width: 1.5,
-                          ),
+                              color: Color(0xFF9E8A4A), width: 1.5),
                         ),
                       ),
                       child: Text(
                         '💾 Salvar e sair',
-                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                        style:
+                            GoogleFonts.cinzel(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Salvar e continuar para o próximo mundo (Mundo do Luis)
                 Center(
                   child: SizedBox(
                     width: 260,
@@ -387,12 +700,11 @@ class _Ligue3GameState extends State<Ligue3Game> {
                       onPressed: () async {
                         await NivelService.completarNivelMaju();
                         if (mounted) {
-                          Navigator.of(context).pop(); // Fecha o dialog
+                          Navigator.of(context).pop();
                           Navigator.push(
                             this.context,
                             MaterialPageRoute(
-                              builder: (_) => const MundoLuisScreen(),
-                            ),
+                                builder: (_) => const MundoLuisScreen()),
                           );
                         }
                       },
@@ -403,14 +715,13 @@ class _Ligue3GameState extends State<Ligue3Game> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                           side: const BorderSide(
-                            color: Color(0xFF9E8A4A),
-                            width: 1.5,
-                          ),
+                              color: Color(0xFF9E8A4A), width: 1.5),
                         ),
                       ),
                       child: Text(
                         '⚔️ Salvar e continuar',
-                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                        style:
+                            GoogleFonts.cinzel(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -509,6 +820,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
       ),
       body: Stack(
         children: [
+          // ── Fundo ────────────────────────────────────────────────────────────
           SizedBox.expand(
             child: Image.asset(
               'assets/images/fundo_fazenda.jpeg',
@@ -518,6 +830,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
             ),
           ),
           Container(color: Colors.black.withValues(alpha: 0.6)),
+
+          // ── Conteúdo do jogo ──────────────────────────────────────────────────
           SafeArea(
             child: Column(
               children: [
@@ -530,7 +844,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
                     'Toque 3 iguais ou arraste para mover',
                     style: GoogleFonts.cinzel(
                       fontSize: 12,
-                      color: const Color(0xFFF8E7B9).withValues(alpha: 0.75),
+                      color:
+                          const Color(0xFFF8E7B9).withValues(alpha: 0.75),
                     ),
                   ),
                 ),
@@ -538,6 +853,17 @@ class _Ligue3GameState extends State<Ligue3Game> {
               ],
             ),
           ),
+
+          // ── Overlay cinematográfico da ferradura ──────────────────────────────
+          if (_mostrarReveal)
+            Positioned.fill(
+              child: FerradoraRevealOverlay(
+                onContinuar: () {
+                  setState(() => _mostrarReveal = false);
+                  _mostrarPopupEscolhaFinal();
+                },
+              ),
+            ),
         ],
       ),
     );
@@ -636,9 +962,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
                     child: LinearProgressIndicator(
                       value: progresso,
                       minHeight: 6,
-                      backgroundColor: const Color(
-                        0xFFF8E7B9,
-                      ).withValues(alpha: 0.2),
+                      backgroundColor:
+                          const Color(0xFFF8E7B9).withValues(alpha: 0.2),
                       valueColor: AlwaysStoppedAnimation<Color>(
                         completo ? Colors.greenAccent : cor,
                       ),
@@ -674,7 +999,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: mensagemErro ? Colors.red.shade700 : Colors.green.shade700,
+          color:
+              mensagemErro ? Colors.red.shade700 : Colors.green.shade700,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text(
@@ -713,7 +1039,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
 
               return DragTarget<List<int>>(
                 onWillAcceptWithDetails: (details) => true,
-                onAcceptWithDetails: (details) => _finalizarDrop(linha, coluna),
+                onAcceptWithDetails: (details) =>
+                    _finalizarDrop(linha, coluna),
                 builder: (context, candidateData, rejectedData) {
                   final highlight = candidateData.isNotEmpty;
                   return Draggable<List<int>>(
@@ -750,8 +1077,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
           color: selecionado
               ? Colors.greenAccent
               : highlight
-              ? Colors.white
-              : const Color(0xFFF8E7B9).withValues(alpha: 0.7),
+                  ? Colors.white
+                  : const Color(0xFFF8E7B9).withValues(alpha: 0.7),
           width: selecionado || highlight ? 3 : 1.5,
         ),
         borderRadius: BorderRadius.circular(12),
