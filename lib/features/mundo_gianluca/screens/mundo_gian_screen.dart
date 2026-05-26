@@ -57,6 +57,7 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
   bool _somAtivado = true;
   bool _audioLiberado = true;
   bool _tocandoSomLetra = false;
+  bool _bloquearAcoesPiano = false;
 
 late AudioPlayer _typePlayer;
 late AudioPlayer _efeitosPlayer;
@@ -399,6 +400,25 @@ Future<void> _toggleSom() async {
     }
   } catch (e) {
     debugPrint('Erro ao ativar som: $e');
+  }Future<void> _toggleSom() async {
+  final novoEstado = !_somAtivado;
+
+  setState(() {
+    _somAtivado = novoEstado;
+    _audioLiberado = novoEstado;
+  });
+
+  if (!novoEstado) {
+    await _typePlayer.stop();
+    await _efeitosPlayer.stop();
+    await _musicaPlayer.pause();
+    return;
+  }
+
+  if (_etapa != _Etapa.demonstrandoPiano &&
+      _etapa != _Etapa.tocandoPiano) {
+    await _tocarFurElise();
+    }
   }
 }
 
@@ -473,16 +493,15 @@ void _pularTexto() {
 }
 
 Future<void> _iniciarMiniGamePiano() async {
-
   _entradaJogador.clear();
 
   setState(() {
     _etapa = _Etapa.demonstrandoPiano;
     _podeTocar = false;
+    _bloquearAcoesPiano = true;
   });
 
   for (final nota in _sequenciaCorreta) {
-    
     if (!mounted) return;
 
     setState(() {
@@ -496,10 +515,13 @@ Future<void> _iniciarMiniGamePiano() async {
     );
   }
 
+  if (!mounted) return;
+
   setState(() {
     _notaAtualDemo = null;
     _podeTocar = true;
     _etapa = _Etapa.tocandoPiano;
+    _bloquearAcoesPiano = true;
   });
 
   _exibirTexto(_textoAtual);
@@ -516,6 +538,7 @@ Future<void> _iniciarMiniGamePiano() async {
   };
 
 Future<void> _tocarNota(String nota) async {
+  if (!_somAtivado) return;
   try {
     final arquivo = _sonsNotas[nota];
 
@@ -535,6 +558,7 @@ Future<void> _tocarNota(String nota) async {
 }
 
 Future<void> _tocarErro() async {
+  if (!_somAtivado) return;
   try {
     await _efeitosPlayer.stop();
 
@@ -548,7 +572,6 @@ Future<void> _tocarErro() async {
 
 Future<void> _tocarFurElise() async {
   try {
-    debugPrint('Tentando tocar Fur Elise...');
 
     await _musicaPlayer.stop();
     await _musicaPlayer.setReleaseMode(ReleaseMode.loop);
@@ -558,7 +581,6 @@ Future<void> _tocarFurElise() async {
       AssetSource('audio/fur_elise.mp3'),
     );
 
-    debugPrint('Fur Elise tocando!');
   } catch (e) {
     debugPrint('Erro tocando Fur Elise: $e');
   }
@@ -592,6 +614,7 @@ Future<void> _pressionarNota(String nota) async {
 
     setState(() {
       _fragmentos++;
+      _bloquearAcoesPiano = false;
     });
 
     await Future.delayed(
@@ -799,7 +822,9 @@ Widget _buildNpc() {
                 ),
 
               if (_textoTerminou &&
-                _etapa != _Etapa.demonstrandoPiano)
+                !_bloquearAcoesPiano &&
+                _etapa != _Etapa.demonstrandoPiano &&
+                _etapa != _Etapa.tocandoPiano)
               _buildAcoes(),
             ],
           ),
