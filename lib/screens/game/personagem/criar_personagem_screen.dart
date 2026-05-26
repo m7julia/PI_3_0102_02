@@ -26,6 +26,8 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
   Timer? timerTexto;
 
   bool mostrarConteudo = false;
+  bool _mostrarNpc = false;
+  bool _mostrarDialogo = false;
 
   final List<String> falasIniciais = [
     'Saudações, viajante...',
@@ -47,9 +49,15 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
   }
 
   Future<void> _iniciarCena() async {
-    await Future.delayed(const Duration(milliseconds: 400));
+    await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
-    setState(() => mostrarConteudo = true);
+    setState(() {
+      mostrarConteudo = true;
+      _mostrarNpc = true;
+    });
+    await Future.delayed(const Duration(milliseconds: 700));
+    if (!mounted) return;
+    setState(() => _mostrarDialogo = true);
     mostrarTexto(falaAtual);
   }
 
@@ -115,9 +123,7 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
 
     try {
       final service = PersonagemService();
-
       final personagem = Personagem(nome: nomeJogador);
-
       final personagemId = await service.criarPersonagem(personagem);
 
       final prefs = await SharedPreferences.getInstance();
@@ -177,330 +183,250 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isSmall = size.height < 600;
-
-    // Tamanhos responsivos
-    final titleFontSize = (size.width * 0.08).clamp(22.0, 38.0);
-    final subtitleFontSize = (size.width * 0.045).clamp(14.0, 22.0);
-    final personagemHeight = (size.height * 0.38).clamp(180.0, 340.0);
-    final dialogMargin = size.width * 0.04;
-    final dialogPadding = size.width * 0.045;
-
     return Scaffold(
+      // ── AppBar igual ao MundoAnaScreen ──────────────────────────────────
+      appBar: AppBar(
+        title: Text(
+          'Crie seu personagem',
+          style: GoogleFonts.cinzel(
+            color: const Color(0xFFF8E7B9),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: const Color(0xFF6B3F1D),
+        foregroundColor: const Color(0xFFF8E7B9),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: Stack(
         children: [
-          // Background
+          // ── Background ────────────────────────────────────────────────
           SizedBox.expand(
             child: Image.asset(
-              'assets/images/criar_personagem.png',
+              'assets/images/fundo_tela_inicial.png',
               fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
+              errorBuilder: (_, __, ___) =>
+                  Container(color: const Color(0xFF2D1A0A)),
             ),
           ),
+          Container(color: Colors.black.withValues(alpha: 0.55)),
 
-          Container(color: Colors.black.withValues(alpha: 0.6)),
-
-          // Personagem (canto inferior esquerdo)
+          // ── Personagem — canto inferior esquerdo, igual ao MundoAnaScreen ──
           Align(
             alignment: Alignment.bottomLeft,
             child: Padding(
-              padding: EdgeInsets.only(
-                left: size.width * 0.02,
-                bottom: size.height * 0.28,
-              ),
+              padding: const EdgeInsets.only(left: 10, bottom: 80),
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 700),
-                opacity: mostrarConteudo ? 1.0 : 0.0,
+                opacity: _mostrarNpc ? 1.0 : 0.0,
                 child: Image.asset(
-                  'assets/images/personagem_rafa.png',
-                  height: personagemHeight,
+                  'assets/images/personagem_tela_inicial.png',
+                  height: 320,
                   fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const SizedBox(height: 400),
                 ),
               ),
             ),
           ),
 
-          // Botão voltar
-          Positioned(
-            top: 50,
-            left: 16,
-            child: SafeArea(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.45),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: const Color(0xFF9E8A4A),
-                    width: 1.5,
-                  ),
-                ),
-                child: IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new,
-                    color: Color(0xFFF8E7B9),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // Título e subtítulo
-          Positioned(
-            top: isSmall ? 40 : 70,
-            left: 80,
-            right: 24,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 700),
-              opacity: mostrarConteudo ? 1.0 : 0.0,
+          // ── Caixa de diálogo — SafeArea > Column > Spacer (igual Ana) ──
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
-                  Text(
-                    'Nova Jornada',
-                    style: GoogleFonts.cinzel(
-                      fontSize: titleFontSize,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFFF8E7B9),
-                      letterSpacing: 2,
-                      shadows: const [
-                        Shadow(
-                          color: Colors.black,
-                          blurRadius: 10,
-                          offset: Offset(2, 2),
-                        ),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Motorista Suspeito',
-                    style: GoogleFonts.cinzel(
-                      fontSize: subtitleFontSize,
-                      color: Colors.white70,
-                      letterSpacing: 1.5,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
+                  const Spacer(),
+                  _buildCaixaDialogo(),
+                  const SizedBox(height: 28),
                 ],
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
 
-          // Caixa de diálogo inferior
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 700),
-              opacity: mostrarConteudo ? 1.0 : 0.0,
-              child: SingleChildScrollView(
-                child: Container(
-                  width: double.infinity,
-                  margin: EdgeInsets.all(dialogMargin),
-                  padding: EdgeInsets.all(dialogPadding),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.78),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: const Color(0xFF9E8A4A),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF9E8A4A).withValues(alpha: 0.2),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Tag de quem fala
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF6B3F1D,
-                          ).withValues(alpha: 0.25),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: const Color(
-                              0xFFF8E7B9,
-                            ).withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Text(
-                          'Motorista Suspeito',
-                          style: GoogleFonts.cinzel(
-                            fontSize: (size.width * 0.025).clamp(10.0, 13.0),
-                            fontWeight: FontWeight.bold,
-                            color: const Color(
-                              0xFFF8E7B9,
-                            ).withValues(alpha: 0.65),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
+  // ── Caixa de diálogo ─────────────────────────────────────────────────────
+  Widget _buildCaixaDialogo() {
+    return AnimatedSlide(
+      duration: const Duration(milliseconds: 700),
+      curve: Curves.easeOut,
+      offset: _mostrarDialogo ? Offset.zero : const Offset(0, 0.3),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 700),
+        opacity: _mostrarDialogo ? 1.0 : 0.0,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.78),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF9E8A4A).withValues(alpha: 0.2),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Badge "Rowan"
+              _buildBadgeFalante(),
+              const SizedBox(height: 8),
 
-                      const SizedBox(height: 10),
-
-                      // Texto animado
-                      Text(
-                        textoVisivel,
-                        style: GoogleFonts.cinzel(
-                          fontSize: (size.width * 0.037).clamp(13.0, 16.0),
-                          height: 1.65,
-                          color: const Color(0xFFF8E7B9),
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-
-                      // Campo de nome (etapa 2)
-                      if (etapa == 2 && textoCompleto) ...[
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: nomeController,
-                          style: GoogleFonts.cinzel(
-                            color: const Color(0xFFF8E7B9),
-                            fontSize: (size.width * 0.037).clamp(13.0, 16.0),
-                          ),
-                          cursorColor: const Color(0xFFF8E7B9),
-                          decoration: InputDecoration(
-                            hintText: 'Digite o nome do personagem',
-                            hintStyle: GoogleFonts.cinzel(
-                              color: const Color(
-                                0xFFF8E7B9,
-                              ).withValues(alpha: 0.4),
-                              fontSize: (size.width * 0.035).clamp(12.0, 15.0),
-                            ),
-                            filled: true,
-                            fillColor: Colors.black.withValues(alpha: 0.35),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: size.height * 0.014,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                color: Color(0xFF9E8A4A),
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                color: Color(0xFFF8E7B9),
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-
-                      SizedBox(height: size.height * 0.02),
-
-                      // Botão acelerar texto
-                      if (!textoCompleto)
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: ElevatedButton(
-                            onPressed: acelerarTexto,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF6B3F1D),
-                              foregroundColor: const Color(0xFFF8E7B9),
-                              padding: EdgeInsets.symmetric(
-                                horizontal: size.width * 0.05,
-                                vertical: size.height * 0.014,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: const BorderSide(
-                                  color: Color(0xFF9E8A4A),
-                                  width: 1.5,
-                                ),
-                              ),
-                            ),
-                            child: Text(
-                              'Continuar →',
-                              style: GoogleFonts.cinzel(
-                                fontWeight: FontWeight.bold,
-                                fontSize: (size.width * 0.035).clamp(
-                                  12.0,
-                                  15.0,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                      // Botões de ação
-                      if (textoCompleto) ...[
-                        SizedBox(height: size.height * 0.01),
-                        ...opcoesAtuais.map((opcao) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: _salvando
-                                    ? null
-                                    : () => escolherOpcao(opcao),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF6B3F1D),
-                                  foregroundColor: const Color(0xFFF8E7B9),
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: size.height * 0.016,
-                                  ),
-                                  elevation: 4,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    side: const BorderSide(
-                                      color: Color(0xFF9E8A4A),
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                ),
-                                child: _salvando && opcao == 'Começar jornada'
-                                    ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Color(0xFFF8E7B9),
-                                        ),
-                                      )
-                                    : Text(
-                                        opcao,
-                                        textAlign: TextAlign.center,
-                                        style: GoogleFonts.cinzel(
-                                          fontSize: (size.width * 0.035).clamp(
-                                            12.0,
-                                            15.0,
-                                          ),
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                          );
-                        }),
-                      ],
-                    ],
-                  ),
+              // Texto animado
+              Text(
+                textoVisivel,
+                style: GoogleFonts.cinzel(
+                  fontSize: 15,
+                  height: 1.65,
+                  color: const Color(0xFFF8E7B9),
                 ),
               ),
-            ),
+
+              // Campo de nome (etapa 2)
+              if (etapa == 2 && textoCompleto) ...[
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nomeController,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 15,
+                  ),
+                  cursorColor: const Color(0xFFF8E7B9),
+                  decoration: InputDecoration(
+                    hintText: 'Digite o nome do personagem',
+                    hintStyle: GoogleFonts.cinzel(
+                      color: const Color(0xFFF8E7B9).withValues(alpha: 0.4),
+                      fontSize: 14,
+                    ),
+                    filled: true,
+                    fillColor: Colors.black.withValues(alpha: 0.35),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide:
+                          const BorderSide(color: Color(0xFF9E8A4A)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFF8E7B9),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 16),
+
+              // Enquanto digita → botão pular (igual ao MundoAnaScreen)
+              if (!textoCompleto)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton(
+                    onPressed: acelerarTexto,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6B3F1D),
+                      foregroundColor: const Color(0xFFF8E7B9),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(
+                            color: Color(0xFF9E8A4A), width: 1.5),
+                      ),
+                    ),
+                    child: Text(
+                      'Continuar →',
+                      style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+
+              // Botões de ação (texto terminado)
+              if (textoCompleto)
+                ...opcoesAtuais.map((opcao) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _salvando
+                              ? null
+                              : () => escolherOpcao(opcao),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6B3F1D),
+                            foregroundColor: const Color(0xFFF8E7B9),
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 12),
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: const BorderSide(
+                                  color: Color(0xFF9E8A4A), width: 1.5),
+                            ),
+                          ),
+                          child: _salvando && opcao == 'Começar jornada'
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Color(0xFFF8E7B9),
+                                  ),
+                                )
+                              : Text(
+                                  opcao,
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.cinzel(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    )),
+            ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  // ── Badge do falante ──────────────────────────────────────────────────────
+  Widget _buildBadgeFalante() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF6B3F1D).withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFF8E7B9).withValues(alpha: 0.3),
+        ),
+      ),
+      child: Text(
+        'Rowan',
+        style: GoogleFonts.cinzel(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: const Color(0xFFF8E7B9).withValues(alpha: 0.65),
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
