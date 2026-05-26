@@ -5,6 +5,8 @@ import 'package:rpg_game/features/mundo_luis/screens/mundo_luis.dart';
 import 'package:rpg_game/screens/home/home_screen.dart';
 import 'package:rpg_game/services/nivel_service.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:rpg_game/models/location_gate_widget.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class JogoMemoriaGame extends StatefulWidget {
   const JogoMemoriaGame({super.key});
@@ -179,7 +181,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
               border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                  color: const Color(0xFF9E8A4A).withOpacity(0.4),
                   blurRadius: 25,
                   spreadRadius: 2,
                 ),
@@ -274,11 +276,19 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                       onPressed: () async {
                         await NivelService.completarNivelMaju();
                         if (mounted) {
-                          Navigator.of(context).pop(); // Fecha o dialog
-                          Navigator.push(
+                          Navigator.of(context).pop();
+                          Navigator.pushReplacement(
                             this.context,
                             MaterialPageRoute(
-                              builder: (_) => const MundoLuisScreen(),
+                              builder: (_) => LocationGateWidget(
+                                key: UniqueKey(),
+                                localizacaoFase: const GeoPoint(
+                                  -22.83347,
+                                  -47.04992,
+                                ),
+                                nomeFase: 'Bar Pirata',
+                                child: const MundoLuisScreen(),
+                              ),
                             ),
                           );
                         }
@@ -364,7 +374,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                   Container(color: const Color(0xFF6B3F1D)),
             ),
           ),
-          Container(color: Colors.black.withValues(alpha: 0.6)),
+          Container(color: Colors.black.withOpacity(0.6)),
           SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -400,10 +410,10 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF6B3F1D).withValues(alpha: 0.85),
+        color: const Color(0xFF6B3F1D).withOpacity(0.85),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFFF8E7B9).withValues(alpha: 0.6),
+          color: const Color(0xFFF8E7B9).withOpacity(0.6),
           width: 1,
         ),
       ),
@@ -423,7 +433,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
             textAlign: TextAlign.center,
             style: GoogleFonts.cinzel(
               fontSize: 11,
-              color: const Color(0xFFF8E7B9).withValues(alpha: 0.85),
+              color: const Color(0xFFF8E7B9).withOpacity(0.85),
             ),
           ),
         ],
@@ -439,10 +449,10 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.4),
+        color: Colors.black.withOpacity(0.4),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: const Color(0xFFF8E7B9).withValues(alpha: 0.4),
+          color: const Color(0xFFF8E7B9).withOpacity(0.4),
           width: 1,
         ),
       ),
@@ -461,7 +471,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
               label: encontrado ? '✓' : '?',
               corLabel: encontrado
                   ? Colors.greenAccent
-                  : const Color(0xFFF8E7B9).withValues(alpha: 0.5),
+                  : const Color(0xFFF8E7B9).withOpacity(0.5),
             );
           }),
           _buildIconeContador(
@@ -470,7 +480,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
             label: ferraduraRevelada ? '✓' : '🔒',
             corLabel: ferraduraRevelada
                 ? Colors.amberAccent
-                : const Color(0xFFF8E7B9).withValues(alpha: 0.5),
+                : const Color(0xFFF8E7B9).withOpacity(0.5),
             corCheck: Colors.amberAccent,
           ),
         ],
@@ -551,20 +561,20 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
 
     Color borderColor = const Color(0xFFF8E7B9);
     double borderWidth = 2;
-    Color bgColor = const Color(0xFF8B5A2B).withValues(alpha: 0.9);
+    Color bgColor = const Color(0xFF8B5A2B).withOpacity(0.9);
 
     if (combinada && ehFerr) {
       borderColor = Colors.amberAccent;
       borderWidth = 2.5;
-      bgColor = Colors.amber.withValues(alpha: 0.25);
+      bgColor = Colors.amber.withOpacity(0.25);
     } else if (combinada) {
       borderColor = Colors.greenAccent;
       borderWidth = 2.5;
-      bgColor = Colors.green.withValues(alpha: 0.2);
+      bgColor = Colors.green.withOpacity(0.2);
     } else if (reveladas[index]) {
       borderColor = Colors.white;
       borderWidth = 2;
-      bgColor = const Color(0xFF6B3F1D).withValues(alpha: 0.9);
+      bgColor = const Color(0xFF6B3F1D).withOpacity(0.9);
     }
 
     return GestureDetector(
@@ -573,12 +583,10 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
         decoration: BoxDecoration(
           border: Border.all(color: borderColor, width: borderWidth),
           borderRadius: BorderRadius.circular(14),
-          color: visivel
-              ? bgColor
-              : const Color(0xFF8B5A2B).withValues(alpha: 0.9),
+          color: visivel ? bgColor : const Color(0xFF8B5A2B).withOpacity(0.9),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.25),
+              color: Colors.black.withOpacity(0.25),
               blurRadius: 6,
               offset: const Offset(2, 2),
             ),
@@ -590,7 +598,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
               : Icon(
                   Icons.question_mark_rounded,
                   size: 38,
-                  color: const Color(0xFFF8E7B9).withValues(alpha: 0.7),
+                  color: const Color(0xFFF8E7B9).withOpacity(0.7),
                 ),
         ),
       ),
@@ -599,7 +607,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
 
   Widget _buildOverlayConclusao() {
     return Container(
-      color: Colors.black.withValues(alpha: 0.75),
+      color: Colors.black.withOpacity(0.75),
       child: Center(
         child: Container(
           margin: const EdgeInsets.all(24),
@@ -637,7 +645,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.cinzel(
                   fontSize: 13,
-                  color: const Color(0xFFF8E7B9).withValues(alpha: 0.9),
+                  color: const Color(0xFFF8E7B9).withOpacity(0.9),
                 ),
               ),
               const SizedBox(height: 20),
