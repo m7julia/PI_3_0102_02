@@ -95,6 +95,21 @@ class CreditosScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
+                  // Mundo ana créditos
+                  _buildCard(
+                    titulo: 'Mundo Conservatório Diminuto',
+                    conteudo: Column(
+                      children: [
+                        _buildLinha(
+                          'Beethoven, O Magnífico',
+                          'Personagem inspirado na obra de Brian Levant com junção do músico e compositor Ludwig van Beethoven',
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
                   // SEÇÃO DE TRILHA SONORA
                   _buildCard(
                     titulo: '🎵  Trilha Sonora  🎵',
@@ -104,6 +119,13 @@ class CreditosScreen extends StatelessWidget {
                           'Happy Farm',
                           'Infraction [No Copyright Music]',
                           'Trilha sonora da Fazenda Vale Dourado',
+                        ),
+                        const SizedBox(height: 12),
+
+                        _buildMusica(
+                          'Für Elise',
+                          'Ludwig van Beethoven',
+                          'Trilha sonora do Conservatório Diminuto',
                         ),
                       ],
                     ),
