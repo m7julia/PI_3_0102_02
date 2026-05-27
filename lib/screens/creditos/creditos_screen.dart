@@ -95,6 +95,22 @@ class CreditosScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
+                  // SEÇÃO DE TRILHA SONORA
+                  _buildCard(
+                    titulo: '🎵  Trilha Sonora  🎵',
+                    conteudo: Column(
+                      children: [
+                        _buildMusica(
+                          'Happy Farm',
+                          'Infraction [No Copyright Music]',
+                          'Trilha sonora da Fazenda Vale Dourado',
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
                   // IAs utilizadas
                   _buildCard(
                     titulo: 'Inteligências Artificiais utilizadas',
@@ -190,26 +206,66 @@ class CreditosScreen extends StatelessWidget {
   Widget _buildMembro(String nome, String papel) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            nome,
-            style: GoogleFonts.cinzel(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFFF8E7B9),
-            ),
-          ),
-          Text(
-            papel,
-            style: GoogleFonts.cinzel(
-              fontSize: 13,
-              color: Colors.white54,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Para telas menores, empilha os textos
+          if (constraints.maxWidth < 500) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  nome,
+                  style: GoogleFonts.cinzel(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFF8E7B9),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  papel,
+                  style: GoogleFonts.cinzel(
+                    fontSize: 12,
+                    color: Colors.white54,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            );
+          }
+          // Layout padrão horizontal
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                flex: 3,
+                child: Text(
+                  nome,
+                  style: GoogleFonts.cinzel(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFF8E7B9),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Flexible(
+                flex: 2,
+                child: Text(
+                  papel,
+                  textAlign: TextAlign.end,
+                  style: GoogleFonts.cinzel(
+                    fontSize: 13,
+                    color: Colors.white54,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -217,29 +273,177 @@ class CreditosScreen extends StatelessWidget {
   Widget _buildLinha(String nome, String descricao) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            nome,
-            style: GoogleFonts.cinzel(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFFF8E7B9),
-            ),
-          ),
-          Flexible(
-            child: Text(
-              descricao,
-              textAlign: TextAlign.end,
-              style: GoogleFonts.cinzel(
-                fontSize: 13,
-                color: Colors.white54,
-                fontStyle: FontStyle.italic,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 500) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  nome,
+                  style: GoogleFonts.cinzel(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFF8E7B9),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  descricao,
+                  style: GoogleFonts.cinzel(
+                    fontSize: 12,
+                    color: Colors.white54,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            );
+          }
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                flex: 1,
+                child: Text(
+                  nome,
+                  style: GoogleFonts.cinzel(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFF8E7B9),
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
+              const SizedBox(width: 12),
+              Flexible(
+                flex: 2,
+                child: Text(
+                  descricao,
+                  textAlign: TextAlign.end,
+                  style: GoogleFonts.cinzel(
+                    fontSize: 13,
+                    color: Colors.white54,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // Widget para exibir música com detalhes (responsivo)
+  Widget _buildMusica(String titulo, String artista, String descricao) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8E7B9).withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: const Color(0xFF9E8A4A).withValues(alpha: 0.3),
+          width: 0.5,
+        ),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Para telas muito pequenas, empilha verticalmente
+          if (constraints.maxWidth < 400) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.music_note,
+                      color: Color(0xFFF8E7B9),
+                      size: 32,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            titulo,
+                            style: GoogleFonts.cinzel(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFFF8E7B9),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            artista,
+                            style: GoogleFonts.cinzel(
+                              fontSize: 11,
+                              color: Colors.white54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.only(left: 44),
+                  child: Text(
+                    descricao,
+                    style: GoogleFonts.cinzel(
+                      fontSize: 12,
+                      color: const Color(0xFF9E8A4A),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+          // Layout padrão horizontal
+          return Row(
+            children: [
+              const Icon(
+                Icons.music_note,
+                color: Color(0xFFF8E7B9),
+                size: 32,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      titulo,
+                      style: GoogleFonts.cinzel(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFFF8E7B9),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      artista,
+                      style: GoogleFonts.cinzel(
+                        fontSize: 11,
+                        color: Colors.white54,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      descricao,
+                      style: GoogleFonts.cinzel(
+                        fontSize: 12,
+                        color: const Color(0xFF9E8A4A),
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

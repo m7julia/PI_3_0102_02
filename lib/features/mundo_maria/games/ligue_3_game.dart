@@ -617,6 +617,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
   }
 
   Future<void> _mostrarPopupEscolhaFinal() async {
+    await _pararMusica();
+    
     await showDialog(
       context: context,
       barrierDismissible: false,
