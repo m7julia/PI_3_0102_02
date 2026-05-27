@@ -6,6 +6,8 @@ import 'package:rpg_game/features/mundo_maria/screens/mundo_maria.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rpg_game/screens/home/home_screen.dart';
+import 'package:rpg_game/models/location_gate_widget.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // ================= ENUMS E CLASSES AUXILIARES =================
 enum _Etapa {
@@ -57,6 +59,8 @@ class _MundoGianlucaScreenState extends State<MundoGianlucaScreen> with TickerPr
   bool _somAtivado = true;
   bool _audioLiberado = true;
   bool _tocandoSomLetra = false;
+  bool _bloquearAcoesPiano = false;
+  bool _furEliseAtivaNoContexto = false;
 
 late AudioPlayer _typePlayer;
 late AudioPlayer _efeitosPlayer;
@@ -89,8 +93,7 @@ late AudioPlayer _musicaPlayer;
   'fa',
 ];
 
-List<String> _entradaJogador = [];
-
+final List<String> _entradaJogador = [];
 bool _podeTocar = false;
 
 String? _notaAtualDemo;
@@ -122,7 +125,6 @@ String? _notaAtualDemo;
       case _Etapa.reuniao1: return 'Incrível! Os fragmentos musicais ressoam perfeitamente. A partitura está completa.';
       case _Etapa.reuniao2: return 'Coragem. Sabedoria. Coração. Três notas, um único acorde. 🎵';
       case _Etapa.finalHist: return 'O feitiço foi quebrado! Te agradeço por tudo, ótima sorte nessa sua jornada $_nomeJogador.';
-      default: return '';
     }
   }
 
@@ -378,27 +380,28 @@ Future<void> _tocarSomLetra() async {
 }
 
 Future<void> _toggleSom() async {
+  final novoEstado = !_somAtivado;
+
   setState(() {
-    _somAtivado = !_somAtivado;
-    _audioLiberado = true;
+    _somAtivado = novoEstado;
+    _audioLiberado = novoEstado;
   });
 
-  if (!_somAtivado) {
+  if (!novoEstado) {
     await _typePlayer.stop();
     await _efeitosPlayer.stop();
-    await _musicaPlayer.pause();
+
+    if (_furEliseAtivaNoContexto) {
+      await _musicaPlayer.pause();
+    }
+
     return;
   }
 
-  try {
-    await _typePlayer.setVolume(0.25);
-
-    if (_etapa == _Etapa.demonstrandoPiano ||
-        _etapa == _Etapa.tocandoPiano) {
-      await _musicaPlayer.resume();
-    }
-  } catch (e) {
-    debugPrint('Erro ao ativar som: $e');
+  if (_furEliseAtivaNoContexto &&
+      _etapa != _Etapa.demonstrandoPiano &&
+      _etapa != _Etapa.tocandoPiano) {
+    await _musicaPlayer.resume();
   }
 }
 
@@ -473,16 +476,15 @@ void _pularTexto() {
 }
 
 Future<void> _iniciarMiniGamePiano() async {
-
   _entradaJogador.clear();
 
   setState(() {
     _etapa = _Etapa.demonstrandoPiano;
     _podeTocar = false;
+    _bloquearAcoesPiano = true;
   });
 
   for (final nota in _sequenciaCorreta) {
-    
     if (!mounted) return;
 
     setState(() {
@@ -496,10 +498,13 @@ Future<void> _iniciarMiniGamePiano() async {
     );
   }
 
+  if (!mounted) return;
+
   setState(() {
     _notaAtualDemo = null;
     _podeTocar = true;
     _etapa = _Etapa.tocandoPiano;
+    _bloquearAcoesPiano = true;
   });
 
   _exibirTexto(_textoAtual);
@@ -516,6 +521,7 @@ Future<void> _iniciarMiniGamePiano() async {
   };
 
 Future<void> _tocarNota(String nota) async {
+  if (!_somAtivado) return;
   try {
     final arquivo = _sonsNotas[nota];
 
@@ -535,6 +541,7 @@ Future<void> _tocarNota(String nota) async {
 }
 
 Future<void> _tocarErro() async {
+  if (!_somAtivado) return;
   try {
     await _efeitosPlayer.stop();
 
@@ -548,17 +555,17 @@ Future<void> _tocarErro() async {
 
 Future<void> _tocarFurElise() async {
   try {
-    debugPrint('Tentando tocar Fur Elise...');
+    _furEliseAtivaNoContexto = true;
 
     await _musicaPlayer.stop();
     await _musicaPlayer.setReleaseMode(ReleaseMode.loop);
     await _musicaPlayer.setVolume(1.0);
 
-    await _musicaPlayer.play(
-      AssetSource('audio/fur_elise.mp3'),
-    );
-
-    debugPrint('Fur Elise tocando!');
+    if (_somAtivado) {
+      await _musicaPlayer.play(
+        AssetSource('audio/fur_elise.mp3'),
+      );
+    }
   } catch (e) {
     debugPrint('Erro tocando Fur Elise: $e');
   }
@@ -592,6 +599,7 @@ Future<void> _pressionarNota(String nota) async {
 
     setState(() {
       _fragmentos++;
+      _bloquearAcoesPiano = false;
     });
 
     await Future.delayed(
@@ -690,7 +698,7 @@ Future<void> _mostrarPopupErroPiano() async {
       ),
       body: Stack(
         children: [
-          SizedBox.expand(child: Image.asset('assets/images/IMAGEM_OFICIAL_CONSERVATORIO.png', fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: const Color(0xFF2D1A0A)))),
+          SizedBox.expand(child: Image.asset('assets/images/IMAGEM_OFICIAL_CONSERVATORIO.png', fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => Container(color: const Color(0xFF2D1A0A)))),
           Container(color: Colors.black.withValues(alpha:0.55)),
           
           if (_etapa == _Etapa.carregando) const Center(child: CircularProgressIndicator(color: Color(0xFFF8E7B9))),
@@ -799,7 +807,9 @@ Widget _buildNpc() {
                 ),
 
               if (_textoTerminou &&
-                _etapa != _Etapa.demonstrandoPiano)
+                !_bloquearAcoesPiano &&
+                _etapa != _Etapa.demonstrandoPiano &&
+                _etapa != _Etapa.tocandoPiano)
               _buildAcoes(),
             ],
           ),
@@ -837,6 +847,7 @@ Widget _buildNpc() {
         _OpcaoBtn(
           label: 'Estou pronto. Vou ouvir com atenção e repetir a melodia.',
           onTap: () async {
+            _furEliseAtivaNoContexto = false;
             await _musicaPlayer.stop();
             await _iniciarMiniGamePiano();
           },
@@ -1260,7 +1271,7 @@ Future<void> _mostrarPopupConclusao() async {
 
                       Navigator.of(context).pop();
                       Navigator.pushAndRemoveUntil(
-                        this.context,
+                        this.context, 
                         MaterialPageRoute(
                           builder: (_) => const HomeScreen(),
                         ),
@@ -1287,45 +1298,49 @@ Future<void> _mostrarPopupConclusao() async {
               const SizedBox(height: 12),
 
               SizedBox(
-                width: 260,
-
-                child: ElevatedButton(
-
-                  onPressed: () async {
-
-                    await _salvarProgressoConservatorio();
-
-                    if (mounted) {
-
-                    Navigator.of(context).pop();
-
-                      await Future.delayed(
-                        const Duration(milliseconds: 100),
-                      );
-
-                      Navigator.pushReplacement(
-                        this.context,
-                        MaterialPageRoute(
-                          builder: (_) => const MundoMariaScreen(),
-                        ),
-                      );
-                    }
-                  },
-
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6B3F1D),
-                    foregroundColor: const Color(0xFFF8E7B9),
-                  ),
-
-                  child: Text(
-                    '⚔️ Salvar e continuar',
-
-                    style: GoogleFonts.cinzel(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+  width: 260,
+  child: ElevatedButton(
+    onPressed: () async {
+      await _salvarProgressoConservatorio();
+      if (mounted) {
+        Navigator.of(context).pop();
+        await Future.delayed(
+          const Duration(milliseconds: 100),
+        );
+        Navigator.pushReplacement(
+          this.context,
+          MaterialPageRoute(
+            builder: (_) => LocationGateWidget(
+              key: UniqueKey(),
+              localizacaoFase: const GeoPoint(
+                -22.83319,
+                -47.05261,
               ),
+              nomeFase: 'Fazenda Vale Dourado',
+              child: const MundoMariaScreen(),
+            ),
+          ),
+        );
+      }
+    },
+    style: ElevatedButton.styleFrom(
+      backgroundColor: const Color(0xFF6B3F1D),
+      foregroundColor: const Color(0xFFF8E7B9),
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(
+            color: Color(0xFF9E8A4A), width: 1.5),
+      ),
+    ),
+    child: Text(
+      '⚔️ Salvar e continuar',
+      style: GoogleFonts.cinzel(
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+  ),
+),
             ],
           ),
         ),

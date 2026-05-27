@@ -5,6 +5,8 @@ import '../../../services/personagem_service.dart';
 import '../../../models/personagem.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rpg_game/features/mundo_rafael/screens/mundo_rafael_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:rpg_game/models/location_gate_widget.dart';
 
 class CriarPersonagemScreen extends StatefulWidget {
   const CriarPersonagemScreen({super.key});
@@ -141,7 +143,14 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const MundoRafaelScreen()),
+        MaterialPageRoute(
+          builder: (_) => LocationGateWidget(
+            key: UniqueKey(),
+            localizacaoFase: const GeoPoint(-22.8344, -47.05177),
+            nomeFase: 'Estacionamento Caótico',
+            child: const MundoRafaelScreen(),
+          ),
+        ),
       );
     } catch (e) {
       _mostrarMensagem('Erro ao salvar: $e');

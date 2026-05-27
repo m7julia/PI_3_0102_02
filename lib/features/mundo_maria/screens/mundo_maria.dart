@@ -163,244 +163,6 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
     if (mounted) Navigator.of(context).pop();
   }
 
-  // ─── Popup: Conclusão / Chave obtida ─────────────────────────────────────
-
-  Future<void> _mostrarPopupConclusao() async {
-    final size = MediaQuery.of(context).size;
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: EdgeInsets.symmetric(
-            horizontal: size.width * 0.06,
-            vertical: size.height * 0.06,
-          ),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: 420,
-              maxHeight: size.height * 0.85,
-            ),
-            child: Container(
-              padding: EdgeInsets.all(size.width * 0.06),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E1208),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
-                    blurRadius: 25,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Image.asset(
-                      'assets/images/chave_amuleto.png',
-                      height: (size.height * 0.18).clamp(100.0, 150.0),
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => Icon(
-                        Icons.vpn_key_rounded,
-                        size: (size.width * 0.18).clamp(56.0, 80.0),
-                        color: const Color(0xFFF8E7B9),
-                      ),
-                    ),
-                    SizedBox(height: size.height * 0.025),
-                    Text(
-                      'Chave da Fazenda Obtida',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.cinzel(
-                        color: const Color(0xFFF8E7B9),
-                        fontSize: (size.width * 0.055).clamp(18.0, 26.0),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: size.height * 0.022),
-                    Text(
-                      'Muito bem, $_nomeJogador.\n\nVocê concluiu a jornada pela Fazenda Vale-Dourado e ajudou Margarida com a colheita.\n\nA chave deste mundo agora pertence a você.',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.cinzel(
-                        color: const Color(0xFFF8E7B9),
-                        fontSize: (size.width * 0.036).clamp(13.0, 16.0),
-                        height: 1.6,
-                      ),
-                    ),
-                    SizedBox(height: size.height * 0.032),
-                    ElevatedButton(
-                      onPressed: () async {
-                        Navigator.of(context).pop();
-                        await _mostrarPopupEscolhaFinal();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6B3F1D),
-                        foregroundColor: const Color(0xFFF8E7B9),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: size.width * 0.07,
-                          vertical: size.height * 0.016,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: const BorderSide(
-                            color: Color(0xFF9E8A4A),
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                      child: Text(
-                        'Abrir portal 🌀',
-                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // ─── Popup: Escolha final ─────────────────────────────────────────────────
-
-  Future<void> _mostrarPopupEscolhaFinal() async {
-    final size = MediaQuery.of(context).size;
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: EdgeInsets.symmetric(
-            horizontal: size.width * 0.06,
-            vertical: size.height * 0.06,
-          ),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: 420,
-              maxHeight: size.height * 0.85,
-            ),
-            child: Container(
-              padding: EdgeInsets.all(size.width * 0.06),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E1208),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
-                    blurRadius: 25,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'O Portal Está Aberto',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.cinzel(
-                        color: const Color(0xFFF8E7B9),
-                        fontSize: (size.width * 0.055).clamp(18.0, 26.0),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: size.height * 0.025),
-                    Text(
-                      'Sua jornada pela Fazenda Vale-Dourado foi registrada.\n\nDeseja encerrar sua aventura agora ou continuar explorando os mundos?',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.cinzel(
-                        color: const Color(0xFFF8E7B9),
-                        fontSize: (size.width * 0.036).clamp(13.0, 16.0),
-                        height: 1.6,
-                      ),
-                    ),
-                    SizedBox(height: size.height * 0.032),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          await NivelService.completarNivelMaju();
-                          Navigator.of(context).pop();
-                          Navigator.of(this.context).pop();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6B3F1D),
-                          foregroundColor: const Color(0xFFF8E7B9),
-                          padding: EdgeInsets.symmetric(
-                            vertical: size.height * 0.016,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            side: const BorderSide(
-                              color: Color(0xFF9E8A4A),
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                        child: Text(
-                          '💾 Salvar e sair',
-                          style: GoogleFonts.cinzel(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: size.height * 0.015),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          await NivelService.completarNivelMaju();
-                          Navigator.of(context).pop();
-                          Navigator.push(
-                            this.context,
-                            MaterialPageRoute(
-                              builder: (_) => const MundoAnaScreen(),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6B3F1D),
-                          foregroundColor: const Color(0xFFF8E7B9),
-                          padding: EdgeInsets.symmetric(
-                            vertical: size.height * 0.016,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            side: const BorderSide(
-                              color: Color(0xFF9E8A4A),
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                        child: Text(
-                          '⚔️ Salvar e continuar',
-                          style: GoogleFonts.cinzel(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   // ─── Textos das etapas ────────────────────────────────────────────────────
 
   String get _textoAtual {
@@ -751,26 +513,26 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
 
   // ─── Navegação para minigame ──────────────────────────────────────────────
 
-  void _irParaJogo({required bool memoria}) {
-    _pararMusica();
-    Navigator.push<bool>(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (_, animation, __) =>
-            memoria ? const JogoMemoriaGame() : const Ligue3Game(),
-        transitionsBuilder: (_, animation, __, child) => FadeTransition(
-          opacity: CurvedAnimation(parent: animation, curve: Curves.easeIn),
-          child: child,
-        ),
-        transitionDuration: const Duration(milliseconds: 600),
+void _irParaJogo({required bool memoria}) {
+  _pararMusica();
+
+  Navigator.push(
+    context,
+    PageRouteBuilder(
+      pageBuilder: (_, animation, __) =>
+          memoria ? const JogoMemoriaGame() : const Ligue3Game(),
+      transitionsBuilder: (_, animation, __, child) => FadeTransition(
+        opacity: CurvedAnimation(parent: animation, curve: Curves.easeIn),
+        child: child,
       ),
-    ).then((venceu) {
+      transitionDuration: const Duration(milliseconds: 600),
+    ),
+  ).then((_) {
+    if (mounted) {
       _iniciarMusica();
-      if (mounted && venceu == true) {
-        _mostrarPopupConclusao();
-      }
-    });
-  }
+    }
+  });
+}
 
   // ─── Helpers de UI ────────────────────────────────────────────────────────
 

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rpg_game/features/mundo_ana/screens/mundo_ana_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:rpg_game/models/location_gate_widget.dart';
 
 const Color _corMarrom = Color(0xFF6B3F1D);
 const Color _corCreme = Color(0xFFF8E7B9);
