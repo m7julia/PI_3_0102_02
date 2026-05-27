@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rpg_game/features/mundo_ana/screens/mundo_ana_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:rpg_game/models/location_gate_widget.dart';
 
 enum _Etapa {
   inicio,
@@ -674,7 +675,14 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
                 onTap: () {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => MundoAnaScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => LocationGateWidget(
+                        key: UniqueKey(),
+                        localizacaoFase: const GeoPoint(-22.83365, -47.05197),
+                        nomeFase: 'Terrasen',
+                        child: const MundoAnaScreen(),
+                      ),
+                    ),
                   );
                 },
               ),
