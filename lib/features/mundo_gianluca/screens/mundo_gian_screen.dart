@@ -91,8 +91,7 @@ late AudioPlayer _musicaPlayer;
   'fa',
 ];
 
-List<String> _entradaJogador = [];
-
+final List<String> _entradaJogador = [];
 bool _podeTocar = false;
 
 String? _notaAtualDemo;
@@ -124,7 +123,6 @@ String? _notaAtualDemo;
       case _Etapa.reuniao1: return 'Incrível! Os fragmentos musicais ressoam perfeitamente. A partitura está completa.';
       case _Etapa.reuniao2: return 'Coragem. Sabedoria. Coração. Três notas, um único acorde. 🎵';
       case _Etapa.finalHist: return 'O feitiço foi quebrado! Te agradeço por tudo, ótima sorte nessa sua jornada $_nomeJogador.';
-      default: return '';
     }
   }
 
@@ -698,7 +696,7 @@ Future<void> _mostrarPopupErroPiano() async {
       ),
       body: Stack(
         children: [
-          SizedBox.expand(child: Image.asset('assets/images/IMAGEM_OFICIAL_CONSERVATORIO.png', fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: const Color(0xFF2D1A0A)))),
+          SizedBox.expand(child: Image.asset('assets/images/IMAGEM_OFICIAL_CONSERVATORIO.png', fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => Container(color: const Color(0xFF2D1A0A)))),
           Container(color: Colors.black.withValues(alpha:0.55)),
           
           if (_etapa == _Etapa.carregando) const Center(child: CircularProgressIndicator(color: Color(0xFFF8E7B9))),
@@ -1271,7 +1269,7 @@ Future<void> _mostrarPopupConclusao() async {
 
                       Navigator.of(context).pop();
                       Navigator.pushAndRemoveUntil(
-                        this.context,
+                        this.context, 
                         MaterialPageRoute(
                           builder: (_) => const HomeScreen(),
                         ),

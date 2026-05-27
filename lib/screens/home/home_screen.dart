@@ -195,59 +195,6 @@ class _HomeScreenState extends State<HomeScreen> {
     await player.setVolume(estaMutado ? 0.0 : 0.5);
   }
 
-  Future<void> irParaMundoMaria() async {
-    await player.stop();
-    if (!mounted) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const MundoMariaScreen()),
-    );
-  }
-
-  Future<void> irParaMundoAna() async {
-    await player.stop();
-    if (!mounted) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const MundoAnaScreen()),
-    );
-  }
-
-  Future<void> irParaMundoGianluca() async {
-    await player.stop();
-    if (!mounted) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const MundoGianlucaScreen()),
-    );
-  }
-
-  Future<void> irParaMundoRafa() async {
-  await player.stop();
-  if (!mounted) return;
-
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => LocationGateWidget(
-        key: UniqueKey(),
-        localizacaoFase: const GeoPoint(-22.8344, -47.05177),
-        nomeFase: 'Estacionamento Caótico',
-        child: const MundoRafaelScreen(),
-      ),
-    ),
-  );
-}
-
-  Future<void> irParaMundoLuis() async {
-    await player.stop();
-    if (!mounted) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const MundoLuisScreen()),
-    );
-  }
-
   Future<void> irParaPersonagem() async {
     await player.stop();
     if (!mounted) return;
