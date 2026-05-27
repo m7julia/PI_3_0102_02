@@ -490,6 +490,8 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
   }
 
   Future<void> _mostrarPopupEscolhaFinal() async {
+    await _pararMusica();
+    
     await showDialog(
       context: context,
       barrierDismissible: false,
