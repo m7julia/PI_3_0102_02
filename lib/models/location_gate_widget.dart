@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'location_gate.dart';
+import 'package:rpg_game/screens/home/home_screen.dart';
 
 class LocationGateWidget extends StatefulWidget {
   final Widget child;
@@ -113,8 +114,11 @@ class _LocationGateWidgetState extends State<LocationGateWidget>
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pop();
+              Navigator.of(context).pop(); // fecha o dialog
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const HomeScreen()),
+                (route) => false,
+              );
             },
             child: const Text('Voltar'),
           ),
