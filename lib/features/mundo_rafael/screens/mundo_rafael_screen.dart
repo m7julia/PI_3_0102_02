@@ -1,8 +1,13 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rpg_game/features/mundo_ana/screens/mundo_ana_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+const Color _corMarrom = Color(0xFF6B3F1D);
+const Color _corCreme = Color(0xFFF8E7B9);
+const Color _corDourado = Color(0xFF9E8A4A);
 
 enum _Etapa {
   inicio,
@@ -208,15 +213,12 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.92),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Colors.amber.shade300.withValues(alpha: 0.7),
-                width: 2,
-              ),
+              color: const Color(0xFF1E1208),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: _corDourado, width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.amber.withValues(alpha: 0.3),
+                  color: _corDourado.withValues(alpha: 0.4),
                   blurRadius: 25,
                   spreadRadius: 2,
                 ),
@@ -229,24 +231,20 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
                   'assets/images/chave_estacionamento.png',
                   height: 150,
                   fit: BoxFit.contain,
-                  errorBuilder: (_, _, _) => Icon(
-                    Icons.vpn_key,
-                    size: 100,
-                    color: Colors.amber.shade300,
-                  ),
+                  errorBuilder: (_, _, _) =>
+                      const Icon(Icons.vpn_key, size: 100, color: _corCreme),
                 ),
                 const SizedBox(height: 20),
                 Text(
                   'Chave do Estacionamento Obtida',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.amber.shade200,
-                    fontSize: 20,
+                  style: GoogleFonts.cinzel(
+                    color: _corCreme,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 1.1,
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 18),
                 Text(
                   doMotorista
                       ? 'O motorista te entrega a chave do estacionamento.\n\n'
@@ -254,30 +252,135 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
                       : 'Ao forçar a passagem pelo portão, você encontra a chave caída entre os carros.\n\n'
                             'O caminho à frente é seu.',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
+                  style: GoogleFonts.cinzel(
+                    color: _corCreme,
+                    fontSize: 15,
                     height: 1.6,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 28),
                 ElevatedButton.icon(
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.arrow_forward, size: 18),
-                  label: const Text(
+                  label: Text(
                     'Continuar',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.amber.shade700,
-                    foregroundColor: Colors.black,
+                    backgroundColor: _corMarrom,
+                    foregroundColor: _corCreme,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 26,
-                      vertical: 12,
+                      horizontal: 28,
+                      vertical: 14,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: const BorderSide(color: Colors.amber, width: 1.5),
+                      borderRadius: BorderRadius.circular(14),
+                      side: const BorderSide(color: _corDourado, width: 1.5),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _mostrarPopupEscolhaFinal() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1208),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: _corDourado, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: _corDourado.withValues(alpha: 0.4),
+                  blurRadius: 25,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'O Portão Está Aberto',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: _corCreme,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Sua travessia pelo estacionamento foi registrada.\n\n'
+                  'Deseja encerrar sua aventura agora ou continuar explorando os mundos?',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: _corCreme,
+                    fontSize: 15,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                SizedBox(
+                  width: 260,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      await _salvarProgressoEstacionamento();
+                      if (!mounted) return;
+                      Navigator.of(this.context).pop();
+                      Navigator.of(this.context).pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _corMarrom,
+                      foregroundColor: _corCreme,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: const BorderSide(color: _corDourado, width: 1.5),
+                      ),
+                    ),
+                    child: Text(
+                      '💾 Salvar e sair',
+                      style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: 260,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      await _salvarProgressoEstacionamento();
+                      if (!mounted) return;
+                      Navigator.of(this.context).pop();
+                      Navigator.pushReplacement(
+                        this.context,
+                        MaterialPageRoute(builder: (_) => MundoAnaScreen()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _corMarrom,
+                      foregroundColor: _corCreme,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: const BorderSide(color: _corDourado, width: 1.5),
+                      ),
+                    ),
+                    child: Text(
+                      '⚔️ Salvar e continuar',
+                      style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -405,21 +508,19 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.black.withValues(alpha: 0.35),
+        backgroundColor: _corMarrom,
         elevation: 0,
-        foregroundColor: Colors.amber.shade200,
+        foregroundColor: _corCreme,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Estacionamento',
-          style: TextStyle(
-            color: Colors.amber.shade200,
+          style: GoogleFonts.cinzel(
+            color: _corCreme,
             fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
           ),
         ),
         actions: [
@@ -427,13 +528,13 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
           _hudChip(
             icon: Icons.directions_walk,
             label: '$_movimentos/$totalMovimentos',
-            cor: Colors.lightBlueAccent,
+            cor: _corCreme,
           ),
           if (_temChave)
             _hudChip(
               icon: _chaveUsada ? Icons.lock_open : Icons.vpn_key,
               label: _chaveUsada ? 'usada' : 'ok',
-              cor: Colors.amber,
+              cor: _corCreme,
             ),
           const SizedBox(width: 8),
         ],
@@ -445,7 +546,7 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
               'assets/images/fundo_estacionamento.png',
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) =>
-                  Container(color: const Color(0xFF1A1A1A)),
+                  Container(color: const Color(0xFF2D1A0A)),
             ),
           ),
           Container(color: Colors.black.withValues(alpha: 0.55)),
@@ -476,7 +577,7 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
                               child: Icon(
                                 Icons.person,
                                 size: 100,
-                                color: Colors.amber,
+                                color: _corCreme,
                               ),
                             ),
                           ),
@@ -506,7 +607,7 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.45),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: cor.withValues(alpha: 0.6)),
+          border: Border.all(color: _corDourado),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -515,7 +616,7 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
             const SizedBox(width: 4),
             Text(
               label,
-              style: TextStyle(
+              style: GoogleFonts.cinzel(
                 color: cor,
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
@@ -534,13 +635,10 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.amber.shade300.withValues(alpha: 0.6),
-          width: 2,
-        ),
+        border: Border.all(color: _corDourado, width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.amber.withValues(alpha: 0.15),
+            color: _corDourado.withValues(alpha: 0.2),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -552,10 +650,10 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
           if (_ehResultadoDado && _ultimoDado != null) _badgeDado(_ultimoDado!),
           Text(
             textoAtual,
-            style: const TextStyle(
-              color: Colors.white,
+            style: GoogleFonts.cinzel(
+              color: _corCreme,
               fontSize: 15,
-              height: 1.55,
+              height: 1.65,
             ),
           ),
           const SizedBox(height: 18),
@@ -571,19 +669,19 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.amber.withValues(alpha: 0.2),
+          color: _corMarrom.withValues(alpha: 0.35),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.amber.shade300),
+          border: Border.all(color: _corDourado),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.casino, size: 16, color: Colors.amber),
+            const Icon(Icons.casino, size: 16, color: _corCreme),
             const SizedBox(width: 6),
             Text(
               'Dado: $valor',
-              style: TextStyle(
-                color: Colors.amber.shade200,
+              style: GoogleFonts.cinzel(
+                color: _corCreme,
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
               ),
@@ -656,30 +754,10 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
 
       case _Etapa.vitoriaComChave:
       case _Etapa.vitoriaSemChave:
-        return Row(
-          children: [
-            Expanded(
-              child: _botaoEscolha(
-                label: 'Salvar e jogar de novo',
-                icone: Icons.refresh,
-                onTap: reiniciar,
-                secundario: true,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _botaoEscolha(
-                label: 'Salvar e continuar',
-                icone: Icons.exit_to_app,
-                onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => MundoAnaScreen()),
-                  );
-                },
-              ),
-            ),
-          ],
+        return _botaoPrimario(
+          label: 'Atravessar o portão',
+          icone: Icons.arrow_forward,
+          onTap: _mostrarPopupEscolhaFinal,
         );
 
       case _Etapa.derrota:
@@ -701,14 +779,17 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
       child: ElevatedButton.icon(
         onPressed: onTap,
         icon: Icon(icone, size: 18),
-        label: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+        label: Text(
+          label,
+          style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+        ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.amber.shade700,
-          foregroundColor: Colors.black,
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+          backgroundColor: _corMarrom,
+          foregroundColor: _corCreme,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: Colors.amber, width: 1.5),
+            side: const BorderSide(color: _corDourado, width: 1.5),
           ),
         ),
       ),
@@ -726,20 +807,16 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
       icon: Icon(icone, size: 18),
       label: Text(
         label,
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold, fontSize: 14),
       ),
       style: ElevatedButton.styleFrom(
-        backgroundColor: secundario
-            ? Colors.transparent
-            : Colors.amber.shade700,
-        foregroundColor: secundario ? Colors.amber.shade200 : Colors.black,
+        backgroundColor: secundario ? Colors.transparent : _corMarrom,
+        foregroundColor: _corCreme,
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-            color: secundario
-                ? Colors.amber.shade300.withValues(alpha: 0.6)
-                : Colors.amber,
+            color: secundario ? _corDourado.withValues(alpha: 0.6) : _corDourado,
             width: 1.5,
           ),
         ),
