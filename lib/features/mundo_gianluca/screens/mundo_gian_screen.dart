@@ -429,11 +429,9 @@ void _pularTexto() {
   switch (_etapa) {
 
     case _Etapa.chegada1:
-      await _mudarEtapa(_Etapa.chegada2);
       break;
 
     case _Etapa.chegada2:
-      await _mudarEtapa(_Etapa.dialogo1);
       break;
 
     case _Etapa.dialogo1:
@@ -826,21 +824,6 @@ Widget _buildNpc() {
   Widget _buildAcoes() {
 
   switch (_etapa) {
-
-    case _Etapa.chegada2:
-
-      return _buildEscolhas([
-
-        _OpcaoBtn(
-
-          label: 'Sou $_nomeJogador. Estou procurando o caminho para o próximo mundo.',
-
-          onTap: () => _mudarEtapa(_Etapa.dialogo1),
-
-        ),
-
-      ]);
-
  
     case _Etapa.dialogo3:
     case _Etapa.espera:
@@ -865,6 +848,22 @@ Widget _buildNpc() {
             await _musicaPlayer.stop();
             await _iniciarMiniGamePiano();
           },
+        ),
+      ]);
+
+    case _Etapa.chegada1:
+      return _buildEscolhas([
+        _OpcaoBtn(
+          label: 'Sou $_nomeJogador. Estou procurando o caminho para o próximo mundo.',
+          onTap: () => _mudarEtapa(_Etapa.chegada2),
+        ),
+      ]);
+
+    case _Etapa.chegada2:
+      return _buildEscolhas([
+        _OpcaoBtn(
+          label: 'Preciso encontrar uma forma de seguir viagem. Talvez você possa me ajudar.',
+          onTap: () => _mudarEtapa(_Etapa.dialogo1),
         ),
       ]);
 
