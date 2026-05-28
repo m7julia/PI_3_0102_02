@@ -51,6 +51,7 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
   int? _ultimoDado;
   String? _personagemId;
   bool _somAtivado = false;
+  late AudioPlayer _musicaPlayer;
 
   @override
   void initState() {
