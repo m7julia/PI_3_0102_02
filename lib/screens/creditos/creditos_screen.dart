@@ -120,12 +120,29 @@ class CreditosScreen extends StatelessWidget {
                           'Infraction [No Copyright Music]',
                           'Trilha sonora da Fazenda Vale Dourado',
                         ),
+
+                        const SizedBox(height: 12),
+
+                        _buildMusica(
+                          'Powerful Dramatic Trailer',
+                          'ArtMyLife',
+                          'Trilha sonora da tela de inicio',
+                        ),
+
                         const SizedBox(height: 12),
 
                         _buildMusica(
                           'Für Elise',
                           'Ludwig van Beethoven',
                           'Trilha sonora do Conservatório Diminuto',
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        _buildMusica(
+                          'es a Pirate',
+                          'Composta por Klaus Badelt e Hans Zimmer',
+                          'Trilha sonora do Bar Pirata',
                         ),
                       ],
                     ),
@@ -425,11 +442,7 @@ class CreditosScreen extends StatelessWidget {
           // Layout padrão horizontal
           return Row(
             children: [
-              const Icon(
-                Icons.music_note,
-                color: Color(0xFFF8E7B9),
-                size: 32,
-              ),
+              const Icon(Icons.music_note, color: Color(0xFFF8E7B9), size: 32),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
