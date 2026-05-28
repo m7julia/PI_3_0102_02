@@ -113,9 +113,7 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
     if (!_somAtivado) {
       try {
         await _musicaPlayer.setReleaseMode(ReleaseMode.loop);
-        await _musicaPlayer.play(
-          AssetSource('audio/music/estacionamento.mp3'),
-        );
+        await _musicaPlayer.play(AssetSource('audio/music/estacionamento.mp3'));
         setState(() => _somAtivado = true);
       } catch (e) {
         debugPrint('Erro som: $e');
@@ -551,6 +549,13 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
             label: '$_movimentos/$totalMovimentos',
             cor: _corCreme,
           ),
+          IconButton(
+            onPressed: _toggleSom,
+            icon: Icon(
+              _somAtivado ? Icons.volume_up : Icons.volume_off,
+              color: const Color(0xFFF8E7B9),
+            ),
+          ),
           if (_temChave)
             _hudChip(
               icon: _chaveUsada ? Icons.lock_open : Icons.vpn_key,
@@ -559,13 +564,6 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
             ),
           const SizedBox(width: 8),
         ],
-        IconButton(
-            onPressed: _toggleSom,
-            icon: Icon(
-              _somAtivado ? Icons.volume_up : Icons.volume_off,
-              color: const Color(0xFFF8E7B9),
-            ),
-          ),
       ),
       body: Stack(
         children: [
@@ -844,7 +842,9 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-            color: secundario ? _corDourado.withValues(alpha: 0.6) : _corDourado,
+            color: secundario
+                ? _corDourado.withValues(alpha: 0.6)
+                : _corDourado,
             width: 1.5,
           ),
         ),
