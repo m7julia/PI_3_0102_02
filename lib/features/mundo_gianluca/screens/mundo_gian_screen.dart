@@ -7,7 +7,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rpg_game/screens/home/home_screen.dart';
 import 'package:rpg_game/models/location_gate_widget.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 // ================= ENUMS E CLASSES AUXILIARES =================
 enum _Etapa {
@@ -108,7 +107,9 @@ String? _notaAtualDemo;
 
   // ================= TEXTOS DA HISTÓRIA =================
   String get _textoAtual {
+
     switch (_etapa) {
+
       case _Etapa.carregando: return 'Processando frequências harmônicas...';
       case _Etapa.bloqueado: return 'Acesso restrito ao Conservatório.';
       case _Etapa.chegada1: return 'Oh, olá vi"AU"jante, quem é você e o que lhe trás até meu conservatório?';
@@ -117,16 +118,20 @@ String? _notaAtualDemo;
       case _Etapa.dialogo2: return 'Ao tentar tocar o lendário acorde de EM7(9,13)/G#°m4add fui enfeitiç"AU"do pelo elfo da música. Ele me chamou de indisciplin"AU"do!';
       case _Etapa.dialogo3: return 'E me transformou em um cachorro! Para recuperar minha forma humana, preciso ensinar a harmonia natural para alguém. "AU"ceita ser meu aluno?';
       case _Etapa.espera: return 'Bom, nesse caso vamos esperar... Estarei aqui praticando minhas escalas. Me avise se mudar de ideia.';
-      case _Etapa.positivo: return 'AU-migo! Fico feliz que decidiu me "AU"xiliar, vamos nessa!';
-      case _Etapa.dialogo5: return 'A primeira lição é ouvir o coração da música. Observe atentamente a melodia que irei tocar.';
+      case _Etapa.positivo: return '"AU"migo! Fico feliz que decidiu me "AU"xiliar, vamos nessa!';
+      case _Etapa.dialogo5: return 'A lição que vou te ensinar é a de ouvir o coração da música. Observe atentamente a melodia que irei tocar.';
       case _Etapa.introPiano: return 'Repita corretamente a melodia usando o piano. Se errar uma única nota, será necessário começar novamente.';
       case _Etapa.demonstrandoPiano: return 'Observe a sequência musical...';
-      case _Etapa.tocandoPiano: return 'Agora é sua vez. Toque a melodia correta.'; 
+      case _Etapa.tocandoPiano: return 'Agora é sua vez. Toque a melodia correta.';
       case _Etapa.reuniao1: return 'Incrível! Os fragmentos musicais ressoam perfeitamente. A partitura está completa.';
-      case _Etapa.reuniao2: return 'Coragem. Sabedoria. Coração. Três notas, um único acorde. 🎵';
+      case _Etapa.reuniao2: return 'Melodia. Harmonia. Ritmo. Três notas, um único acorde. 🎵';
       case _Etapa.finalHist: return 'O feitiço foi quebrado! Te agradeço por tudo, ótima sorte nessa sua jornada $_nomeJogador.';
+
     }
+
   }
+
+
 
   // ================= INICIALIZAÇÃO =================
   @override
@@ -424,11 +429,9 @@ void _pularTexto() {
   switch (_etapa) {
 
     case _Etapa.chegada1:
-      await _mudarEtapa(_Etapa.chegada2);
       break;
 
     case _Etapa.chegada2:
-      await _mudarEtapa(_Etapa.dialogo1);
       break;
 
     case _Etapa.dialogo1:
@@ -749,7 +752,7 @@ Widget _buildNpc() {
                 'assets/images/cachorroMet.png',
                 height: 320,
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const SizedBox(
+                errorBuilder: (context, error, stackTrace) => const SizedBox(
                   height: 320,
                   child: Icon(
                     Icons.pets,
@@ -819,20 +822,14 @@ Widget _buildNpc() {
   }
 
   Widget _buildAcoes() {
-  switch (_etapa) {
-    case _Etapa.chegada2:
-      return _buildEscolhas([
-        _OpcaoBtn(
-          label: 'Sou $_nomeJogador. Estou procurando o caminho para o próximo mundo.',
-          onTap: () => _mudarEtapa(_Etapa.dialogo1),
-        ),
-      ]);
 
+  switch (_etapa) {
+ 
     case _Etapa.dialogo3:
     case _Etapa.espera:
       return _buildEscolhas([
         _OpcaoBtn(
-          label: 'Eu aceito ser seu aluno e aprender a harmonia natural.',
+          label: 'Eu aceito ser seu aluno.',
           onTap: () => _mudarEtapa(_Etapa.positivo),
         ),
         _OpcaoBtn(
@@ -841,16 +838,32 @@ Widget _buildNpc() {
           secundario: true,
         ),
       ]);
-
+ 
     case _Etapa.introPiano:
       return _buildEscolhas([
         _OpcaoBtn(
-          label: 'Estou pronto. Vou ouvir com atenção e repetir a melodia.',
+          label: 'Estou pronto. Vamos nessa!',
           onTap: () async {
             _furEliseAtivaNoContexto = false;
             await _musicaPlayer.stop();
             await _iniciarMiniGamePiano();
           },
+        ),
+      ]);
+
+    case _Etapa.chegada1:
+      return _buildEscolhas([
+        _OpcaoBtn(
+          label: 'Sou $_nomeJogador. Estou procurando o caminho para o próximo mundo.',
+          onTap: () => _mudarEtapa(_Etapa.chegada2),
+        ),
+      ]);
+
+    case _Etapa.chegada2:
+      return _buildEscolhas([
+        _OpcaoBtn(
+          label: 'Preciso encontrar uma forma de seguir viagem. Talvez você possa me ajudar.',
+          onTap: () => _mudarEtapa(_Etapa.dialogo1),
         ),
       ]);
 
@@ -1298,49 +1311,49 @@ Future<void> _mostrarPopupConclusao() async {
               const SizedBox(height: 12),
 
               SizedBox(
-  width: 260,
-  child: ElevatedButton(
-    onPressed: () async {
-      await _salvarProgressoConservatorio();
-      if (mounted) {
-        Navigator.of(context).pop();
-        await Future.delayed(
-          const Duration(milliseconds: 100),
-        );
-        Navigator.pushReplacement(
-          this.context,
-          MaterialPageRoute(
-            builder: (_) => LocationGateWidget(
-              key: UniqueKey(),
-              localizacaoFase: const GeoPoint(
-                -22.83319,
-                -47.05261,
+                width: 260,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    await _salvarProgressoConservatorio();
+                    if (mounted) {
+                      Navigator.of(context).pop();
+                      await Future.delayed(
+                        const Duration(milliseconds: 100),
+                      );
+                      Navigator.pushReplacement(
+                        this.context,
+                        MaterialPageRoute(
+                          builder: (_) => LocationGateWidget(
+                            key: UniqueKey(),
+                            localizacaoFase: const GeoPoint(
+                              -22.83319,
+                              -47.05261,
+                            ),
+                            nomeFase: 'Fazenda Vale Dourado',
+                            child: const MundoMariaScreen(),
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6B3F1D),
+                    foregroundColor: const Color(0xFFF8E7B9),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: const BorderSide(
+                          color: Color(0xFF9E8A4A), width: 1.5),
+                    ),
+                  ),
+                  child: Text(
+                    '⚔️ Salvar e continuar',
+                    style: GoogleFonts.cinzel(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
-              nomeFase: 'Fazenda Vale Dourado',
-              child: const MundoMariaScreen(),
-            ),
-          ),
-        );
-      }
-    },
-    style: ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFF6B3F1D),
-      foregroundColor: const Color(0xFFF8E7B9),
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(
-            color: Color(0xFF9E8A4A), width: 1.5),
-      ),
-    ),
-    child: Text(
-      '⚔️ Salvar e continuar',
-      style: GoogleFonts.cinzel(
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-  ),
-),
             ],
           ),
         ),
