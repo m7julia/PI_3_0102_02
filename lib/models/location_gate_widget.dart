@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'location_gate.dart';
@@ -24,7 +25,6 @@ class LocationGateWidget extends StatefulWidget {
 
 class _LocationGateWidgetState extends State<LocationGateWidget>
     with WidgetsBindingObserver {
-  // <-- observa o ciclo de vida do app
   bool _verificando = true;
   bool _liberado = false;
   double? _distanciaAtual;
@@ -42,7 +42,6 @@ class _LocationGateWidgetState extends State<LocationGateWidget>
     super.dispose();
   }
 
-  /// Roda novamente quando o app volta ao primeiro plano
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -53,7 +52,7 @@ class _LocationGateWidgetState extends State<LocationGateWidget>
   Future<void> _verificarLocalizacao() async {
     setState(() {
       _verificando = true;
-      _liberado = false; // reseta antes de verificar
+      _liberado = false;
     });
 
     try {
@@ -82,70 +81,161 @@ class _LocationGateWidgetState extends State<LocationGateWidget>
 
   void _mostrarPopupBloqueio() {
     final distancia = _distanciaAtual;
+    final size = MediaQuery.of(context).size;
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.location_off, color: Colors.red),
-            SizedBox(width: 8),
-            Text('Área bloqueada'),
-          ],
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: size.width * 0.06,
+          vertical: size.height * 0.12,
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Você precisa estar próximo de "${widget.nomeFase}" para jogar esta fase.',
-            ),
-            if (distancia != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                'Você está a ${distancia.toStringAsFixed(0)}m do local.\n'
-                'Chegue a menos de ${widget.raio.toStringAsFixed(0)}m para entrar.',
-                style: const TextStyle(color: Colors.grey, fontSize: 13),
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(size.width * 0.06),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1208),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                blurRadius: 25,
+                spreadRadius: 2,
               ),
             ],
-          ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.location_off,
+                size: (size.width * 0.13).clamp(40.0, 58.0),
+                color: const Color(0xFFF8E7B9),
+              ),
+              SizedBox(height: size.height * 0.018),
+              Text(
+                'Área Bloqueada',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.cinzel(
+                  color: const Color(0xFFF8E7B9),
+                  fontSize: (size.width * 0.050).clamp(16.0, 22.0),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: size.height * 0.016),
+              Text(
+                'Você precisa estar próximo de "${widget.nomeFase}" para jogar esta fase.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.cinzel(
+                  color: const Color(0xFFF8E7B9),
+                  fontSize: (size.width * 0.034).clamp(12.0, 15.0),
+                  height: 1.55,
+                ),
+              ),
+              if (distancia != null) ...[
+                SizedBox(height: size.height * 0.012),
+                Text(
+                  'Você está a ${distancia.toStringAsFixed(0)}m do local.\n'
+                  'Chegue a menos de ${widget.raio.toStringAsFixed(0)}m para entrar.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9).withValues(alpha: 0.55),
+                    fontSize: (size.width * 0.028).clamp(10.0, 13.0),
+                    height: 1.55,
+                  ),
+                ),
+              ],
+              SizedBox(height: size.height * 0.024),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _verificarLocalizacao();
+                  },
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: Text(
+                    'Tentar novamente',
+                    style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6B3F1D),
+                    foregroundColor: const Color(0xFFF8E7B9),
+                    padding: EdgeInsets.symmetric(
+                      vertical: size.height * 0.014,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: const BorderSide(
+                        color: Color(0xFF9E8A4A),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: size.height * 0.012),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const HomeScreen()),
+                      (route) => false,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: const Color(0xFFF8E7B9),
+                    padding: EdgeInsets.symmetric(
+                      vertical: size.height * 0.014,
+                    ),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: BorderSide(
+                        color: const Color(0xFF9E8A4A).withValues(alpha: 0.5),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                  child: Text(
+                    'Voltar',
+                    style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // fecha o dialog
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const HomeScreen()),
-                (route) => false,
-              );
-            },
-            child: const Text('Voltar'),
-          ),
-          FilledButton.icon(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _verificarLocalizacao();
-            },
-            icon: const Icon(Icons.refresh),
-            label: const Text('Tentar novamente'),
-          ),
-        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     if (_verificando) {
-      return const Scaffold(
+      return Scaffold(
+        backgroundColor: const Color(0xFF1E1208),
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Verificando sua localização...'),
+              const CircularProgressIndicator(color: Color(0xFFF8E7B9)),
+              SizedBox(height: size.height * 0.025),
+              Text(
+                'Verificando sua localização...',
+                style: GoogleFonts.cinzel(
+                  color: const Color(0xFFF8E7B9),
+                  fontSize: (size.width * 0.037).clamp(13.0, 16.0),
+                ),
+              ),
             ],
           ),
         ),
