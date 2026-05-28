@@ -56,6 +56,7 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
   @override
   void initState() {
     super.initState();
+    _musicaPlayer = AudioPlayer();
     _carregarPersonagemId();
   }
 
