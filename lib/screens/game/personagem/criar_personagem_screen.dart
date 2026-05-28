@@ -208,7 +208,7 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
       // ── AppBar igual ao MundoAnaScreen ──────────────────────────────────
       appBar: AppBar(
         title: Text(
-          'Nova Jornada',
+          'Crie seu personagem',
           style: GoogleFonts.cinzel(
             color: const Color(0xFFF8E7B9),
             fontWeight: FontWeight.bold,

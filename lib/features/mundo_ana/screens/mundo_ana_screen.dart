@@ -44,329 +44,10 @@ class MundoAnaScreen extends StatefulWidget {
 
 class _MundoAnaScreenState extends State<MundoAnaScreen>
     with TickerProviderStateMixin {
-  Future<void> _mostrarPopupBloqueado() async {
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1208),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
-                  blurRadius: 25,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.lock, size: 70, color: Color(0xFFF8E7B9)),
 
-                const SizedBox(height: 20),
-
-                Text(
-                  'Portal Bloqueado',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cinzel(
-                    color: const Color(0xFFF8E7B9),
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
-                Text(
-                  'Você ainda não possui a chave necessária para acessar Terrasen.\n\nConclua primeiro o mundo "Estacionamento Caótico" e obtenha sua chave antes de prosseguir.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cinzel(
-                    color: const Color(0xFFF8E7B9),
-                    fontSize: 15,
-                    height: 1.6,
-                  ),
-                ),
-
-                const SizedBox(height: 28),
-
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6B3F1D),
-                    foregroundColor: const Color(0xFFF8E7B9),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 28,
-                      vertical: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      side: const BorderSide(
-                        color: Color(0xFF9E8A4A),
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                  child: Text(
-                    'Voltar',
-                    style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _mostrarPopupConclusao() async {
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1208),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
-                  blurRadius: 25,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset(
-                  'assets/images/chave_amuleto.png',
-                  height: 150,
-                  fit: BoxFit.contain,
-                ),
-
-                const SizedBox(height: 20),
-
-                Text(
-                  'Chave de Terrasen Obtida',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cinzel(
-                    color: const Color(0xFFF8E7B9),
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
-                Text(
-                  'Muito bem, $_nomeJogador.\n\nVocê concluiu a jornada por Terrasen e conquistou o Amuleto de Orynth.\n\nA chave deste mundo agora pertence a você.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cinzel(
-                    color: const Color(0xFFF8E7B9),
-                    fontSize: 15,
-                    height: 1.6,
-                  ),
-                ),
-
-                const SizedBox(height: 28),
-
-                ElevatedButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop();
-
-                    await _mostrarPopupEscolhaFinal();
-                  },
-
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6B3F1D),
-                    foregroundColor: const Color(0xFFF8E7B9),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 28,
-                      vertical: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      side: const BorderSide(
-                        color: Color(0xFF9E8A4A),
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                  child: Text(
-                    'Abrir portal 🌀',
-                    style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _mostrarPopupEscolhaFinal() async {
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1208),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
-                  blurRadius: 25,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'O Portal Está Aberto',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cinzel(
-                    color: const Color(0xFFF8E7B9),
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                Text(
-                  'Sua jornada em Terrasen foi registrada.\n\nDeseja encerrar sua aventura agora ou continuar explorando os mundos?',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cinzel(
-                    color: const Color(0xFFF8E7B9),
-                    fontSize: 15,
-                    height: 1.6,
-                  ),
-                ),
-
-                const SizedBox(height: 28),
-
-                Center(
-                  child: SizedBox(
-                    width: 260,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await _salvarProgressoTerrasen();
-
-                        Navigator.of(context).pop();
-
-                        Navigator.of(this.context).pop();
-                      },
-
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6B3F1D),
-                        foregroundColor: const Color(0xFFF8E7B9),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: const BorderSide(
-                            color: Color(0xFF9E8A4A),
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                      child: Text(
-                        '💾 Salvar e sair',
-                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                Center(
-                  child: SizedBox(
-                    width: 260,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await _salvarProgressoTerrasen();
-
-                        Navigator.of(context).pop();
-
-                        Navigator.push(
-                          this.context,
-                          MaterialPageRoute(
-                            builder: (_) => LocationGateWidget(
-                              key: UniqueKey(),
-                              localizacaoFase: const GeoPoint(
-                                -22.83239,
-                                -47.05127,
-                              ),
-                              nomeFase: 'Conservatório Diminuto',
-                              child: const MundoGianlucaScreen(),
-                            ),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6B3F1D),
-                        foregroundColor: const Color(0xFFF8E7B9),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: const BorderSide(
-                            color: Color(0xFF9E8A4A),
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                      child: Text(
-                        '⚔️ Salvar e continuar',
-                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _salvarProgressoTerrasen() async {
-    if (_personagemId == null) return;
-
-    try {
-      await FirebaseFirestore.instance
-          .collection('personagens')
-          .doc(_personagemId)
-          .update({
-            'terrasen': [true, Timestamp.now(), '[22.83365° S, 47.05197° W]'],
-          });
-    } catch (e) {
-      debugPrint('Erro ao salvar progresso: $e');
-    }
-  }
+  // -------------------------------------------------------------------------
+  // estado
+  // -------------------------------------------------------------------------
 
   _Etapa _etapa = _Etapa.carregando;
   String _nomeJogador = 'Viajante';
@@ -381,9 +62,7 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
   bool _temVantagem = false;
 
   bool _somAtivado = false;
-  bool _audioLiberado = false;
-  bool _tocandoSomLetra = false;
-  late AudioPlayer _audioPlayer;
+  late AudioPlayer _musicaPlayer;
 
   Timer? _timerTexto;
 
@@ -391,6 +70,10 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
   late AnimationController _dialogoAnimCtrl;
   late Animation<double> _npcScale;
   late Animation<double> _npcRotate;
+
+  // -------------------------------------------------------------------------
+  // textos
+  // -------------------------------------------------------------------------
 
   String get _textoAtual {
     switch (_etapa) {
@@ -411,7 +94,7 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
       case _Etapa.desafio1Erro:
         return 'Este caminho leva a um beco sem saída. A floresta sussurra... tente novamente, $_nomeJogador.';
       case _Etapa.desafio1Sucesso:
-        return 'O Caminho C te conduz a uma clareira encantada. Um fragmento do Amuleto de Orynth brilha entre as raízes! ✨ Fragmento coletado: $_fragmentos/3';
+        return 'A Trilha de Oakwald  te conduz a uma clareira encantada. Um fragmento do Amuleto de Orynth brilha entre as raízes! ✨ Fragmento coletado: $_fragmentos/3';
       case _Etapa.desafio2:
         return 'Uma criatura surge à sua frente, bloqueando o caminho. O que você faz?';
       case _Etapa.desafio2Erro:
@@ -447,11 +130,15 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
     }
   }
 
+  // -------------------------------------------------------------------------
+  // ciclo de vida
+  // -------------------------------------------------------------------------
+
   @override
   void initState() {
     super.initState();
     _configurarAnimacoes();
-    _audioPlayer = AudioPlayer();
+    _musicaPlayer = AudioPlayer();
     _buscarNomeEIniciar();
   }
 
@@ -479,13 +166,70 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
     _timerTexto?.cancel();
     _npcAnimCtrl.dispose();
     _dialogoAnimCtrl.dispose();
-    _audioPlayer.dispose();
+    _musicaPlayer.dispose();
     super.dispose();
   }
 
+  // -------------------------------------------------------------------------
+  // áudio — só liga/desliga, nunca interrompe sozinho
+  // -------------------------------------------------------------------------
+
+  Future<void> _toggleSom() async {
+    if (!_somAtivado) {
+      try {
+        await _musicaPlayer.setReleaseMode(ReleaseMode.loop);
+        await _musicaPlayer.play(
+          AssetSource('audio/music/musica_terrasen.mp3'),
+        );
+        setState(() => _somAtivado = true);
+      } catch (e) {
+        debugPrint('Erro som: $e');
+      }
+    } else {
+      await _musicaPlayer.stop();
+      setState(() => _somAtivado = false);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // lógica de texto (sem nenhum som aqui)
+  // -------------------------------------------------------------------------
+
+  void _mostrarTexto(String texto) {
+    _timerTexto?.cancel();
+    setState(() {
+      _textoExibido = '';
+      _textoTerminou = false;
+    });
+    int index = 0;
+    _timerTexto = Timer.periodic(const Duration(milliseconds: 30), (timer) {
+      if (index < texto.length) {
+        if (mounted) {
+          setState(() => _textoExibido += texto[index]);
+        }
+        index++;
+      } else {
+        timer.cancel();
+        if (mounted) setState(() => _textoTerminou = true);
+      }
+    });
+  }
+
+  void _pularTexto() {
+    if (_textoTerminou) return;
+    _timerTexto?.cancel();
+    setState(() {
+      _textoExibido = _textoAtual;
+      _textoTerminou = true;
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // firestore
+  // -------------------------------------------------------------------------
+
   Future<void> _buscarNomeEIniciar() async {
     try {
-      // busca o id do personagem salvo no sharedpreferences
       final prefs = await SharedPreferences.getInstance();
       final personagemId = prefs.getString('personagemAtualId');
 
@@ -493,7 +237,6 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
       String? docId;
 
       if (personagemId != null) {
-        // tenta buscar pelo id salvo
         final doc = await FirebaseFirestore.instance
             .collection('personagens')
             .doc(personagemId)
@@ -502,13 +245,10 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
         if (doc.exists) {
           docId = doc.id;
           final data = doc.data();
-          if (data != null) {
-            nome = data['nome'] as String?;
-          }
+          if (data != null) nome = data['nome'] as String?;
         }
       }
 
-      // se não encontrou pelo id salvo, busca o último criado
       if (docId == null) {
         final snapshot = await FirebaseFirestore.instance
             .collection('personagens')
@@ -528,17 +268,15 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
         return;
       }
 
-      // agora docId não é mais null
       _personagemId = docId;
 
       if (nome != null && nome.isNotEmpty && mounted) {
         setState(() => _nomeJogador = nome!);
       }
 
-      // busca o documento completo para ver o estacionamento
       final doc = await FirebaseFirestore.instance
           .collection('personagens')
-          .doc(docId) // aqui docId é string, não precisa de !
+          .doc(docId)
           .get();
 
       if (!doc.exists) return;
@@ -552,9 +290,7 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
       }
 
       if (!concluiuAnterior) {
-        if (mounted) {
-          await _mostrarPopupBloqueado();
-        }
+        if (mounted) await _mostrarPopupBloqueado();
         return;
       }
 
@@ -569,6 +305,25 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
     }
   }
 
+  Future<void> _salvarProgressoTerrasen() async {
+    if (_personagemId == null) return;
+    await _musicaPlayer.stop();
+    try {
+      await FirebaseFirestore.instance
+          .collection('personagens')
+          .doc(_personagemId)
+          .update({
+            'terrasen': [true, Timestamp.now(), '[22.83365° S, 47.05197° W]'],
+          });
+    } catch (e) {
+      debugPrint('Erro ao salvar progresso: $e');
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // navegação entre etapas
+  // -------------------------------------------------------------------------
+
   Future<void> _iniciarCena() async {
     await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
@@ -582,69 +337,6 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
     setState(() => _mostrarDialogo = true);
     _dialogoAnimCtrl.forward();
     _mostrarTexto(_textoAtual);
-  }
-
-  Future<void> _toggleSom() async {
-    if (!_somAtivado) {
-      try {
-        await _audioPlayer.setVolume(0.01);
-        await _audioPlayer.play(AssetSource('audio/typewriter_click.mp3'));
-        await Future.delayed(const Duration(milliseconds: 80));
-        await _audioPlayer.stop();
-        await _audioPlayer.setVolume(1.0);
-        setState(() {
-          _somAtivado = true;
-          _audioLiberado = true;
-        });
-      } catch (e) {
-        debugPrint('Erro som: $e');
-      }
-    } else {
-      setState(() => _somAtivado = false);
-    }
-  }
-
-  Future<void> _tocarSomLetra() async {
-    if (!_somAtivado || !_audioLiberado || _tocandoSomLetra) return;
-    try {
-      _tocandoSomLetra = true;
-      await _audioPlayer.stop();
-      await _audioPlayer.play(AssetSource('audio/typewriter_click.mp3'));
-    } catch (e) {
-      debugPrint('Erro som letra: $e');
-    } finally {
-      _tocandoSomLetra = false;
-    }
-  }
-
-  void _mostrarTexto(String texto) {
-    _timerTexto?.cancel();
-    setState(() {
-      _textoExibido = '';
-      _textoTerminou = false;
-    });
-    int index = 0;
-    _timerTexto = Timer.periodic(const Duration(milliseconds: 30), (timer) {
-      if (index < texto.length) {
-        if (mounted) {
-          setState(() => _textoExibido += texto[index]);
-          if (texto[index] != ' ' && index % 2 == 0) _tocarSomLetra();
-        }
-        index++;
-      } else {
-        timer.cancel();
-        if (mounted) setState(() => _textoTerminou = true);
-      }
-    });
-  }
-
-  void _pularTexto() {
-    if (_textoTerminou) return;
-    _timerTexto?.cancel();
-    setState(() {
-      _textoExibido = _textoAtual;
-      _textoTerminou = true;
-    });
   }
 
   Future<void> _irParaEtapa(_Etapa proxima) async {
@@ -796,6 +488,277 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
     }
   }
 
+  // -------------------------------------------------------------------------
+  // popups
+  // -------------------------------------------------------------------------
+
+  Future<void> _mostrarPopupBloqueado() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1208),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                  blurRadius: 25,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.lock, size: 70, color: Color(0xFFF8E7B9)),
+                const SizedBox(height: 20),
+                Text(
+                  'Portal Bloqueado',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Você ainda não possui a chave necessária para acessar Terrasen.\n\nConclua primeiro o mundo "Estacionamento Caótico" e obtenha sua chave antes de prosseguir.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 15,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6B3F1D),
+                    foregroundColor: const Color(0xFFF8E7B9),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 28, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: const BorderSide(
+                          color: Color(0xFF9E8A4A), width: 1.5),
+                    ),
+                  ),
+                  child: Text('Voltar',
+                      style: GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _mostrarPopupConclusao() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1208),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                  blurRadius: 25,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(
+                  'assets/images/chave_amuleto.png',
+                  height: 150,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Chave de Terrasen Obtida',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Muito bem, $_nomeJogador.\n\nVocê concluiu a jornada por Terrasen e conquistou o Amuleto de Orynth.\n\nA chave deste mundo agora pertence a você.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 15,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    await _mostrarPopupEscolhaFinal();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6B3F1D),
+                    foregroundColor: const Color(0xFFF8E7B9),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 28, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: const BorderSide(
+                          color: Color(0xFF9E8A4A), width: 1.5),
+                    ),
+                  ),
+                  child: Text('Abrir portal 🌀',
+                      style: GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _mostrarPopupEscolhaFinal() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1208),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFF9E8A4A), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF9E8A4A).withValues(alpha: 0.4),
+                  blurRadius: 25,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'O Portal Está Aberto',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Sua jornada em Terrasen foi registrada.\n\nDeseja encerrar sua aventura agora ou continuar explorando os mundos?',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: const Color(0xFFF8E7B9),
+                    fontSize: 15,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                Center(
+                  child: SizedBox(
+                    width: 260,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await _salvarProgressoTerrasen();
+                        Navigator.of(context).pop();
+                        Navigator.of(this.context).pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6B3F1D),
+                        foregroundColor: const Color(0xFFF8E7B9),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: const BorderSide(
+                              color: Color(0xFF9E8A4A), width: 1.5),
+                        ),
+                      ),
+                      child: Text('💾 Salvar e sair',
+                          style:
+                              GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Center(
+                  child: SizedBox(
+                    width: 260,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await _salvarProgressoTerrasen();
+                        Navigator.of(context).pop();
+                        Navigator.push(
+                          this.context,
+                          MaterialPageRoute(
+                            builder: (_) => LocationGateWidget(
+                              key: UniqueKey(),
+                              localizacaoFase: const GeoPoint(
+                                -22.83239,
+                                -47.05127,
+                              ),
+                              nomeFase: 'Conservatório Diminuto',
+                              child: const MundoGianlucaScreen(),
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6B3F1D),
+                        foregroundColor: const Color(0xFFF8E7B9),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: const BorderSide(
+                              color: Color(0xFF9E8A4A), width: 1.5),
+                        ),
+                      ),
+                      child: Text('⚔️ Salvar e continuar',
+                          style:
+                              GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // build
+  // -------------------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -819,7 +782,8 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
               child: Chip(
-                backgroundColor: const Color(0xFF9E8A4A).withValues(alpha: 0.3),
+                backgroundColor:
+                    const Color(0xFF9E8A4A).withValues(alpha: 0.3),
                 label: Text(
                   '💎 $_fragmentos/3',
                   style: GoogleFonts.cinzel(
@@ -867,7 +831,8 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
                     'assets/images/aelin.png',
                     height: 320,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const SizedBox(height: 320),
+                    errorBuilder: (_, __, ___) =>
+                        const SizedBox(height: 320),
                   ),
                 ),
               ),
@@ -886,32 +851,6 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
             ),
           ],
         ],
-      ),
-    );
-  }
-
-  Widget _buildNpc() {
-    return AnimatedSlide(
-      duration: const Duration(milliseconds: 700),
-      curve: Curves.easeOut,
-      offset: _mostrarNpc ? Offset.zero : const Offset(0, 0.2),
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 700),
-        opacity: _mostrarNpc ? 1 : 0,
-        child: ScaleTransition(
-          scale: _npcScale,
-          child: RotationTransition(
-            turns: _npcRotate,
-            child: Image.asset(
-              'assets/images/aelin.png',
-              height: 220,
-              errorBuilder: (_, __, ___) => const SizedBox(
-                height: 220,
-                child: Icon(Icons.person, size: 100, color: Color(0xFFF8E7B9)),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -953,8 +892,6 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Enquanto digita → botão pular
               if (!_textoTerminou)
                 Align(
                   alignment: Alignment.centerRight,
@@ -964,24 +901,18 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
                       backgroundColor: const Color(0xFF6B3F1D),
                       foregroundColor: const Color(0xFFF8E7B9),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
+                          horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                         side: const BorderSide(
-                          color: Color(0xFF9E8A4A),
-                          width: 1.5,
-                        ),
+                            color: Color(0xFF9E8A4A), width: 1.5),
                       ),
                     ),
-                    child: Text(
-                      'Continuar →',
-                      style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-                    ),
+                    child: Text('Continuar →',
+                        style:
+                            GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
                   ),
                 ),
-
               if (_textoTerminou) _buildAcoes(),
             ],
           ),
@@ -995,68 +926,60 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
       case _Etapa.chegada2:
         return _buildEscolhas([
           _OpcaoBtn(
-            label: '1. Aceitar o desafio ⚔️',
-            onTap: () => _escolhaChegada(true),
-          ),
+              label: '1. Aceitar o desafio ⚔️',
+              onTap: () => _escolhaChegada(true)),
           _OpcaoBtn(
-            label: '2. Recusar',
-            onTap: () => _escolhaChegada(false),
-            secundario: true,
-          ),
+              label: '2. Recusar',
+              onTap: () => _escolhaChegada(false),
+              secundario: true),
         ]);
       case _Etapa.desafio1:
         return _buildEscolhas([
           _OpcaoBtn(
-            label: '🌿 Caminho A',
-            onTap: () => _escolhaCaminho(1),
-            secundario: true,
-          ),
+              label: 'Rota de Orynth',
+              onTap: () => _escolhaCaminho(1),
+              secundario: true),
           _OpcaoBtn(
-            label: '🌑 Caminho B',
-            onTap: () => _escolhaCaminho(2),
-            secundario: true,
-          ),
-          _OpcaoBtn(label: '✨ Caminho C', onTap: () => _escolhaCaminho(3)),
+              label: 'Passagem de Morath',
+              onTap: () => _escolhaCaminho(2),
+              secundario: true),
+          _OpcaoBtn(
+              label: 'Trilha de Oakwald', onTap: () => _escolhaCaminho(3)),
         ]);
       case _Etapa.desafio2:
         return _buildEscolhas([
           _OpcaoBtn(
-            label: '👁️ Observar',
-            onTap: () => _escolhaCriatura(3),
-          ), // CORRETO - primeiro e único que funciona
+              label: '👁️ Observar', onTap: () => _escolhaCriatura(3)),
           _OpcaoBtn(
-            label: '⚔️ Atacar',
-            onTap: () => _escolhaCriatura(1),
-            secundario: true,
-          ),
+              label: '⚔️ Atacar',
+              onTap: () => _escolhaCriatura(1),
+              secundario: true),
           _OpcaoBtn(
-            label: '🏃 Fugir',
-            onTap: () => _escolhaCriatura(2),
-            secundario: true,
-          ),
+              label: '🏃 Fugir',
+              onTap: () => _escolhaCriatura(2),
+              secundario: true),
         ]);
       case _Etapa.desafio3:
         return _buildEscolhas([
           _OpcaoBtn(
-            label: '1. Passado',
-            onTap: () => _escolhaEnigma(1),
-            secundario: true,
-          ),
-          _OpcaoBtn(label: '2. Presente', onTap: () => _escolhaEnigma(2)),
+              label: '1. Passado',
+              onTap: () => _escolhaEnigma(1),
+              secundario: true),
           _OpcaoBtn(
-            label: '3. Futuro',
-            onTap: () => _escolhaEnigma(3),
-            secundario: true,
-          ),
+              label: '2. Presente', onTap: () => _escolhaEnigma(2)),
+          _OpcaoBtn(
+              label: '3. Futuro',
+              onTap: () => _escolhaEnigma(3),
+              secundario: true),
         ]);
       case _Etapa.desafio4:
         return _buildEscolhas([
-          _OpcaoBtn(label: '💛 Ajudar', onTap: () => _escolhaFerido(true)),
           _OpcaoBtn(
-            label: '→ Ignorar e avançar',
-            onTap: () => _escolhaFerido(false),
-            secundario: true,
-          ),
+              label: '💛 Ajudar', onTap: () => _escolhaFerido(true)),
+          _OpcaoBtn(
+              label: '→ Ignorar e avançar',
+              onTap: () => _escolhaFerido(false),
+              secundario: true),
         ]);
       default:
         if (_mostrarBotaoContinuar) {
@@ -1068,18 +991,15 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
                 backgroundColor: const Color(0xFF6B3F1D),
                 foregroundColor: const Color(0xFFF8E7B9),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
+                    horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(color: Color(0xFF9E8A4A), width: 1.5),
+                  side: const BorderSide(
+                      color: Color(0xFF9E8A4A), width: 1.5),
                 ),
               ),
-              child: Text(
-                _labelBotao,
-                style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-              ),
+              child: Text(_labelBotao,
+                  style: GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
             ),
           );
         }
@@ -1097,26 +1017,20 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
               child: ElevatedButton(
                 onPressed: o.onTap,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(
-                    0xFF6B3F1D,
-                  ), // mesma cor para todos
+                  backgroundColor: const Color(0xFF6B3F1D),
                   foregroundColor: const Color(0xFFF8E7B9),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: const BorderSide(
-                      color: Color(0xFF9E8A4A),
-                      width: 1.5,
-                    ),
+                        color: Color(0xFF9E8A4A), width: 1.5),
                   ),
                   elevation: 4,
                 ),
                 child: Text(
                   o.label,
                   style: GoogleFonts.cinzel(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
+                      fontWeight: FontWeight.bold, fontSize: 13),
                 ),
               ),
             ),
@@ -1132,8 +1046,7 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
         color: const Color(0xFF6B3F1D).withValues(alpha: 0.25),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: const Color(0xFFF8E7B9).withValues(alpha: 0.3),
-        ),
+            color: const Color(0xFFF8E7B9).withValues(alpha: 0.3)),
       ),
       child: Text(
         'Aelin',
