@@ -49,6 +49,7 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
   bool _npcJaApareceu = false;
   int? _ultimoDado;
   String? _personagemId;
+  bool _somAtivado = false;
 
   @override
   void initState() {
