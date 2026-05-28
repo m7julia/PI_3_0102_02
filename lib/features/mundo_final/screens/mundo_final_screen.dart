@@ -7,7 +7,23 @@ class MundoFinalScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Fim da Jornada',
+          style: GoogleFonts.cinzel(
+            color: const Color(0xFFF8E7B9),
+            fontWeight: FontWeight.bold,
+            fontSize: (size.width * 0.045).clamp(15.0, 20.0),
+          ),
+        ),
+        backgroundColor: const Color(0xFF6B3F1D),
+        foregroundColor: const Color(0xFFF8E7B9),
+        elevation: 0,
+        automaticallyImplyLeading: false,
+      ),
       body: Stack(
         children: [
           // Fundo
@@ -15,99 +31,100 @@ class MundoFinalScreen extends StatelessWidget {
             child: Image.asset(
               'assets/images/fundo_final.png',
               fit: BoxFit.cover,
+              alignment: Alignment.center,
+              errorBuilder: (_, __, ___) =>
+                  Container(color: const Color(0xFF1E1208)),
             ),
           ),
 
-          // Escurece o fundo
-          Container(color: Colors.black.withValues(alpha: 0.2)),
+          // Overlay — mesmo alpha dos outros mundos
+          Container(color: Colors.black.withValues(alpha: 0.50)),
 
-          // Conteúdo principal
-          Center(
+          // Conteúdo
+          SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(28),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.70),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFF8E7B9), width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFF8E7B9).withValues(alpha: 0.2),
-                      blurRadius: 20,
-                    ),
-                  ],
-                ),
+              padding: EdgeInsets.symmetric(horizontal: size.width * 0.04),
+              child: Column(
+                children: [
+                  const Spacer(),
 
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Título
-                    Text(
-                      'Fim da Jornada',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.cinzel(
-                        fontSize: 34,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFFF8E7B9),
-                        letterSpacing: 2,
+                  // Caixa de diálogo no mesmo estilo
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(size.width * 0.045),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xFF9E8A4A),
+                        width: 2,
                       ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Texto final
-                    Text(
-                      'Parabéns, aventureiro.\n\n'
-                      'Você atravessou todos os mundos e concluiu sua missão.\n\n'
-                      'Obrigado por jogar nosso RPG!',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.cinzel(
-                        fontSize: 18,
-                        height: 1.7,
-                        color: Colors.white70,
-                      ),
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // Botão final
-                    SizedBox(
-                      width: 240,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const HomeScreen(),
-                            ),
-                            (route) => false,
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6B3F1D),
-                          foregroundColor: const Color(0xFFF8E7B9),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            side: const BorderSide(
-                              color: Color(0xFF9E8A4A),
-                              width: 1.5,
-                            ),
-                          ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF9E8A4A).withValues(alpha: 0.2),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
                         ),
-                        child: Text(
-                          'Voltar ao menu incial',
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Parabéns, aventureiro.\n\n'
+                          'Você atravessou todos os mundos e concluiu sua missão.\n\n'
+                          'Obrigado por jogar nosso RPG!',
+                          textAlign: TextAlign.center,
                           style: GoogleFonts.cinzel(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontSize: (size.width * 0.037).clamp(13.0, 16.0),
+                            height: 1.65,
+                            color: const Color(0xFFF8E7B9),
                           ),
                         ),
-                      ),
+
+                        SizedBox(height: size.height * 0.025),
+
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const HomeScreen(),
+                                ),
+                                (route) => false,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF6B3F1D),
+                              foregroundColor: const Color(0xFFF8E7B9),
+                              padding: EdgeInsets.symmetric(
+                                vertical: size.height * 0.016,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                side: const BorderSide(
+                                  color: Color(0xFF9E8A4A),
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              'Voltar ao menu inicial',
+                              style: GoogleFonts.cinzel(
+                                fontWeight: FontWeight.bold,
+                                fontSize: (size.width * 0.035).clamp(12.0, 15.0),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+
+                  SizedBox(height: size.height * 0.03),
+                ],
               ),
             ),
           ),
