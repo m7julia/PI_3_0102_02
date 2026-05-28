@@ -86,8 +86,22 @@ class CreditosScreen extends StatelessWidget {
                     conteudo: Column(
                       children: [
                         _buildLinha(
-                          'Tronos de Vidro',
+                          'Trono de Vidro',
                           'Inspirado na obra de Sara J. Maas',
+                        ),
+                      ],
+                    ),
+                  ),
+
+                const SizedBox(height: 20),
+
+                  _buildCard(
+                    titulo: 'Tela criar personagem',
+                    conteudo: Column(
+                      children: [
+                        _buildLinha(
+                          'Rowan',
+                          'Personagem inspirado na obra de Sara J. Maas',
                         ),
                       ],
                     ),
@@ -130,6 +144,14 @@ class CreditosScreen extends StatelessWidget {
                         ),
 
                         const SizedBox(height: 12),
+
+                        _buildMusica(
+                          'Kingdoms and Castles',
+                          'Youtube Audio Library',
+                          'Trilha sonora de Terrasen',
+                        ),
+
+                         const SizedBox(height: 12),
 
                         _buildMusica(
                           'Für Elise',

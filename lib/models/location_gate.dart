@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LocationGate {
   /// Raio padrão em metros para considerar "dentro da área"
-  static const double raioPermitidoMetros = 50.0;
+  static const double raioPermitidoMetros = 150.0;
 
   /// Retorna a distância em metros entre a posição atual e o GeoPoint da fase
   static double distanciaMetros({

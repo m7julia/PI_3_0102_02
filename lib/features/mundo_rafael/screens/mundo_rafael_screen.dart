@@ -563,14 +563,14 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
                     alignment: Alignment.bottomLeft,
                     child: AnimatedOpacity(
                       duration: const Duration(milliseconds: 500),
-                      opacity: _mostrarMotorista ? 1 : 0,
+                      opacity: 1,
                       child: Align(
                         alignment: Alignment.bottomLeft,
                         child: Transform.translate(
                           offset: const Offset(0, 14),
                           child: Image.asset(
                             'assets/images/personagem_rafa.png',
-                            height: _mostrarMotorista ? 260 : 0,
+                            height: 260,
                             fit: BoxFit.contain,
                             errorBuilder: (_, _, _) => const SizedBox(
                               height: 260,
