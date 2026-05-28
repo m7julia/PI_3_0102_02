@@ -93,7 +93,7 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
 
   Future<void> _salvarProgressoEstacionamento() async {
     if (_personagemId == null) return;
-
+    await _musicaPlayer.stop();
     try {
       await FirebaseFirestore.instance
           .collection('personagens')
