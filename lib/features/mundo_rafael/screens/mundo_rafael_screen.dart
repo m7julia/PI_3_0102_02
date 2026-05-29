@@ -125,8 +125,6 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
     }
   }
 
-  // Lógica do dado
-
   void rolarDado() {
     final resultado = _rng.nextInt(6) + 1;
 
@@ -162,8 +160,6 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
       _etapa = _Etapa.resultadoSucesso;
     });
   }
-
-  // Lógica de resultado do dado
 
   void continuarAposResultado() {
     if (_etapa == _Etapa.resultadoFalha) {
@@ -211,8 +207,6 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
     _salvarProgressoEstacionamento();
     setState(() => _etapa = _Etapa.vitoriaSemChave);
   }
-
-  // Escolhas interacao com o NPC
 
   Future<void> escolhaPedirAjuda() async {
     setState(() {
@@ -423,8 +417,6 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
     });
   }
 
-  // Continuar após interacao com o NPC
-
   void continuarAposNpc() {
     if (_hp <= 0) {
       setState(() {
@@ -439,8 +431,6 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
     }
     setState(() => _etapa = _Etapa.rolarDado);
   }
-
-  // Texto exibido em cada etapa
 
   String get textoAtual {
     switch (_etapa) {
@@ -499,8 +489,6 @@ class _MundoRafaelScreenState extends State<MundoRafaelScreen> {
             'O estacionamento te derrotou.';
     }
   }
-
-  // Reiniciar os atributos da fase
 
   void reiniciar() {
     setState(() {

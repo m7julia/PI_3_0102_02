@@ -65,8 +65,6 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
   late Animation<double> _shakeAnim;
   late Animation<double> _opcaoScale;
 
-  // ─── Popup: Fase bloqueada ────────────────────────────────────────────────
-
   Future<void> _mostrarPopupBloqueado() async {
     final size = MediaQuery.of(context).size;
 
@@ -163,8 +161,6 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
     if (mounted) Navigator.of(context).pop();
   }
 
-  // ─── Textos das etapas ────────────────────────────────────────────────────
-
   String get _textoAtual {
     switch (_etapa) {
       case _Etapa.carregando:
@@ -215,8 +211,6 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
     }
   }
 
-  // ─── Lifecycle ────────────────────────────────────────────────────────────
-
   @override
   void initState() {
     super.initState();
@@ -266,8 +260,6 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
     super.dispose();
   }
 
-  // ─── Animações ────────────────────────────────────────────────────────────
-
   void _configurarAnimacoes() {
     _npcAnimCtrl = AnimationController(
       duration: const Duration(milliseconds: 800),
@@ -304,8 +296,6 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
       CurvedAnimation(parent: _opcaoAnimCtrl, curve: Curves.elasticOut),
     );
   }
-
-  // ─── Busca personagem + verifica bloqueio ─────────────────────────────────
 
   Future<void> _buscarPersonagemEIniciar() async {
     try {
@@ -383,8 +373,6 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
     }
   }
 
-  // ─── Inicia a cena de diálogo ─────────────────────────────────────────────
-
   Future<void> _iniciarCena() async {
     await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
@@ -403,8 +391,6 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
 
     await _animarTexto(_textoAtual);
   }
-
-  // ─── Texto animado ───────────────────────────────────────────────────────
 
   void _pularTexto() {
     if (!_textoTerminou) {
@@ -438,8 +424,6 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
       setState(() => _textoTerminou = true);
     }
   }
-
-  // ─── Navegação de diálogo ─────────────────────────────────────────────────
 
   Future<void> _executarShake() async {
     _shakeCtrl.reset();
@@ -511,30 +495,26 @@ class _MundoMariaScreenState extends State<MundoMariaScreen>
     await _animarTexto(_textoAtual);
   }
 
-  // ─── Navegação para minigame ──────────────────────────────────────────────
+  void _irParaJogo({required bool memoria}) {
+    _pararMusica();
 
-void _irParaJogo({required bool memoria}) {
-  _pararMusica();
-
-  Navigator.push(
-    context,
-    PageRouteBuilder(
-      pageBuilder: (_, animation, __) =>
-          memoria ? const JogoMemoriaGame() : const Ligue3Game(),
-      transitionsBuilder: (_, animation, __, child) => FadeTransition(
-        opacity: CurvedAnimation(parent: animation, curve: Curves.easeIn),
-        child: child,
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, animation, __) =>
+            memoria ? const JogoMemoriaGame() : const Ligue3Game(),
+        transitionsBuilder: (_, animation, __, child) => FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeIn),
+          child: child,
+        ),
+        transitionDuration: const Duration(milliseconds: 600),
       ),
-      transitionDuration: const Duration(milliseconds: 600),
-    ),
-  ).then((_) {
-    if (mounted) {
-      _iniciarMusica();
-    }
-  });
-}
-
-  // ─── Helpers de UI ────────────────────────────────────────────────────────
+    ).then((_) {
+      if (mounted) {
+        _iniciarMusica();
+      }
+    });
+  }
 
   bool get _mostrarBotaoContinuar =>
       _etapa != _Etapa.escolha &&
@@ -550,8 +530,6 @@ void _irParaJogo({required bool memoria}) {
   }
 
   bool get _ehFalaJogador => _etapa == _Etapa.jogadorFala;
-
-  // ─── Build ────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -601,7 +579,6 @@ void _irParaJogo({required bool memoria}) {
           ),
           Container(color: Colors.black.withValues(alpha: 0.50)),
 
-          // NPC Margarida
           Positioned(
             bottom: size.height * 0.24,
             left: size.width * 0.03,
@@ -658,8 +635,6 @@ void _irParaJogo({required bool memoria}) {
       ),
     );
   }
-
-  // ─── Widgets ──────────────────────────────────────────────────────────────
 
   Widget _buildCaixaDialogo(Size size) {
     return AnimatedSlide(

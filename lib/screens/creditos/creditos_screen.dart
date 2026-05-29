@@ -18,13 +18,11 @@ class CreditosScreen extends StatelessWidget {
 
           Container(color: Colors.black.withValues(alpha: 0.45)),
 
-          // Conteúdo scrollável
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(24, 56, 24, 40),
               child: Column(
                 children: [
-                  // Título da tela
                   Text(
                     '✦  Créditos  ✦',
                     textAlign: TextAlign.center,
@@ -80,7 +78,6 @@ class CreditosScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // Mundo ana créditos
                   _buildCard(
                     titulo: 'Mundo Terrasen',
                     conteudo: Column(
@@ -109,7 +106,6 @@ class CreditosScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // Mundo ana créditos
                   _buildCard(
                     titulo: 'Mundo Conservatório Diminuto',
                     conteudo: Column(
@@ -124,7 +120,6 @@ class CreditosScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // SEÇÃO DE TRILHA SONORA
                   _buildCard(
                     titulo: '🎵  Trilha Sonora  🎵',
                     conteudo: Column(
@@ -180,7 +175,6 @@ class CreditosScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // IAs utilizadas
                   _buildCard(
                     titulo: 'Inteligências Artificiais utilizadas',
                     conteudo: Column(
@@ -216,7 +210,6 @@ class CreditosScreen extends StatelessWidget {
             ),
           ),
 
-          // Botão de voltar (por último para ficar em cima)
           SafeArea(
             child: Align(
               alignment: Alignment.topLeft,
@@ -277,7 +270,6 @@ class CreditosScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // Para telas menores, empilha os textos
           if (constraints.maxWidth < 500) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,7 +294,6 @@ class CreditosScreen extends StatelessWidget {
               ],
             );
           }
-          // Layout padrão horizontal
           return Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -402,7 +393,6 @@ class CreditosScreen extends StatelessWidget {
     );
   }
 
-  // Widget para exibir música com detalhes (responsivo)
   Widget _buildMusica(String titulo, String artista, String descricao) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
@@ -416,7 +406,6 @@ class CreditosScreen extends StatelessWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // Para telas muito pequenas, empilha verticalmente
           if (constraints.maxWidth < 400) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -469,7 +458,6 @@ class CreditosScreen extends StatelessWidget {
               ],
             );
           }
-          // Layout padrão horizontal
           return Row(
             children: [
               const Icon(Icons.music_note, color: Color(0xFFF8E7B9), size: 32),

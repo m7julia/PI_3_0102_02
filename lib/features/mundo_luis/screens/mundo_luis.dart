@@ -35,7 +35,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
 
   List<String> opcoesAtuais = ['Continuar'];
 
-  // ─── Mostrar NPC e diálogo (igual ao MundoMaria) ─────────────────────────
   bool _mostrarNpc = false;
   bool _mostrarDialogo = false;
 
@@ -87,7 +86,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
     }
   }
 
-  // ─── Popup: mundo bloqueado ───────────────────────────────────────────────
   Future<void> _mostrarPopupBloqueado() async {
     final size = MediaQuery.of(context).size;
 
@@ -184,7 +182,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
     if (mounted) Navigator.of(context).pop();
   }
 
-  // ─── Popup: conclusão (chave obtida) ─────────────────────────────────────
   Future<void> _mostrarPopupConclusao() async {
     final size = MediaQuery.of(context).size;
 
@@ -343,6 +340,8 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
                       child: ElevatedButton(
                         onPressed: () async {
                           await _salvarProgressoBarPirata();
+                          await _pararMusica();
+                          if (mounted) setState(() => _somAtivado = false);
                           Navigator.of(context).pop();
                           Navigator.of(this.context).pop();
                         },
@@ -374,6 +373,8 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
                       child: ElevatedButton(
                         onPressed: () async {
                           await _salvarProgressoBarPirata();
+                          await _pararMusica();
+                          if (mounted) setState(() => _somAtivado = false);
                           Navigator.of(context).pop();
                           Navigator.push(
                             this.context,
@@ -414,7 +415,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
     );
   }
 
-  // ─── Carregar nome + verificar bloqueio ───────────────────────────────────
   Future<void> carregarNomeJogador() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -480,7 +480,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
         return;
       }
 
-      // Inicia a cena com animação igual ao MundoMaria
       await Future.delayed(const Duration(milliseconds: 300));
       if (!mounted) return;
       setState(() {
@@ -694,7 +693,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    // Mesmo tamanho de NPC que o MundoMaria
     final npcSize = (size.width * 0.50).clamp(140.0, 240.0);
 
     return Scaffold(
@@ -729,7 +727,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
       ),
       body: Stack(
         children: [
-          // Background
           SizedBox.expand(
             child: Image.asset(
               'assets/images/bar_pirata.png',
@@ -740,10 +737,8 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
             ),
           ),
 
-          // Overlay escuro — mesmo alpha do MundoMaria
           Container(color: Colors.black.withValues(alpha: 0.50)),
 
-          // ── NPC Luis — posicionamento idêntico ao MundoMaria ────────────
           Positioned(
             bottom: size.height * 0.24,
             left: size.width * 0.03,
@@ -777,7 +772,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
             ),
           ),
 
-          // ── Barra de progresso (canto superior direito, compacta) ────────
           Positioned(
             top: size.height * 0.01,
             right: size.width * 0.04,
@@ -849,7 +843,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
             ),
           ),
 
-          // ── Imagem do item encontrado (centralizada) ─────────────────────
           if (imagemItemEncontrado != null)
             Center(
               child: Container(
@@ -867,7 +860,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
               ),
             ),
 
-          // ── Caixa de diálogo — estrutura idêntica ao MundoMaria ──────────
           SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: size.width * 0.04),
@@ -885,7 +877,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
     );
   }
 
-  // ─── Caixa de diálogo (espelho do MundoMaria) ─────────────────────────────
   Widget _buildCaixaDialogo(Size size) {
     return AnimatedSlide(
       duration: const Duration(milliseconds: 700),
@@ -925,7 +916,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
               ),
               SizedBox(height: size.height * 0.018),
 
-              // Botão "Pular" enquanto o texto ainda está sendo escrito
               if (!textoCompleto)
                 Align(
                   alignment: Alignment.centerRight,
@@ -956,7 +946,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
                   ),
                 ),
 
-              // Opções após texto completo
               if (textoCompleto) ...[
                 ...opcoesAtuais.map((opcao) {
                   return Padding(
@@ -1001,7 +990,6 @@ class _MundoLuisScreenState extends State<MundoLuisScreen> {
     );
   }
 
-  // ─── Badge do falante (espelho do MundoMaria) ─────────────────────────────
   Widget _buildBadgeFalante(Size size) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

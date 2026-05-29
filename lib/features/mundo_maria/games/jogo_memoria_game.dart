@@ -8,41 +8,32 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:rpg_game/models/location_gate_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// OVERLAY CINEMATOGRÁFICO DA FERRADURA
-// ═══════════════════════════════════════════════════════════════════════════════
 class FerradoraRevealOverlay extends StatefulWidget {
   final VoidCallback onContinuar;
 
   const FerradoraRevealOverlay({super.key, required this.onContinuar});
 
   @override
-  State<FerradoraRevealOverlay> createState() =>
-      _FerradoraRevealOverlayState();
+  State<FerradoraRevealOverlay> createState() => _FerradoraRevealOverlayState();
 }
 
 class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
     with TickerProviderStateMixin {
-  // 1. Fundo escurece
   late AnimationController _bgController;
   late Animation<double> _bgOpacity;
 
-  // 2. Ferradura cresce do centro
   late AnimationController _ferrController;
   late Animation<double> _ferrScale;
   late Animation<double> _ferrOpacity;
   late Animation<double> _ferrRotation;
 
-  // 3. Brilho pulsante após crescer
   late AnimationController _glowController;
   late Animation<double> _glowAnim;
 
-  // 4. Texto aparece
   late AnimationController _textoController;
   late Animation<double> _textoOpacity;
   late Animation<Offset> _textoSlide;
 
-  // 5. Botão aparece
   late AnimationController _btnController;
   late Animation<double> _btnOpacity;
   late Animation<double> _btnScale;
@@ -51,74 +42,94 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
   void initState() {
     super.initState();
 
-    // ── 1. Fundo ──────────────────────────────────────────────────────────────
     _bgController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 600));
-    _bgOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: _bgController, curve: Curves.easeIn));
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _bgOpacity = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _bgController, curve: Curves.easeIn));
 
-    // ── 2. Ferradura ──────────────────────────────────────────────────────────
     _ferrController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1100));
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    );
     _ferrScale = TweenSequence<double>([
       TweenSequenceItem(
-          tween: Tween<double>(begin: 0.0, end: 1.15)
-              .chain(CurveTween(curve: Curves.easeOutCubic)),
-          weight: 70),
+        tween: Tween<double>(
+          begin: 0.0,
+          end: 1.15,
+        ).chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 70,
+      ),
       TweenSequenceItem(
-          tween: Tween<double>(begin: 1.15, end: 0.95)
-              .chain(CurveTween(curve: Curves.easeInOut)),
-          weight: 15),
+        tween: Tween<double>(
+          begin: 1.15,
+          end: 0.95,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 15,
+      ),
       TweenSequenceItem(
-          tween: Tween<double>(begin: 0.95, end: 1.0)
-              .chain(CurveTween(curve: Curves.easeOut)),
-          weight: 15),
+        tween: Tween<double>(
+          begin: 0.95,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeOut)),
+        weight: 15,
+      ),
     ]).animate(_ferrController);
     _ferrOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-            parent: _ferrController,
-            curve: const Interval(0.0, 0.3, curve: Curves.easeIn)));
+      CurvedAnimation(
+        parent: _ferrController,
+        curve: const Interval(0.0, 0.3, curve: Curves.easeIn),
+      ),
+    );
     _ferrRotation = Tween<double>(begin: -0.15, end: 0.0).animate(
-        CurvedAnimation(parent: _ferrController, curve: Curves.easeOutBack));
+      CurvedAnimation(parent: _ferrController, curve: Curves.easeOutBack),
+    );
 
-    // ── 3. Brilho pulsante ────────────────────────────────────────────────────
     _glowController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1600));
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    );
     _glowAnim = Tween<double>(begin: 0.5, end: 1.0).animate(
-        CurvedAnimation(parent: _glowController, curve: Curves.easeInOut));
+      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+    );
 
-    // ── 4. Texto ──────────────────────────────────────────────────────────────
     _textoController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 700));
-    _textoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: _textoController, curve: Curves.easeIn));
-    _textoSlide =
-        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
-            CurvedAnimation(parent: _textoController, curve: Curves.easeOut));
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _textoOpacity = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _textoController, curve: Curves.easeIn));
+    _textoSlide = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _textoController, curve: Curves.easeOut));
 
-    // ── 5. Botão ──────────────────────────────────────────────────────────────
     _btnController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 500));
-    _btnOpacity = Tween<double>(begin: 0.0, end: 1.0)
-        .animate(CurvedAnimation(parent: _btnController, curve: Curves.easeIn));
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _btnOpacity = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _btnController, curve: Curves.easeIn));
     _btnScale = Tween<double>(begin: 0.7, end: 1.0).animate(
-        CurvedAnimation(parent: _btnController, curve: Curves.easeOutBack));
+      CurvedAnimation(parent: _btnController, curve: Curves.easeOutBack),
+    );
 
-    // ── Sequência orquestrada ─────────────────────────────────────────────────
     _runSequence();
   }
 
   Future<void> _runSequence() async {
-    // Passo 1: fundo escurece
     await _bgController.forward();
-    // Passo 2: ferradura cresce
     await _ferrController.forward();
-    // Passo 3: brilho começa a pulsar (não awaita — roda em loop)
     _glowController.repeat(reverse: true);
-    // Passo 4: texto sobe e aparece (pequena pausa dramática)
     await Future.delayed(const Duration(milliseconds: 200));
     await _textoController.forward();
-    // Passo 5: botão aparece
     await Future.delayed(const Duration(milliseconds: 400));
     await _btnController.forward();
   }
@@ -150,7 +161,6 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
         return Opacity(
           opacity: _bgOpacity.value,
           child: Container(
-            // Fundo com gradiente radial dourado
             decoration: BoxDecoration(
               gradient: RadialGradient(
                 center: Alignment.center,
@@ -167,7 +177,6 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
                 children: [
                   const Spacer(flex: 2),
 
-                  // ── Texto principal ─────────────────────────────────────────
                   SlideTransition(
                     position: _textoSlide,
                     child: Opacity(
@@ -181,8 +190,9 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
                               textAlign: TextAlign.center,
                               style: GoogleFonts.cinzel(
                                 fontSize: 15,
-                                color: const Color(0xFFF8E7B9)
-                                    .withValues(alpha: 0.85),
+                                color: const Color(
+                                  0xFFF8E7B9,
+                                ).withValues(alpha: 0.85),
                                 letterSpacing: 0.8,
                                 height: 1.5,
                               ),
@@ -213,7 +223,6 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
 
                   const SizedBox(height: 40),
 
-                  // ── Ferradura animada ───────────────────────────────────────
                   Transform.rotate(
                     angle: _ferrRotation.value,
                     child: Transform.scale(
@@ -224,24 +233,24 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             boxShadow: [
-                              // Brilho âmbar interno
                               BoxShadow(
-                                color: Colors.amberAccent
-                                    .withValues(alpha: glowAlpha * 0.8),
+                                color: Colors.amberAccent.withValues(
+                                  alpha: glowAlpha * 0.8,
+                                ),
                                 blurRadius: glow,
                                 spreadRadius: glow * 0.35,
                               ),
-                              // Halo laranja externo
                               BoxShadow(
-                                color: const Color(0xFFFF8C00)
-                                    .withValues(alpha: glowAlpha * 0.5),
+                                color: const Color(
+                                  0xFFFF8C00,
+                                ).withValues(alpha: glowAlpha * 0.5),
                                 blurRadius: glow * 2.2,
                                 spreadRadius: glow * 0.15,
                               ),
-                              // Reflexo branco central suave
                               BoxShadow(
-                                color: Colors.white
-                                    .withValues(alpha: glowAlpha * 0.15),
+                                color: Colors.white.withValues(
+                                  alpha: glowAlpha * 0.15,
+                                ),
                                 blurRadius: glow * 0.5,
                                 spreadRadius: 2,
                               ),
@@ -252,10 +261,8 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
                             width: 200,
                             height: 200,
                             fit: BoxFit.contain,
-                            errorBuilder: (_, __, ___) => Text(
-                              '🐴',
-                              style: TextStyle(fontSize: 160),
-                            ),
+                            errorBuilder: (_, __, ___) =>
+                                Text('🐴', style: TextStyle(fontSize: 160)),
                           ),
                         ),
                       ),
@@ -264,15 +271,13 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
 
                   const SizedBox(height: 16),
 
-                  // ── Subtitle embaixo da ferradura ───────────────────────────
                   Opacity(
                     opacity: _textoOpacity.value,
                     child: Text(
                       '✦ A Ferradura ✦',
                       style: GoogleFonts.cinzel(
                         fontSize: 13,
-                        color:
-                            Colors.amberAccent.withValues(alpha: 0.75),
+                        color: Colors.amberAccent.withValues(alpha: 0.75),
                         letterSpacing: 3,
                       ),
                     ),
@@ -280,7 +285,6 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
 
                   const Spacer(flex: 2),
 
-                  // ── Botão continuar ─────────────────────────────────────────
                   Transform.scale(
                     scale: _btnScale.value,
                     child: Opacity(
@@ -289,24 +293,30 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
                         padding: const EdgeInsets.only(bottom: 40),
                         child: ElevatedButton(
                           onPressed: widget.onContinuar,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            foregroundColor: const Color(0xFFF8E7B9),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 48, vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              side: const BorderSide(
-                                  color: Color(0xFF9E8A4A), width: 1.5),
-                            ),
-                            elevation: 0,
-                            shadowColor: Colors.transparent,
-                          ).copyWith(
-                            backgroundColor:
-                                WidgetStateProperty.all(
-                              const Color(0xFF6B3F1D).withValues(alpha: 0.85),
-                            ),
-                          ),
+                          style:
+                              ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: const Color(0xFFF8E7B9),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 48,
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  side: const BorderSide(
+                                    color: Color(0xFF9E8A4A),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                elevation: 0,
+                                shadowColor: Colors.transparent,
+                              ).copyWith(
+                                backgroundColor: WidgetStateProperty.all(
+                                  const Color(
+                                    0xFF6B3F1D,
+                                  ).withValues(alpha: 0.85),
+                                ),
+                              ),
                           child: Text(
                             'Continuar a jornada  ➡️',
                             style: GoogleFonts.cinzel(
@@ -329,9 +339,6 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// JOGO PRINCIPAL
-// ═══════════════════════════════════════════════════════════════════════════════
 class JogoMemoriaGame extends StatefulWidget {
   const JogoMemoriaGame({super.key});
 
@@ -366,7 +373,8 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
       _musicPlayer = AudioPlayer();
       await _musicPlayer.setVolume(0.5);
       await _musicPlayer.play(
-          AssetSource('audio/music/audio_fazenda_vale_dourado.mp3'));
+        AssetSource('audio/music/audio_fazenda_vale_dourado.mp3'),
+      );
       await _musicPlayer.setReleaseMode(ReleaseMode.loop);
     } catch (e) {
       debugPrint('Erro ao iniciar música no Memória: $e');
@@ -398,7 +406,6 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
   int pontuacao = 0;
   int paresEncontrados = 0;
 
-  // Controla se o overlay cinematográfico está visível
   bool _mostrarReveal = false;
 
   bool _salvoNoFirestore = false;
@@ -481,7 +488,6 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
         combinadas[idx] = true;
       });
 
-      // Pequena pausa para o jogador ver a ferradura na grade antes do reveal
       Future.delayed(const Duration(milliseconds: 800), () {
         if (!mounted) return;
         setState(() => _mostrarReveal = true);
@@ -491,7 +497,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
 
   Future<void> _mostrarPopupEscolhaFinal() async {
     await _pararMusica();
-    
+
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -538,13 +544,18 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.cloud_done,
-                        color: Colors.greenAccent, size: 14),
+                    const Icon(
+                      Icons.cloud_done,
+                      color: Colors.greenAccent,
+                      size: 14,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'Progresso será salvo',
                       style: GoogleFonts.cinzel(
-                          fontSize: 11, color: Colors.greenAccent),
+                        fontSize: 11,
+                        color: Colors.greenAccent,
+                      ),
                     ),
                   ],
                 ),
@@ -560,7 +571,8 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                           Navigator.pushAndRemoveUntil(
                             this.context,
                             MaterialPageRoute(
-                                builder: (_) => const HomeScreen()),
+                              builder: (_) => const HomeScreen(),
+                            ),
                             (route) => false,
                           );
                         }
@@ -572,12 +584,15 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                           side: const BorderSide(
-                              color: Color(0xFF9E8A4A), width: 1.5),
+                            color: Color(0xFF9E8A4A),
+                            width: 1.5,
+                          ),
                         ),
                       ),
-                      child: Text('💾 Salvar e sair',
-                          style: GoogleFonts.cinzel(
-                              fontWeight: FontWeight.bold)),
+                      child: Text(
+                        '💾 Salvar e sair',
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                 ),
@@ -600,7 +615,7 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                                   -47.04992,
                                 ),
                                 nomeFase: 'Bar Pirata',
-                                child: const MundoLuisScreen(),  // 
+                                child: const MundoLuisScreen(),
                               ),
                             ),
                           );
@@ -613,12 +628,15 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                           side: const BorderSide(
-                              color: Color(0xFF9E8A4A), width: 1.5),
+                            color: Color(0xFF9E8A4A),
+                            width: 1.5,
+                          ),
                         ),
                       ),
-                      child: Text('⚔️ Salvar e continuar',
-                          style: GoogleFonts.cinzel(
-                              fontWeight: FontWeight.bold)),
+                      child: Text(
+                        '⚔️ Salvar e continuar',
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                 ),
@@ -648,7 +666,9 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
         title: Text(
           'Jogo da Memória',
           style: GoogleFonts.cinzel(
-              color: const Color(0xFFF8E7B9), fontSize: 18),
+            color: const Color(0xFFF8E7B9),
+            fontSize: 18,
+          ),
         ),
         backgroundColor: const Color(0xFF6B3F1D),
         foregroundColor: const Color(0xFFF8E7B9),
@@ -663,7 +683,9 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                 Text(
                   '$pontuacao',
                   style: GoogleFonts.cinzel(
-                      fontSize: 18, color: const Color(0xFFF8E7B9)),
+                    fontSize: 18,
+                    color: const Color(0xFFF8E7B9),
+                  ),
                 ),
               ],
             ),
@@ -672,7 +694,6 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
       ),
       body: Stack(
         children: [
-          // ── Fundo ────────────────────────────────────────────────────────────
           SizedBox.expand(
             child: Image.asset(
               'assets/images/fundo_fazenda.jpeg',
@@ -687,8 +708,9 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
               builder: (context, constraints) {
                 return SingleChildScrollView(
                   child: ConstrainedBox(
-                    constraints:
-                        BoxConstraints(minHeight: constraints.maxHeight),
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
                     child: IntrinsicHeight(
                       child: Column(
                         children: [
@@ -706,7 +728,6 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
             ),
           ),
 
-          // ── Overlay cinematográfico da ferradura ──────────────────────────────
           if (_mostrarReveal)
             Positioned.fill(
               child: FerradoraRevealOverlay(
@@ -825,10 +846,11 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
                 child: Container(
                   width: 14,
                   height: 14,
-                  decoration:
-                      BoxDecoration(color: corCheck, shape: BoxShape.circle),
-                  child:
-                      const Icon(Icons.check, size: 10, color: Colors.black),
+                  decoration: BoxDecoration(
+                    color: corCheck,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.check, size: 10, color: Colors.black),
                 ),
               ),
           ],
@@ -837,7 +859,10 @@ class _JogoMemoriaGameState extends State<JogoMemoriaGame> {
         Text(
           label,
           style: GoogleFonts.cinzel(
-              fontSize: 10, color: corLabel, fontWeight: FontWeight.bold),
+            fontSize: 10,
+            color: corLabel,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
