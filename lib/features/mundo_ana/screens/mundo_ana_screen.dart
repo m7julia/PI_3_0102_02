@@ -44,11 +44,6 @@ class MundoAnaScreen extends StatefulWidget {
 
 class _MundoAnaScreenState extends State<MundoAnaScreen>
     with TickerProviderStateMixin {
-
-  // -------------------------------------------------------------------------
-  // estado
-  // -------------------------------------------------------------------------
-
   _Etapa _etapa = _Etapa.carregando;
   String _nomeJogador = 'Viajante';
   String? _personagemId;
@@ -70,10 +65,6 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
   late AnimationController _dialogoAnimCtrl;
   late Animation<double> _npcScale;
   late Animation<double> _npcRotate;
-
-  // -------------------------------------------------------------------------
-  // textos
-  // -------------------------------------------------------------------------
 
   String get _textoAtual {
     switch (_etapa) {
@@ -130,10 +121,6 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
     }
   }
 
-  // -------------------------------------------------------------------------
-  // ciclo de vida
-  // -------------------------------------------------------------------------
-
   @override
   void initState() {
     super.initState();
@@ -170,10 +157,6 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
     super.dispose();
   }
 
-  // -------------------------------------------------------------------------
-  // áudio — só liga/desliga, nunca interrompe sozinho
-  // -------------------------------------------------------------------------
-
   Future<void> _toggleSom() async {
     if (!_somAtivado) {
       try {
@@ -190,10 +173,6 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
       setState(() => _somAtivado = false);
     }
   }
-
-  // -------------------------------------------------------------------------
-  // lógica de texto (sem nenhum som aqui)
-  // -------------------------------------------------------------------------
 
   void _mostrarTexto(String texto) {
     _timerTexto?.cancel();
@@ -223,10 +202,6 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
       _textoTerminou = true;
     });
   }
-
-  // -------------------------------------------------------------------------
-  // firestore
-  // -------------------------------------------------------------------------
 
   Future<void> _buscarNomeEIniciar() async {
     try {
@@ -319,10 +294,6 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
       debugPrint('Erro ao salvar progresso: $e');
     }
   }
-
-  // -------------------------------------------------------------------------
-  // navegação entre etapas
-  // -------------------------------------------------------------------------
 
   Future<void> _iniciarCena() async {
     await Future.delayed(const Duration(milliseconds: 300));
@@ -488,10 +459,6 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
     }
   }
 
-  // -------------------------------------------------------------------------
-  // popups
-  // -------------------------------------------------------------------------
-
   Future<void> _mostrarPopupBloqueado() async {
     await showDialog(
       context: context,
@@ -544,15 +511,21 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
                     backgroundColor: const Color(0xFF6B3F1D),
                     foregroundColor: const Color(0xFFF8E7B9),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 28, vertical: 14),
+                      horizontal: 28,
+                      vertical: 14,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                       side: const BorderSide(
-                          color: Color(0xFF9E8A4A), width: 1.5),
+                        color: Color(0xFF9E8A4A),
+                        width: 1.5,
+                      ),
                     ),
                   ),
-                  child: Text('Voltar',
-                      style: GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
+                  child: Text(
+                    'Voltar',
+                    style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
@@ -621,15 +594,21 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
                     backgroundColor: const Color(0xFF6B3F1D),
                     foregroundColor: const Color(0xFFF8E7B9),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 28, vertical: 14),
+                      horizontal: 28,
+                      vertical: 14,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                       side: const BorderSide(
-                          color: Color(0xFF9E8A4A), width: 1.5),
+                        color: Color(0xFF9E8A4A),
+                        width: 1.5,
+                      ),
                     ),
                   ),
-                  child: Text('Abrir portal 🌀',
-                      style: GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
+                  child: Text(
+                    'Abrir portal 🌀',
+                    style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
@@ -699,12 +678,15 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                           side: const BorderSide(
-                              color: Color(0xFF9E8A4A), width: 1.5),
+                            color: Color(0xFF9E8A4A),
+                            width: 1.5,
+                          ),
                         ),
                       ),
-                      child: Text('💾 Salvar e sair',
-                          style:
-                              GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
+                      child: Text(
+                        '💾 Salvar e sair',
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                 ),
@@ -738,12 +720,15 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                           side: const BorderSide(
-                              color: Color(0xFF9E8A4A), width: 1.5),
+                            color: Color(0xFF9E8A4A),
+                            width: 1.5,
+                          ),
                         ),
                       ),
-                      child: Text('⚔️ Salvar e continuar',
-                          style:
-                              GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
+                      child: Text(
+                        '⚔️ Salvar e continuar',
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                 ),
@@ -754,10 +739,6 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
       },
     );
   }
-
-  // -------------------------------------------------------------------------
-  // build
-  // -------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -782,8 +763,7 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
               child: Chip(
-                backgroundColor:
-                    const Color(0xFF9E8A4A).withValues(alpha: 0.3),
+                backgroundColor: const Color(0xFF9E8A4A).withValues(alpha: 0.3),
                 label: Text(
                   '💎 $_fragmentos/3',
                   style: GoogleFonts.cinzel(
@@ -831,8 +811,7 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
                     'assets/images/aelin.png',
                     height: 320,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) =>
-                        const SizedBox(height: 320),
+                    errorBuilder: (_, __, ___) => const SizedBox(height: 320),
                   ),
                 ),
               ),
@@ -901,16 +880,21 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
                       backgroundColor: const Color(0xFF6B3F1D),
                       foregroundColor: const Color(0xFFF8E7B9),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                         side: const BorderSide(
-                            color: Color(0xFF9E8A4A), width: 1.5),
+                          color: Color(0xFF9E8A4A),
+                          width: 1.5,
+                        ),
                       ),
                     ),
-                    child: Text('Continuar →',
-                        style:
-                            GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'Continuar →',
+                      style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               if (_textoTerminou) _buildAcoes(),
@@ -926,60 +910,68 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
       case _Etapa.chegada2:
         return _buildEscolhas([
           _OpcaoBtn(
-              label: '1. Aceitar o desafio ⚔️',
-              onTap: () => _escolhaChegada(true)),
+            label: '1. Aceitar o desafio ⚔️',
+            onTap: () => _escolhaChegada(true),
+          ),
           _OpcaoBtn(
-              label: '2. Recusar',
-              onTap: () => _escolhaChegada(false),
-              secundario: true),
+            label: '2. Recusar',
+            onTap: () => _escolhaChegada(false),
+            secundario: true,
+          ),
         ]);
       case _Etapa.desafio1:
         return _buildEscolhas([
           _OpcaoBtn(
-              label: 'Rota de Orynth',
-              onTap: () => _escolhaCaminho(1),
-              secundario: true),
+            label: 'Rota de Orynth',
+            onTap: () => _escolhaCaminho(1),
+            secundario: true,
+          ),
           _OpcaoBtn(
-              label: 'Passagem de Morath',
-              onTap: () => _escolhaCaminho(2),
-              secundario: true),
+            label: 'Passagem de Morath',
+            onTap: () => _escolhaCaminho(2),
+            secundario: true,
+          ),
           _OpcaoBtn(
-              label: 'Trilha de Oakwald', onTap: () => _escolhaCaminho(3)),
+            label: 'Trilha de Oakwald',
+            onTap: () => _escolhaCaminho(3),
+          ),
         ]);
       case _Etapa.desafio2:
         return _buildEscolhas([
+          _OpcaoBtn(label: '👁️ Observar', onTap: () => _escolhaCriatura(3)),
           _OpcaoBtn(
-              label: '👁️ Observar', onTap: () => _escolhaCriatura(3)),
+            label: '⚔️ Atacar',
+            onTap: () => _escolhaCriatura(1),
+            secundario: true,
+          ),
           _OpcaoBtn(
-              label: '⚔️ Atacar',
-              onTap: () => _escolhaCriatura(1),
-              secundario: true),
-          _OpcaoBtn(
-              label: '🏃 Fugir',
-              onTap: () => _escolhaCriatura(2),
-              secundario: true),
+            label: '🏃 Fugir',
+            onTap: () => _escolhaCriatura(2),
+            secundario: true,
+          ),
         ]);
       case _Etapa.desafio3:
         return _buildEscolhas([
           _OpcaoBtn(
-              label: '1. Passado',
-              onTap: () => _escolhaEnigma(1),
-              secundario: true),
+            label: '1. Passado',
+            onTap: () => _escolhaEnigma(1),
+            secundario: true,
+          ),
+          _OpcaoBtn(label: '2. Presente', onTap: () => _escolhaEnigma(2)),
           _OpcaoBtn(
-              label: '2. Presente', onTap: () => _escolhaEnigma(2)),
-          _OpcaoBtn(
-              label: '3. Futuro',
-              onTap: () => _escolhaEnigma(3),
-              secundario: true),
+            label: '3. Futuro',
+            onTap: () => _escolhaEnigma(3),
+            secundario: true,
+          ),
         ]);
       case _Etapa.desafio4:
         return _buildEscolhas([
+          _OpcaoBtn(label: '💛 Ajudar', onTap: () => _escolhaFerido(true)),
           _OpcaoBtn(
-              label: '💛 Ajudar', onTap: () => _escolhaFerido(true)),
-          _OpcaoBtn(
-              label: '→ Ignorar e avançar',
-              onTap: () => _escolhaFerido(false),
-              secundario: true),
+            label: '→ Ignorar e avançar',
+            onTap: () => _escolhaFerido(false),
+            secundario: true,
+          ),
         ]);
       default:
         if (_mostrarBotaoContinuar) {
@@ -991,15 +983,18 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
                 backgroundColor: const Color(0xFF6B3F1D),
                 foregroundColor: const Color(0xFFF8E7B9),
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 12),
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(
-                      color: Color(0xFF9E8A4A), width: 1.5),
+                  side: const BorderSide(color: Color(0xFF9E8A4A), width: 1.5),
                 ),
               ),
-              child: Text(_labelBotao,
-                  style: GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
+              child: Text(
+                _labelBotao,
+                style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+              ),
             ),
           );
         }
@@ -1023,14 +1018,18 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: const BorderSide(
-                        color: Color(0xFF9E8A4A), width: 1.5),
+                      color: Color(0xFF9E8A4A),
+                      width: 1.5,
+                    ),
                   ),
                   elevation: 4,
                 ),
                 child: Text(
                   o.label,
                   style: GoogleFonts.cinzel(
-                      fontWeight: FontWeight.bold, fontSize: 13),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ),
@@ -1046,7 +1045,8 @@ class _MundoAnaScreenState extends State<MundoAnaScreen>
         color: const Color(0xFF6B3F1D).withValues(alpha: 0.25),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-            color: const Color(0xFFF8E7B9).withValues(alpha: 0.3)),
+          color: const Color(0xFFF8E7B9).withValues(alpha: 0.3),
+        ),
       ),
       child: Text(
         'Aelin',

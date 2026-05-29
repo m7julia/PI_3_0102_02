@@ -295,7 +295,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Fundo
           SizedBox.expand(
             child: Stack(
               children: [
@@ -317,7 +316,6 @@ class _HomeScreenState extends State<HomeScreen> {
           SafeArea(
             child: Stack(
               children: [
-                // Botão de mudo (topo direito)
                 Positioned(
                   top: 16,
                   right: 16,
@@ -337,7 +335,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                // Botão do mapa (topo esquerdo)
                 Positioned(
                   top: 16,
                   left: 16,
@@ -350,7 +347,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                // Conteúdo central
                 Center(
                   child: SingleChildScrollView(
                     child: Padding(
@@ -677,7 +673,6 @@ class _MapaDialogState extends State<_MapaDialog> {
           ),
           child: Column(
             children: [
-              // Cabeçalho
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
                 child: Row(
@@ -706,7 +701,6 @@ class _MapaDialogState extends State<_MapaDialog> {
                 ),
               ),
 
-              // Legenda
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -735,7 +729,6 @@ class _MapaDialogState extends State<_MapaDialog> {
                 ),
               ),
 
-              // Mapa ou estado de carregamento/erro
               Expanded(
                 child: ClipRRect(
                   borderRadius: const BorderRadius.only(
@@ -758,7 +751,6 @@ class _MapaDialogState extends State<_MapaDialog> {
                               userAgentPackageName: 'com.exemplo.magialura',
                             ),
 
-                            // Círculos de 10m
                             CircleLayer(
                               circles: _ambientes
                                   .map(
@@ -782,10 +774,8 @@ class _MapaDialogState extends State<_MapaDialog> {
                                   .toList(),
                             ),
 
-                            // Marcadores
                             MarkerLayer(
                               markers: [
-                                // Jogador
                                 Marker(
                                   point: ponto,
                                   width: 48,
@@ -797,7 +787,6 @@ class _MapaDialogState extends State<_MapaDialog> {
                                   ),
                                 ),
 
-                                // Ambientes
                                 ..._ambientes.map(
                                   (a) => Marker(
                                     point: a.posicao,
@@ -854,7 +843,6 @@ class _MapaDialogState extends State<_MapaDialog> {
                 ),
               ),
 
-              // Coordenadas
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 child: Text(

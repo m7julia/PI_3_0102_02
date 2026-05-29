@@ -205,7 +205,6 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ── AppBar igual ao MundoAnaScreen ──────────────────────────────────
       appBar: AppBar(
         title: Text(
           'Crie seu personagem',
@@ -224,7 +223,6 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
       ),
       body: Stack(
         children: [
-          // ── Background ────────────────────────────────────────────────
           SizedBox.expand(
             child: Image.asset(
               'assets/images/fundo_tela_inicial.png',
@@ -235,7 +233,6 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
           ),
           Container(color: Colors.black.withValues(alpha: 0.55)),
 
-          // ── Personagem — canto inferior esquerdo, igual ao MundoAnaScreen ──
           Align(
             alignment: Alignment.bottomLeft,
             child: Padding(
@@ -253,7 +250,6 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
             ),
           ),
 
-          // ── Caixa de diálogo — SafeArea > Column > Spacer (igual Ana) ──
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -271,7 +267,6 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
     );
   }
 
-  // ── Caixa de diálogo ─────────────────────────────────────────────────────
   Widget _buildCaixaDialogo() {
     return AnimatedSlide(
       duration: const Duration(milliseconds: 700),
@@ -299,11 +294,9 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Badge "Rowan"
               _buildBadgeFalante(),
               const SizedBox(height: 8),
 
-              // Texto animado
               Text(
                 textoVisivel,
                 style: GoogleFonts.cinzel(
@@ -313,7 +306,6 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
                 ),
               ),
 
-              // Campo de nome (etapa 7)
               if (etapa == 7 && textoCompleto) ...[
                 const SizedBox(height: 16),
                 TextField(
@@ -340,8 +332,7 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: Color(0xFF9E8A4A)),
+                      borderSide: const BorderSide(color: Color(0xFF9E8A4A)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -356,7 +347,6 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
 
               const SizedBox(height: 16),
 
-              // Enquanto digita → botão pular (igual ao MundoAnaScreen)
               if (!textoCompleto)
                 Align(
                   alignment: Alignment.centerRight,
@@ -366,11 +356,15 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
                       backgroundColor: const Color(0xFF6B3F1D),
                       foregroundColor: const Color(0xFFF8E7B9),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                         side: const BorderSide(
-                            color: Color(0xFF9E8A4A), width: 1.5),
+                          color: Color(0xFF9E8A4A),
+                          width: 1.5,
+                        ),
                       ),
                     ),
                     child: Text(
@@ -380,48 +374,50 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
                   ),
                 ),
 
-              // Botões de ação (texto terminado)
               if (textoCompleto)
-                ...opcoesAtuais.map((opcao) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _salvando
-                              ? null
-                              : () => escolherOpcao(opcao),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6B3F1D),
-                            foregroundColor: const Color(0xFFF8E7B9),
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 12),
-                            elevation: 4,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: const BorderSide(
-                                  color: Color(0xFF9E8A4A), width: 1.5),
+                ...opcoesAtuais.map(
+                  (opcao) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _salvando
+                            ? null
+                            : () => escolherOpcao(opcao),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6B3F1D),
+                          foregroundColor: const Color(0xFFF8E7B9),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: const BorderSide(
+                              color: Color(0xFF9E8A4A),
+                              width: 1.5,
                             ),
                           ),
-                          child: _salvando && opcao == 'Começar jornada'
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Color(0xFFF8E7B9),
-                                  ),
-                                )
-                              : Text(
-                                  opcao,
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.cinzel(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
                         ),
+                        child: _salvando && opcao == 'Começar jornada'
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFFF8E7B9),
+                                ),
+                              )
+                            : Text(
+                                opcao,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.cinzel(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
-                    )),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -429,7 +425,6 @@ class _CriarPersonagemScreenState extends State<CriarPersonagemScreen> {
     );
   }
 
-  // ── Badge do falante ──────────────────────────────────────────────────────
   Widget _buildBadgeFalante() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

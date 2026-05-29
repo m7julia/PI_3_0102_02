@@ -37,10 +37,8 @@ class MundoFinalScreen extends StatelessWidget {
             ),
           ),
 
-          // Overlay — mesmo alpha dos outros mundos
           Container(color: Colors.black.withValues(alpha: 0.50)),
 
-          // Conteúdo
           SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: size.width * 0.04),
@@ -48,7 +46,6 @@ class MundoFinalScreen extends StatelessWidget {
                 children: [
                   const Spacer(),
 
-                  // Caixa de diálogo no mesmo estilo
                   Container(
                     width: double.infinity,
                     padding: EdgeInsets.all(size.width * 0.045),

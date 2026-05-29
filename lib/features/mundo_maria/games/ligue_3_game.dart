@@ -8,41 +8,32 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:rpg_game/models/location_gate_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// OVERLAY CINEMATOGRÁFICO DA FERRADURA
-// ═══════════════════════════════════════════════════════════════════════════════
 class FerradoraRevealOverlay extends StatefulWidget {
   final VoidCallback onContinuar;
 
   const FerradoraRevealOverlay({super.key, required this.onContinuar});
 
   @override
-  State<FerradoraRevealOverlay> createState() =>
-      _FerradoraRevealOverlayState();
+  State<FerradoraRevealOverlay> createState() => _FerradoraRevealOverlayState();
 }
 
 class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
     with TickerProviderStateMixin {
-  // 1. Fundo escurece
   late AnimationController _bgController;
   late Animation<double> _bgOpacity;
 
-  // 2. Ferradura cresce do centro
   late AnimationController _ferrController;
   late Animation<double> _ferrScale;
   late Animation<double> _ferrOpacity;
   late Animation<double> _ferrRotation;
 
-  // 3. Brilho pulsante após crescer
   late AnimationController _glowController;
   late Animation<double> _glowAnim;
 
-  // 4. Texto aparece
   late AnimationController _textoController;
   late Animation<double> _textoOpacity;
   late Animation<Offset> _textoSlide;
 
-  // 5. Botão aparece
   late AnimationController _btnController;
   late Animation<double> _btnOpacity;
   late Animation<double> _btnScale;
@@ -51,58 +42,84 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
   void initState() {
     super.initState();
 
-    // ── 1. Fundo ──────────────────────────────────────────────────────────────
     _bgController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 600));
-    _bgOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: _bgController, curve: Curves.easeIn));
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _bgOpacity = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _bgController, curve: Curves.easeIn));
 
-    // ── 2. Ferradura ──────────────────────────────────────────────────────────
     _ferrController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1100));
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    );
     _ferrScale = TweenSequence<double>([
       TweenSequenceItem(
-          tween: Tween<double>(begin: 0.0, end: 1.15)
-              .chain(CurveTween(curve: Curves.easeOutCubic)),
-          weight: 70),
+        tween: Tween<double>(
+          begin: 0.0,
+          end: 1.15,
+        ).chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 70,
+      ),
       TweenSequenceItem(
-          tween: Tween<double>(begin: 1.15, end: 0.95)
-              .chain(CurveTween(curve: Curves.easeInOut)),
-          weight: 15),
+        tween: Tween<double>(
+          begin: 1.15,
+          end: 0.95,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 15,
+      ),
       TweenSequenceItem(
-          tween: Tween<double>(begin: 0.95, end: 1.0)
-              .chain(CurveTween(curve: Curves.easeOut)),
-          weight: 15),
+        tween: Tween<double>(
+          begin: 0.95,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeOut)),
+        weight: 15,
+      ),
     ]).animate(_ferrController);
     _ferrOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-            parent: _ferrController,
-            curve: const Interval(0.0, 0.3, curve: Curves.easeIn)));
+      CurvedAnimation(
+        parent: _ferrController,
+        curve: const Interval(0.0, 0.3, curve: Curves.easeIn),
+      ),
+    );
     _ferrRotation = Tween<double>(begin: -0.15, end: 0.0).animate(
-        CurvedAnimation(parent: _ferrController, curve: Curves.easeOutBack));
+      CurvedAnimation(parent: _ferrController, curve: Curves.easeOutBack),
+    );
 
-    // ── 3. Brilho pulsante ────────────────────────────────────────────────────
     _glowController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1600));
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    );
     _glowAnim = Tween<double>(begin: 0.5, end: 1.0).animate(
-        CurvedAnimation(parent: _glowController, curve: Curves.easeInOut));
+      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+    );
 
-    // ── 4. Texto ──────────────────────────────────────────────────────────────
     _textoController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 700));
-    _textoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: _textoController, curve: Curves.easeIn));
-    _textoSlide =
-        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
-            CurvedAnimation(parent: _textoController, curve: Curves.easeOut));
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _textoOpacity = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _textoController, curve: Curves.easeIn));
+    _textoSlide = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _textoController, curve: Curves.easeOut));
 
-    // ── 5. Botão ──────────────────────────────────────────────────────────────
     _btnController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 500));
-    _btnOpacity = Tween<double>(begin: 0.0, end: 1.0)
-        .animate(CurvedAnimation(parent: _btnController, curve: Curves.easeIn));
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _btnOpacity = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _btnController, curve: Curves.easeIn));
     _btnScale = Tween<double>(begin: 0.7, end: 1.0).animate(
-        CurvedAnimation(parent: _btnController, curve: Curves.easeOutBack));
+      CurvedAnimation(parent: _btnController, curve: Curves.easeOutBack),
+    );
 
     _runSequence();
   }
@@ -160,7 +177,6 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
                 children: [
                   const Spacer(flex: 2),
 
-                  // ── Texto principal ─────────────────────────────────────────
                   SlideTransition(
                     position: _textoSlide,
                     child: Opacity(
@@ -174,8 +190,9 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
                               textAlign: TextAlign.center,
                               style: GoogleFonts.cinzel(
                                 fontSize: 15,
-                                color: const Color(0xFFF8E7B9)
-                                    .withValues(alpha: 0.85),
+                                color: const Color(
+                                  0xFFF8E7B9,
+                                ).withValues(alpha: 0.85),
                                 letterSpacing: 0.8,
                                 height: 1.5,
                               ),
@@ -192,8 +209,7 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
                                 height: 1.4,
                                 shadows: [
                                   Shadow(
-                                    color:
-                                        Colors.amber.withValues(alpha: 0.8),
+                                    color: Colors.amber.withValues(alpha: 0.8),
                                     blurRadius: 18,
                                   ),
                                 ],
@@ -207,7 +223,6 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
 
                   const SizedBox(height: 40),
 
-                  // ── Ferradura animada ───────────────────────────────────────
                   Transform.rotate(
                     angle: _ferrRotation.value,
                     child: Transform.scale(
@@ -219,20 +234,23 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.amberAccent
-                                    .withValues(alpha: glowAlpha * 0.8),
+                                color: Colors.amberAccent.withValues(
+                                  alpha: glowAlpha * 0.8,
+                                ),
                                 blurRadius: glow,
                                 spreadRadius: glow * 0.35,
                               ),
                               BoxShadow(
-                                color: const Color(0xFFFF8C00)
-                                    .withValues(alpha: glowAlpha * 0.5),
+                                color: const Color(
+                                  0xFFFF8C00,
+                                ).withValues(alpha: glowAlpha * 0.5),
                                 blurRadius: glow * 2.2,
                                 spreadRadius: glow * 0.15,
                               ),
                               BoxShadow(
-                                color: Colors.white
-                                    .withValues(alpha: glowAlpha * 0.15),
+                                color: Colors.white.withValues(
+                                  alpha: glowAlpha * 0.15,
+                                ),
                                 blurRadius: glow * 0.5,
                                 spreadRadius: 2,
                               ),
@@ -269,7 +287,6 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
 
                   const Spacer(flex: 2),
 
-                  // ── Botão continuar ─────────────────────────────────────────
                   Transform.scale(
                     scale: _btnScale.value,
                     child: Opacity(
@@ -278,23 +295,30 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
                         padding: const EdgeInsets.only(bottom: 40),
                         child: ElevatedButton(
                           onPressed: widget.onContinuar,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            foregroundColor: const Color(0xFFF8E7B9),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 48, vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              side: const BorderSide(
-                                  color: Color(0xFF9E8A4A), width: 1.5),
-                            ),
-                            elevation: 0,
-                            shadowColor: Colors.transparent,
-                          ).copyWith(
-                            backgroundColor: WidgetStateProperty.all(
-                              const Color(0xFF6B3F1D).withValues(alpha: 0.85),
-                            ),
-                          ),
+                          style:
+                              ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: const Color(0xFFF8E7B9),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 48,
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  side: const BorderSide(
+                                    color: Color(0xFF9E8A4A),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                elevation: 0,
+                                shadowColor: Colors.transparent,
+                              ).copyWith(
+                                backgroundColor: WidgetStateProperty.all(
+                                  const Color(
+                                    0xFF6B3F1D,
+                                  ).withValues(alpha: 0.85),
+                                ),
+                              ),
                           child: Text(
                             'Continuar a jornada  ➡️',
                             style: GoogleFonts.cinzel(
@@ -317,9 +341,6 @@ class _FerradoraRevealOverlayState extends State<FerradoraRevealOverlay>
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// JOGO PRINCIPAL
-// ═══════════════════════════════════════════════════════════════════════════════
 class Ligue3Game extends StatefulWidget {
   const Ligue3Game({super.key});
 
@@ -406,7 +427,6 @@ class _Ligue3GameState extends State<Ligue3Game> {
   bool faseConcluida = false;
   List<int>? dragOrigem;
 
-  // Controla o overlay cinematográfico
   bool _mostrarReveal = false;
 
   bool _salvoNoFirestore = false;
@@ -497,8 +517,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
 
   void _tocarCelula(int linha, int coluna) {
     final pos = [linha, coluna];
-    final jaSelected =
-        selecionados.any((s) => s[0] == linha && s[1] == coluna);
+    final jaSelected = selecionados.any((s) => s[0] == linha && s[1] == coluna);
 
     setState(() {
       if (jaSelected) {
@@ -522,8 +541,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
 
   void _tentarCombinar() {
     final asset = matriz[selecionados[0][0]][selecionados[0][1]];
-    final todosIguais =
-        selecionados.every((s) => matriz[s[0]][s[1]] == asset);
+    final todosIguais = selecionados.every((s) => matriz[s[0]][s[1]] == asset);
 
     if (!todosIguais) {
       selecionados = [];
@@ -556,8 +574,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
         if (matriz[r][c].isNotEmpty) coluna.add(matriz[r][c]);
       }
       while (coluna.length < gridSize) {
-        coluna
-            .add(cultivos[rng.nextInt(cultivos.length)]['asset'] as String);
+        coluna.add(cultivos[rng.nextInt(cultivos.length)]['asset'] as String);
       }
       for (int r = gridSize - 1; r >= 0; r--) {
         matriz[r][c] = coluna[gridSize - 1 - r];
@@ -609,7 +626,6 @@ class _Ligue3GameState extends State<Ligue3Game> {
     );
     if (completo && !faseConcluida) {
       faseConcluida = true;
-      // Pequena pausa antes de mostrar o overlay
       Future.delayed(const Duration(milliseconds: 400), () {
         if (mounted) setState(() => _mostrarReveal = true);
       });
@@ -618,7 +634,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
 
   Future<void> _mostrarPopupEscolhaFinal() async {
     await _pararMusica();
-    
+
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -673,7 +689,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
                           Navigator.pushAndRemoveUntil(
                             this.context,
                             MaterialPageRoute(
-                                builder: (_) => const HomeScreen()),
+                              builder: (_) => const HomeScreen(),
+                            ),
                             (route) => false,
                           );
                         }
@@ -685,13 +702,14 @@ class _Ligue3GameState extends State<Ligue3Game> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                           side: const BorderSide(
-                              color: Color(0xFF9E8A4A), width: 1.5),
+                            color: Color(0xFF9E8A4A),
+                            width: 1.5,
+                          ),
                         ),
                       ),
                       child: Text(
                         '💾 Salvar e sair',
-                        style:
-                            GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -728,13 +746,14 @@ class _Ligue3GameState extends State<Ligue3Game> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                           side: const BorderSide(
-                              color: Color(0xFF9E8A4A), width: 1.5),
+                            color: Color(0xFF9E8A4A),
+                            width: 1.5,
+                          ),
                         ),
                       ),
                       child: Text(
                         '⚔️ Salvar e continuar',
-                        style:
-                            GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -758,10 +777,10 @@ class _Ligue3GameState extends State<Ligue3Game> {
 
     if (lo == linhaDestino && co == colunaDestino) return;
 
-    // Só permite mover para célula adjacente (cima, baixo, esquerda, direita)
     final diffLinha = (lo - linhaDestino).abs();
     final diffColuna = (co - colunaDestino).abs();
-    final ehAdjacente = (diffLinha == 1 && diffColuna == 0) ||
+    final ehAdjacente =
+        (diffLinha == 1 && diffColuna == 0) ||
         (diffLinha == 0 && diffColuna == 1);
 
     if (!ehAdjacente) return;
@@ -841,7 +860,6 @@ class _Ligue3GameState extends State<Ligue3Game> {
       ),
       body: Stack(
         children: [
-          // ── Fundo ────────────────────────────────────────────────────────────
           SizedBox.expand(
             child: Image.asset(
               'assets/images/fundo_fazenda.jpeg',
@@ -852,7 +870,6 @@ class _Ligue3GameState extends State<Ligue3Game> {
           ),
           Container(color: Colors.black.withValues(alpha: 0.6)),
 
-          // ── Conteúdo do jogo ──────────────────────────────────────────────────
           SafeArea(
             child: Column(
               children: [
@@ -865,8 +882,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
                     'Toque 3 iguais ou arraste para mover',
                     style: GoogleFonts.cinzel(
                       fontSize: 12,
-                      color:
-                          const Color(0xFFF8E7B9).withValues(alpha: 0.75),
+                      color: const Color(0xFFF8E7B9).withValues(alpha: 0.75),
                     ),
                   ),
                 ),
@@ -875,7 +891,6 @@ class _Ligue3GameState extends State<Ligue3Game> {
             ),
           ),
 
-          // ── Overlay cinematográfico da ferradura ──────────────────────────────
           if (_mostrarReveal)
             Positioned.fill(
               child: FerradoraRevealOverlay(
@@ -983,8 +998,9 @@ class _Ligue3GameState extends State<Ligue3Game> {
                     child: LinearProgressIndicator(
                       value: progresso,
                       minHeight: 6,
-                      backgroundColor:
-                          const Color(0xFFF8E7B9).withValues(alpha: 0.2),
+                      backgroundColor: const Color(
+                        0xFFF8E7B9,
+                      ).withValues(alpha: 0.2),
                       valueColor: AlwaysStoppedAnimation<Color>(
                         completo ? Colors.greenAccent : cor,
                       ),
@@ -1020,8 +1036,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color:
-              mensagemErro ? Colors.red.shade700 : Colors.green.shade700,
+          color: mensagemErro ? Colors.red.shade700 : Colors.green.shade700,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text(
@@ -1060,8 +1075,7 @@ class _Ligue3GameState extends State<Ligue3Game> {
 
               return DragTarget<List<int>>(
                 onWillAcceptWithDetails: (details) => true,
-                onAcceptWithDetails: (details) =>
-                    _finalizarDrop(linha, coluna),
+                onAcceptWithDetails: (details) => _finalizarDrop(linha, coluna),
                 builder: (context, candidateData, rejectedData) {
                   final highlight = candidateData.isNotEmpty;
                   return Draggable<List<int>>(
@@ -1098,8 +1112,8 @@ class _Ligue3GameState extends State<Ligue3Game> {
           color: selecionado
               ? Colors.greenAccent
               : highlight
-                  ? Colors.white
-                  : const Color(0xFFF8E7B9).withValues(alpha: 0.7),
+              ? Colors.white
+              : const Color(0xFFF8E7B9).withValues(alpha: 0.7),
           width: selecionado || highlight ? 3 : 1.5,
         ),
         borderRadius: BorderRadius.circular(12),
