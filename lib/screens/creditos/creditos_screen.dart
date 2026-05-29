@@ -93,7 +93,7 @@ class CreditosScreen extends StatelessWidget {
                     ),
                   ),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
                   _buildCard(
                     titulo: 'Tela criar personagem',
@@ -151,7 +151,7 @@ class CreditosScreen extends StatelessWidget {
                           'Trilha sonora de Terrasen',
                         ),
 
-                         const SizedBox(height: 12),
+                        const SizedBox(height: 12),
 
                         _buildMusica(
                           'Für Elise',
@@ -165,6 +165,14 @@ class CreditosScreen extends StatelessWidget {
                           'es a Pirate',
                           'Composta por Klaus Badelt e Hans Zimmer',
                           'Trilha sonora do Bar Pirata',
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        _buildMusica(
+                          'Som ambiente de trânsito',
+                          'Efeito sonoro de uso livre',
+                          'Trilha sonora do estacionamento caótico',
                         ),
                       ],
                     ),
