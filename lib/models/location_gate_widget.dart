@@ -50,6 +50,15 @@ class _LocationGateWidgetState extends State<LocationGateWidget>
   }
 
   Future<void> _verificarLocalizacao() async {
+    // modo apresentação
+    if (LocationGate.modoApresentacao) {
+      setState(() {
+        _liberado = true;
+        _verificando = false;
+      });
+      return;
+    }
+
     setState(() {
       _verificando = true;
       _liberado = false;
